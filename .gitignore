@@ -1,0 +1,36 @@
+# Working documents, local only
+CLAUDE.md
+PLAN.md
+PROGRESS.md
+
+# Data: images are large and licence-encumbered (Mapillary is CC-BY-SA).
+# The manifest is committed so runs are reproducible; the pixels are not.
+data/images/
+data/raw/
+*.zip
+
+# Model artifacts
+ml/checkpoints/
+ml/embeddings/
+*.pt
+*.pth
+*.npy
+
+# Cached tool results
+.cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
