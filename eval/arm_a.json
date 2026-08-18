@@ -214,5 +214,13 @@
   "lon": -100.35,
   "granularity": "region",
   "confidence": "low"
+ },
+ {
+  "file": "rural_3e5efad504.jpg",
+  "country": "Poland",
+  "lat": 52.1,
+  "lon": 19.4,
+  "granularity": "country",
+  "confidence": "medium"
  }
 ]

@@ -27,7 +27,7 @@ a manifest the model never sees.
 |---|---|---|---|---|
 | IM2GPS, 2004-2007 Flickr | 10 | 2.6 km | 40% | 60% |
 | Mapillary, city centres | 10 | 0.6 km | 70% | 80% |
-| Mapillary, rural roads | 7 | 79.8 km | 0% | 14% |
+| Mapillary, rural roads | 8 | 92.5 km | 0% | 12% |
 
 The last two rows are the same source, the same pipeline and the same model.
 Only the sampling differs, and the median moves by a factor of 130.
@@ -40,7 +40,7 @@ opposite of what the set was for. It is kept rather than deleted because the
 comparison against the rural set measures exactly how much the model leans on
 text and landmarks.
 
-On the rural half the model named the correct country seven times out of seven,
+On the rural half the model named the correct country eight times out of eight,
 and landed within 25 km once. Country knowledge holds up; precision collapses.
 That gap is the problem worth working on.
 

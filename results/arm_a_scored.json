@@ -240,6 +240,18 @@
     "truth_lon": -0.359823
   },
   {
+    "file": "rural_3e5efad504.jpg",
+    "country": "Poland",
+    "lat": 52.1,
+    "lon": 19.4,
+    "granularity": "country",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 108.54680799195779,
+    "truth_lat": 52.831626790829,
+    "truth_lon": 20.460832651067
+  },
+  {
     "file": "rural_42816b32de.jpg",
     "country": "Germany",
     "lat": 52.2,

@@ -13,14 +13,14 @@ This is the number the rest of the project has to beat.
 |---|---|---|---|---|---|
 | IM2GPS | 10 | 2.6 km | 40% | 60% | 80% |
 | Mapillary, city centres | 10 | 0.6 km | 70% | 80% | 80% |
-| Mapillary, rural roads | 7 | 79.8 km | 0% | 14% | 86% |
+| Mapillary, rural roads | 8 | 92.5 km | 0% | 12% | 88% |
 
 **The last two rows are the finding.** Same source, same fetch code, same
 stripping, same model, same prompt. The only variable is where the sampler was
 pointed, and the median moves 130-fold.
 
-Rural country accuracy was 7 of 7: Spain, Mexico, Thailand, Chile, Germany, the
-United Kingdom, Brazil. Errors ran 11 km to 668 km. The model reliably knows
+Rural country accuracy was 8 of 8: Spain, Mexico, Thailand, Chile, Germany, the
+United Kingdom, Poland, Brazil. Errors ran 11 km to 668 km. The model reliably knows
 which country it is looking at and cannot pin the location without text or a
 landmark, which is precisely the gap tools are supposed to close, and precisely
 why a system that answers at country level and stops is answering correctly
