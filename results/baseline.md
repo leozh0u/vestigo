@@ -13,7 +13,7 @@ This is the number the rest of the project has to beat.
 |---|---|---|---|---|---|
 | IM2GPS | 10 | 2.6 km | 40% | 60% | 80% |
 | Mapillary, city centres | 10 | 0.6 km | 70% | 80% | 80% |
-| Mapillary, rural roads | 8 | 92.5 km | 0% | 12% | 88% |
+| Mapillary, rural roads | 8 | 94.2 km | 0% | 12% | 88% |
 
 **The last two rows are the finding.** Same source, same fetch code, same
 stripping, same model, same prompt. The only variable is where the sampler was

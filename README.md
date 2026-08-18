@@ -27,7 +27,7 @@ a manifest the model never sees.
 |---|---|---|---|---|
 | IM2GPS, 2004-2007 Flickr | 10 | 2.6 km | 40% | 60% |
 | Mapillary, city centres | 10 | 0.6 km | 70% | 80% |
-| Mapillary, rural roads | 8 | 92.5 km | 0% | 12% |
+| Mapillary, rural roads | 8 | 94.2 km | 0% | 12% |
 
 The last two rows are the same source, the same pipeline and the same model.
 Only the sampling differs, and the median moves by a factor of 130.
