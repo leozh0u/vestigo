@@ -213,3 +213,53 @@ Cost: deep research is 30-60 model calls per image, roughly a dollar or two
 rather than twenty cents. It cannot be the default path. It is what the system
 escalates to when the cheap path returns low confidence, which is the model
 routing doing real work rather than being a cost micro-optimisation.
+
+### Prior art found: LocationAgent and GeoRC (both Jan 2026)
+
+**LocationAgent** (arXiv 2601.19155) is a hierarchical agent for image
+geolocation: coarse region first, then fine-grained. Architecturally close to
+this project, with two differences that matter. It does not address calibration
+or confidence at all. And its evidence comes from *parametric* knowledge, the
+model's own internalised geography, which is close to the opposite of the rule
+here that evidence must come from a tool result the model cannot fabricate.
+
+**GeoRC** (arXiv 2601.21278) is a benchmark of 800 expert-written reasoning
+chains over 500 GeoGuessr scenes, annotated across hundreds of discriminative
+attributes: soil properties, architecture, licence plate shapes. Read it before
+writing the Phase 3 rule base from scratch; much of that corpus may already
+exist in usable form.
+
+Their control condition is the important part, and it is being adopted here.
+They compared real VLM reasoning against an LLM given the correct location, no
+image at all, and asked to invent a justification. Small open models scored only
+marginally better than that pure hallucination.
+
+That is the empirical basis for this whole project: geolocation reasoning that
+reads as expert is largely confabulation, so grounding claims in tool results is
+addressing a measured failure rather than a hypothetical one.
+
+**Consequence: the eval gains a third arm.** Alongside image-only and
+image-plus-metadata, add a no-image hallucination control -- give the model the
+right answer and ask it to justify. If the evidence-grounded chains do not beat
+that, the tools are contributing nothing and I need to know.
+
+Net position: not scooped. The direction is validated by other people
+publishing on it, the open gap (calibration, evidence grounding) is the one this
+project already targets, and a benchmark plus an annotated attribute corpus now
+exist to compare against.
+
+### Cheap models: local before multi-provider
+
+Considered adding a second API provider for cost. Deferred, because the
+compounding wins on one provider need no new integration: a small model for the
+observation extractor is ~5x, prompt caching is ~10x on the cached prefix, and
+the batch endpoint is another 2x on evals.
+
+The stronger version is to run a small vision model locally for observation
+extraction, which takes marginal cost to zero rather than merely lowering it.
+That call is the highest-volume, most image-heavy and least reasoning-intensive
+step in the pipeline, which is exactly the right job for a small local model.
+
+Sequencing: one provider until the pipeline runs end to end, then swap the
+cheap-path model and measure the quality delta. That delta is itself a result
+worth reporting.
