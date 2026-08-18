@@ -18,7 +18,7 @@
     "lon": 12.501,
     "granularity": "city",
     "confidence": "high",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.11390135152925106,
     "truth_lat": 41.901871776605,
     "truth_lon": 12.500277380458
@@ -30,7 +30,7 @@
     "lon": -3.7045,
     "granularity": "city",
     "confidence": "medium",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.11788036561724638,
     "truth_lat": 40.419185930444,
     "truth_lon": -3.7055617091705
@@ -78,7 +78,7 @@
     "lon": 21.0098,
     "granularity": "city",
     "confidence": "medium",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.40367721185534416,
     "truth_lat": 52.229308234505,
     "truth_lon": 21.015613147661
@@ -90,7 +90,7 @@
     "lon": 126.9866,
     "granularity": "street",
     "confidence": "high",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.42908519199683687,
     "truth_lat": 37.568972874332,
     "truth_lon": 126.98175431879
@@ -102,7 +102,7 @@
     "lon": 18.4198,
     "granularity": "street",
     "confidence": "high",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.4463212767634446,
     "truth_lat": -33.928088025488,
     "truth_lon": 18.424281205814
@@ -114,7 +114,7 @@
     "lon": 36.8135,
     "granularity": "city",
     "confidence": "medium",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.6896779798758694,
     "truth_lat": -1.2913829460792,
     "truth_lon": 36.819640805501
@@ -126,7 +126,7 @@
     "lon": -99.1345,
     "granularity": "city",
     "confidence": "high",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 0.7282019529993473,
     "truth_lat": 19.430632451037,
     "truth_lon": -99.130843484813
@@ -138,7 +138,7 @@
     "lon": -87.6255,
     "granularity": "city",
     "confidence": "high",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 1.1078592017860958,
     "truth_lat": 41.875374597503,
     "truth_lon": -87.633696906728
@@ -168,6 +168,30 @@
     "truth_lon": 2.346954
   },
   {
+    "file": "rural_1e85f5921d.jpg",
+    "country": "Spain",
+    "lat": 41.42,
+    "lon": -4.62,
+    "granularity": "region",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 11.117483630734757,
+    "truth_lat": 41.450156079573,
+    "truth_lon": -4.4928493499239
+  },
+  {
+    "file": "rural_7ee09e498b.jpg",
+    "country": "Mexico",
+    "lat": 20.65,
+    "lon": -100.35,
+    "granularity": "region",
+    "confidence": "low",
+    "source": "mapillary_rural",
+    "error_km": 25.298004309662343,
+    "truth_lat": 20.450895099998,
+    "truth_lon": -100.4675636
+  },
+  {
     "file": "im2gps_db82bcd70c.jpg",
     "country": "United States",
     "lat": 34.2462,
@@ -180,6 +204,30 @@
     "truth_lon": -118.47536
   },
   {
+    "file": "rural_cb06bab2f5.jpg",
+    "country": "Thailand",
+    "lat": 14.6,
+    "lon": 100.6,
+    "granularity": "country",
+    "confidence": "low",
+    "source": "mapillary_rural",
+    "error_km": 45.96453250306496,
+    "truth_lat": 14.836242099972,
+    "truth_lon": 100.24928219997
+  },
+  {
+    "file": "rural_58bb638a1b.jpg",
+    "country": "Chile",
+    "lat": -34.45,
+    "lon": -70.95,
+    "granularity": "region",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 79.82422583748709,
+    "truth_lat": -35.020359835681,
+    "truth_lon": -71.480467080117
+  },
+  {
     "file": "im2gps_2d187a1317.jpg",
     "country": "United Kingdom",
     "lat": 52.0,
@@ -190,6 +238,30 @@
     "error_km": 95.05685276240996,
     "truth_lat": 51.243139,
     "truth_lon": -0.359823
+  },
+  {
+    "file": "rural_42816b32de.jpg",
+    "country": "Germany",
+    "lat": 52.2,
+    "lon": 11.8,
+    "granularity": "country",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 159.69219462217092,
+    "truth_lat": 51.502660679495,
+    "truth_lon": 9.7673672327368
+  },
+  {
+    "file": "rural_97a65d8135.jpg",
+    "country": "United Kingdom",
+    "lat": 51.4,
+    "lon": -0.6,
+    "granularity": "country",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 166.62419992420536,
+    "truth_lat": 52.295381883574,
+    "truth_lon": -2.5452218571858
   },
   {
     "file": "im2gps_04881af57a.jpg",
@@ -222,10 +294,22 @@
     "lon": 78.5,
     "granularity": "country",
     "confidence": "medium",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 502.32975698224135,
     "truth_lat": 12.968025152428,
     "truth_lon": 77.592913949299
+  },
+  {
+    "file": "rural_2dafd2f200.jpg",
+    "country": "Brazil",
+    "lat": -20.44,
+    "lon": -54.62,
+    "granularity": "region",
+    "confidence": "medium",
+    "source": "mapillary_rural",
+    "error_km": 668.0811649082317,
+    "truth_lat": -22.486235070065,
+    "truth_lon": -48.549210989422
   },
   {
     "file": "mapillary_4524de2ded.jpg",
@@ -234,7 +318,7 @@
     "lon": 25.2797,
     "granularity": "city",
     "confidence": "medium",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "error_km": 1545.3227527212803,
     "truth_lat": 41.007780809881,
     "truth_lon": 28.974707325993

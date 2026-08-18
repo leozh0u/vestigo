@@ -25,14 +25,24 @@ a manifest the model never sees.
 
 | set | n | median error | within 1 km | within 25 km |
 |---|---|---|---|---|
-| IM2GPS | 10 | 2.6 km | 40% | 60% |
-| Mapillary | 10 | 0.6 km | 70% | 80% |
+| IM2GPS, 2004-2007 Flickr | 10 | 2.6 km | 40% | 60% |
+| Mapillary, city centres | 10 | 0.6 km | 70% | 80% |
+| Mapillary, rural roads | 7 | 79.8 km | 0% | 14% |
 
-The Mapillary figure overstates performance and I would not cite it. Images were
-drawn from a 440 m box centred on city centres, so ground truth sits close to a
-landmark the model can name on sight, and answering "central Madrid" scores
-under a kilometre by construction. That half was meant to be generic roadside
-and came out as tourist districts with legible shopfronts. It needs rebuilding.
+The last two rows are the same source, the same pipeline and the same model.
+Only the sampling differs, and the median moves by a factor of 130.
+
+Sampling city centres was my mistake on the first pass. A 440 m box centred on a
+famous square puts ground truth next to a landmark the model can name on sight,
+so answering "central Madrid" scores under a kilometre by construction. Those
+images came out as tourist districts full of legible shopfronts, which is the
+opposite of what the set was for. It is kept rather than deleted because the
+comparison against the rural set measures exactly how much the model leans on
+text and landmarks.
+
+On the rural half the model named the correct country seven times out of seven,
+and landed within 25 km once. Country knowledge holds up; precision collapses.
+That gap is the problem worth working on.
 
 The calibration breakdown is the part worth reading:
 

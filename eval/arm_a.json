@@ -158,5 +158,61 @@
   "lon": 78.5,
   "granularity": "country",
   "confidence": "medium"
+ },
+ {
+  "file": "rural_2dafd2f200.jpg",
+  "country": "Brazil",
+  "lat": -20.44,
+  "lon": -54.62,
+  "granularity": "region",
+  "confidence": "medium"
+ },
+ {
+  "file": "rural_1e85f5921d.jpg",
+  "country": "Spain",
+  "lat": 41.42,
+  "lon": -4.62,
+  "granularity": "region",
+  "confidence": "medium"
+ },
+ {
+  "file": "rural_cb06bab2f5.jpg",
+  "country": "Thailand",
+  "lat": 14.6,
+  "lon": 100.6,
+  "granularity": "country",
+  "confidence": "low"
+ },
+ {
+  "file": "rural_58bb638a1b.jpg",
+  "country": "Chile",
+  "lat": -34.45,
+  "lon": -70.95,
+  "granularity": "region",
+  "confidence": "medium"
+ },
+ {
+  "file": "rural_42816b32de.jpg",
+  "country": "Germany",
+  "lat": 52.2,
+  "lon": 11.8,
+  "granularity": "country",
+  "confidence": "medium"
+ },
+ {
+  "file": "rural_97a65d8135.jpg",
+  "country": "United Kingdom",
+  "lat": 51.4,
+  "lon": -0.6,
+  "granularity": "country",
+  "confidence": "medium"
+ },
+ {
+  "file": "rural_7ee09e498b.jpg",
+  "country": "Mexico",
+  "lat": 20.65,
+  "lon": -100.35,
+  "granularity": "region",
+  "confidence": "low"
  }
 ]

@@ -12,8 +12,19 @@ This is the number the rest of the project has to beat.
 | set | n | median error | within 1 km | within 25 km | within 200 km |
 |---|---|---|---|---|---|
 | IM2GPS | 10 | 2.6 km | 40% | 60% | 80% |
-| Mapillary | 10 | 0.6 km | 70% | 80% | 80% |
-| pooled | 20 | 0.7 km | 55% | 70% | 80% |
+| Mapillary, city centres | 10 | 0.6 km | 70% | 80% | 80% |
+| Mapillary, rural roads | 7 | 79.8 km | 0% | 14% | 86% |
+
+**The last two rows are the finding.** Same source, same fetch code, same
+stripping, same model, same prompt. The only variable is where the sampler was
+pointed, and the median moves 130-fold.
+
+Rural country accuracy was 7 of 7: Spain, Mexico, Thailand, Chile, Germany, the
+United Kingdom, Brazil. Errors ran 11 km to 668 km. The model reliably knows
+which country it is looking at and cannot pin the location without text or a
+landmark, which is precisely the gap tools are supposed to close, and precisely
+why a system that answers at country level and stops is answering correctly
+rather than giving up.
 
 For scale, PIGEON reports a 44.4 km median on Street View. A model with no
 tools, no training and no context beat that here by more than an order of

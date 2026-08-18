@@ -1,9 +1,16 @@
 """Score baseline guesses against held-back ground truth.
 
 Reports median great-circle error and the standard IM2GPS threshold bands,
-broken out by source. Never pooled: the whole point of the two-source split is
-that a strong score on the Flickr half may be recall rather than reasoning, and
-pooling would hide exactly that.
+broken out by source. Never read the pooled figure on its own: the whole point
+of splitting by source is that a strong score on the Flickr half may be recall
+rather than reasoning, and that city-centre street imagery is far easier than
+rural, and pooling hides both.
+
+Three sources:
+  im2gps           2004-2007 Flickr photographs, landmark-heavy
+  mapillary_urban  city-centre street imagery; easy, and the sampling box makes
+                   it easier still, so treat its numbers as an upper bound
+  mapillary_rural  rural and small-road imagery; the case this project is for
 """
 import json
 import math
@@ -69,8 +76,10 @@ def main(guess_path):
         print(f"{r['file']:<26} {r['source']:<10} {r['error_km']:>10.1f}  "
               f"{r['confidence']:<7} {r['country']}")
 
-    for src in ("im2gps", "mapillary"):
-        report(src.upper(), [r for r in rows if r["source"] == src])
+    for src in ("im2gps", "mapillary_urban", "mapillary_rural"):
+        sub = [r for r in rows if r["source"] == src]
+        if sub:
+            report(src.upper(), sub)
     report("POOLED (reported only for completeness)", rows)
 
     out = pathlib.Path("results") / (pathlib.Path(guess_path).stem + "_scored.json")

@@ -131,7 +131,7 @@
   },
   {
     "id": "mapillary_51b406aaea",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_51b406aaea.jpg",
     "truth": {
       "lat": -33.928088025488,
@@ -146,7 +146,7 @@
   },
   {
     "id": "mapillary_385508af73",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_385508af73.jpg",
     "truth": {
       "lat": 19.430632451037,
@@ -161,7 +161,7 @@
   },
   {
     "id": "mapillary_3afe051f4f",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_3afe051f4f.jpg",
     "truth": {
       "lat": 12.968025152428,
@@ -176,7 +176,7 @@
   },
   {
     "id": "mapillary_7301b58289",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_7301b58289.jpg",
     "truth": {
       "lat": 52.229308234505,
@@ -191,7 +191,7 @@
   },
   {
     "id": "mapillary_867c10a9aa",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_867c10a9aa.jpg",
     "truth": {
       "lat": 40.419185930444,
@@ -206,7 +206,7 @@
   },
   {
     "id": "mapillary_4524de2ded",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_4524de2ded.jpg",
     "truth": {
       "lat": 41.007780809881,
@@ -221,7 +221,7 @@
   },
   {
     "id": "mapillary_71a9117d55",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_71a9117d55.jpg",
     "truth": {
       "lat": -1.2913829460792,
@@ -236,7 +236,7 @@
   },
   {
     "id": "mapillary_d267ae5246",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_d267ae5246.jpg",
     "truth": {
       "lat": 37.568972874332,
@@ -251,7 +251,7 @@
   },
   {
     "id": "mapillary_36bca76fb5",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_36bca76fb5.jpg",
     "truth": {
       "lat": 41.901871776605,
@@ -266,7 +266,7 @@
   },
   {
     "id": "mapillary_2eedbfc14b",
-    "source": "mapillary",
+    "source": "mapillary_urban",
     "file": "mapillary_2eedbfc14b.jpg",
     "truth": {
       "lat": 41.875374597503,
@@ -278,5 +278,125 @@
     },
     "mapillary_id": "2815707678680310",
     "seed_area": "us_chicago"
+  },
+  {
+    "id": "rural_2dafd2f200",
+    "source": "mapillary_rural",
+    "file": "rural_2dafd2f200.jpg",
+    "truth": {
+      "lat": -22.486235070065,
+      "lon": -48.549210989422
+    },
+    "context": {
+      "captured_utc": "2026-05-24 15:29:08",
+      "compass_angle": 251.3196105957
+    },
+    "mapillary_id": "1507055397623113",
+    "seed_area": "br_sp_interior"
+  },
+  {
+    "id": "rural_3e5efad504",
+    "source": "mapillary_rural",
+    "file": "rural_3e5efad504.jpg",
+    "truth": {
+      "lat": 52.831626790829,
+      "lon": 20.460832651067
+    },
+    "context": {
+      "captured_utc": "2017-08-19 11:50:23",
+      "compass_angle": 109.638064
+    },
+    "mapillary_id": "458695008565324",
+    "seed_area": "pl_mazovia_rural"
+  },
+  {
+    "id": "rural_1e85f5921d",
+    "source": "mapillary_rural",
+    "file": "rural_1e85f5921d.jpg",
+    "truth": {
+      "lat": 41.450156079573,
+      "lon": -4.4928493499239
+    },
+    "context": {
+      "captured_utc": "2024-05-03 12:55:00",
+      "compass_angle": 250.14039686322
+    },
+    "mapillary_id": "7281721041954460",
+    "seed_area": "es_castilla_meseta"
+  },
+  {
+    "id": "rural_cb06bab2f5",
+    "source": "mapillary_rural",
+    "file": "rural_cb06bab2f5.jpg",
+    "truth": {
+      "lat": 14.836242099972,
+      "lon": 100.24928219997
+    },
+    "context": {
+      "captured_utc": "2024-03-10 11:14:52",
+      "compass_angle": 0
+    },
+    "mapillary_id": "1213306313249689",
+    "seed_area": "th_central_plain"
+  },
+  {
+    "id": "rural_58bb638a1b",
+    "source": "mapillary_rural",
+    "file": "rural_58bb638a1b.jpg",
+    "truth": {
+      "lat": -35.020359835681,
+      "lon": -71.480467080117
+    },
+    "context": {
+      "captured_utc": "2022-09-05 11:20:37",
+      "compass_angle": 243.35925092504
+    },
+    "mapillary_id": "1804082769938703",
+    "seed_area": "cl_maule"
+  },
+  {
+    "id": "rural_42816b32de",
+    "source": "mapillary_rural",
+    "file": "rural_42816b32de.jpg",
+    "truth": {
+      "lat": 51.502660679495,
+      "lon": 9.7673672327368
+    },
+    "context": {
+      "captured_utc": "2020-06-06 12:19:33",
+      "compass_angle": 74.372231143926
+    },
+    "mapillary_id": "864376830814213",
+    "seed_area": "de_hesse_rural"
+  },
+  {
+    "id": "rural_97a65d8135",
+    "source": "mapillary_rural",
+    "file": "rural_97a65d8135.jpg",
+    "truth": {
+      "lat": 52.295381883574,
+      "lon": -2.5452218571858
+    },
+    "context": {
+      "captured_utc": "2017-08-21 16:13:09",
+      "compass_angle": 14.979767517035
+    },
+    "mapillary_id": "488926465858177",
+    "seed_area": "uk_shropshire"
+  },
+  {
+    "id": "rural_7ee09e498b",
+    "source": "mapillary_rural",
+    "file": "rural_7ee09e498b.jpg",
+    "truth": {
+      "lat": 20.450895099998,
+      "lon": -100.4675636
+    },
+    "context": {
+      "captured_utc": "2024-04-20 21:35:52",
+      "compass_angle": 94.487431526184
+    },
+    "mapillary_id": "1615256159308868",
+    "seed_area": "mx_guanajuato"
   }
 ]
