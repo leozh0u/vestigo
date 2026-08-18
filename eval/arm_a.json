@@ -1,0 +1,162 @@
+[
+ {
+  "file": "im2gps_a33bc4c242.jpg",
+  "country": "United States",
+  "lat": 40.8085,
+  "lon": -73.9617,
+  "granularity": "street",
+  "confidence": "high"
+ },
+ {
+  "file": "im2gps_d6223a52f3.jpg",
+  "country": "Bahamas",
+  "lat": 24.05,
+  "lon": -74.48,
+  "granularity": "country",
+  "confidence": "low"
+ },
+ {
+  "file": "im2gps_2d187a1317.jpg",
+  "country": "United Kingdom",
+  "lat": 52.0,
+  "lon": -1.0,
+  "granularity": "country",
+  "confidence": "medium"
+ },
+ {
+  "file": "im2gps_771cffef86.jpg",
+  "country": "Argentina",
+  "lat": -34.6037,
+  "lon": -58.3816,
+  "granularity": "city",
+  "confidence": "high"
+ },
+ {
+  "file": "im2gps_694f4bfbd7.jpg",
+  "country": "Pakistan",
+  "lat": 31.588,
+  "lon": 74.3104,
+  "granularity": "street",
+  "confidence": "high"
+ },
+ {
+  "file": "im2gps_0fc6f7a8d1.jpg",
+  "country": "Croatia",
+  "lat": 42.6407,
+  "lon": 18.1077,
+  "granularity": "city",
+  "confidence": "medium"
+ },
+ {
+  "file": "im2gps_8b6f42811a.jpg",
+  "country": "France",
+  "lat": 48.8584,
+  "lon": 2.2945,
+  "granularity": "city",
+  "confidence": "high"
+ },
+ {
+  "file": "im2gps_db82bcd70c.jpg",
+  "country": "United States",
+  "lat": 34.2462,
+  "lon": -118.3742,
+  "granularity": "street",
+  "confidence": "high"
+ },
+ {
+  "file": "im2gps_04881af57a.jpg",
+  "country": "Germany",
+  "lat": 51.0,
+  "lon": 10.0,
+  "granularity": "country",
+  "confidence": "low"
+ },
+ {
+  "file": "im2gps_9b27118e24.jpg",
+  "country": "Taiwan",
+  "lat": 24.5047,
+  "lon": 121.6019,
+  "granularity": "region",
+  "confidence": "low"
+ },
+ {
+  "file": "mapillary_51b406aaea.jpg",
+  "country": "South Africa",
+  "lat": -33.9296,
+  "lon": 18.4198,
+  "granularity": "street",
+  "confidence": "high"
+ },
+ {
+  "file": "mapillary_385508af73.jpg",
+  "country": "Mexico",
+  "lat": 19.4362,
+  "lon": -99.1345,
+  "granularity": "city",
+  "confidence": "high"
+ },
+ {
+  "file": "mapillary_7301b58289.jpg",
+  "country": "Poland",
+  "lat": 52.2286,
+  "lon": 21.0098,
+  "granularity": "city",
+  "confidence": "medium"
+ },
+ {
+  "file": "mapillary_867c10a9aa.jpg",
+  "country": "Spain",
+  "lat": 40.4185,
+  "lon": -3.7045,
+  "granularity": "city",
+  "confidence": "medium"
+ },
+ {
+  "file": "mapillary_71a9117d55.jpg",
+  "country": "Kenya",
+  "lat": -1.2905,
+  "lon": 36.8135,
+  "granularity": "city",
+  "confidence": "medium"
+ },
+ {
+  "file": "mapillary_d267ae5246.jpg",
+  "country": "South Korea",
+  "lat": 37.5686,
+  "lon": 126.9866,
+  "granularity": "street",
+  "confidence": "high"
+ },
+ {
+  "file": "mapillary_36bca76fb5.jpg",
+  "country": "Italy",
+  "lat": 41.901,
+  "lon": 12.501,
+  "granularity": "city",
+  "confidence": "high"
+ },
+ {
+  "file": "mapillary_2eedbfc14b.jpg",
+  "country": "United States",
+  "lat": 41.8675,
+  "lon": -87.6255,
+  "granularity": "city",
+  "confidence": "high"
+ },
+ {
+  "file": "mapillary_4524de2ded.jpg",
+  "country": "Lithuania",
+  "lat": 54.6872,
+  "lon": 25.2797,
+  "granularity": "city",
+  "confidence": "medium"
+ },
+ {
+  "file": "mapillary_3afe051f4f.jpg",
+  "country": "India",
+  "lat": 17.4,
+  "lon": 78.5,
+  "granularity": "country",
+  "confidence": "medium"
+ }
+]
