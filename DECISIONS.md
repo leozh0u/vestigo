@@ -175,3 +175,41 @@ is waiting on an eval. And the public demo serves precomputed evidence boards
 for a gallery of example photos by default, with live upload behind a hard rate
 limit, since most visitors want to see it work rather than submit their own
 photo. That turns an open-ended bill into a fixed one.
+
+### Deep multi-hop research, not just tool lookup
+
+The interesting cases are not "call a tool, get a fact." They are chains: a
+photo taken out of an aircraft window where the winglet shape narrows the
+airframe, the seat fabric narrows the carrier, the terrain below narrows the
+region, the sun angle gives heading and rough time, and the cloud deck gives an
+altitude band. None of those is conclusive alone. Together they can reach a
+specific flight.
+
+Three consequences for the design.
+
+**The agent needs a research sub-loop.** A tool call takes fixed inputs and
+returns a fact. Multi-hop deduction generates each query from the previous
+answer, so it needs its own loop with its own stopping condition, nested inside
+the main one.
+
+**Evidence needs strength and independence, not just presence.** The rule that a
+claim either has evidence or does not is too crude here. Five weak signals that
+independently narrow the space should compound; five that all derive from the
+same observation should not. Without that distinction, correlated evidence
+produces false confidence, which is the hallucination failure mode wearing a
+disguise.
+
+**Search quality is the bottleneck, not reasoning.** People who do this well
+succeed by knowing which niche registry or regional forum holds the answer.
+Generic web search returns noise and the agent flails. So the work is source
+routing: airframes to spotter databases, species to GBIF, architecture to
+specific archives. Curating that table is most of the value.
+
+Error compounding is the risk that scales with depth. At 70% reliability per
+hop, three hops is 34%. Every hop has to be verified before the next builds on
+it, which is why the evidence discipline matters more the deeper the chain.
+
+Cost: deep research is 30-60 model calls per image, roughly a dollar or two
+rather than twenty cents. It cannot be the default path. It is what the system
+escalates to when the cheap path returns low confidence, which is the model
+routing doing real work rather than being a cost micro-optimisation.
