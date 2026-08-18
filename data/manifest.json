@@ -128,5 +128,155 @@
       "captured_local": "2007-02-20 11:58:02"
     },
     "original_name": "Taiwan_00044_406785882_413e3bba60_158_81421684@N00.jpg"
+  },
+  {
+    "id": "mapillary_51b406aaea",
+    "source": "mapillary",
+    "file": "mapillary_51b406aaea.jpg",
+    "truth": {
+      "lat": -33.928088025488,
+      "lon": 18.424281205814
+    },
+    "context": {
+      "captured_utc": "2019-07-14 09:31:29",
+      "compass_angle": 134.56763066044
+    },
+    "mapillary_id": "2813481232247739",
+    "seed_area": "za_capetown"
+  },
+  {
+    "id": "mapillary_385508af73",
+    "source": "mapillary",
+    "file": "mapillary_385508af73.jpg",
+    "truth": {
+      "lat": 19.430632451037,
+      "lon": -99.130843484813
+    },
+    "context": {
+      "captured_utc": "2015-01-25 09:12:23",
+      "compass_angle": 5.002993106842
+    },
+    "mapillary_id": "1226375361154381",
+    "seed_area": "mx_cdmx"
+  },
+  {
+    "id": "mapillary_3afe051f4f",
+    "source": "mapillary",
+    "file": "mapillary_3afe051f4f.jpg",
+    "truth": {
+      "lat": 12.968025152428,
+      "lon": 77.592913949299
+    },
+    "context": {
+      "captured_utc": "2022-08-29 13:26:17",
+      "compass_angle": 275.6872044547
+    },
+    "mapillary_id": "173600265229570",
+    "seed_area": "in_bengaluru"
+  },
+  {
+    "id": "mapillary_7301b58289",
+    "source": "mapillary",
+    "file": "mapillary_7301b58289.jpg",
+    "truth": {
+      "lat": 52.229308234505,
+      "lon": 21.015613147661
+    },
+    "context": {
+      "captured_utc": "2019-12-14 09:05:47",
+      "compass_angle": 250.71749986627
+    },
+    "mapillary_id": "922938314915421",
+    "seed_area": "pl_warsaw"
+  },
+  {
+    "id": "mapillary_867c10a9aa",
+    "source": "mapillary",
+    "file": "mapillary_867c10a9aa.jpg",
+    "truth": {
+      "lat": 40.419185930444,
+      "lon": -3.7055617091705
+    },
+    "context": {
+      "captured_utc": "2025-09-16 06:07:13",
+      "compass_angle": 162.0792569362
+    },
+    "mapillary_id": "1070248245308392",
+    "seed_area": "es_madrid"
+  },
+  {
+    "id": "mapillary_4524de2ded",
+    "source": "mapillary",
+    "file": "mapillary_4524de2ded.jpg",
+    "truth": {
+      "lat": 41.007780809881,
+      "lon": 28.974707325993
+    },
+    "context": {
+      "captured_utc": "2018-05-30 07:48:11",
+      "compass_angle": 0
+    },
+    "mapillary_id": "467614047796884",
+    "seed_area": "tr_istanbul"
+  },
+  {
+    "id": "mapillary_71a9117d55",
+    "source": "mapillary",
+    "file": "mapillary_71a9117d55.jpg",
+    "truth": {
+      "lat": -1.2913829460792,
+      "lon": 36.819640805501
+    },
+    "context": {
+      "captured_utc": "2017-12-08 08:19:23",
+      "compass_angle": 335.07064819336
+    },
+    "mapillary_id": "1172311399863726",
+    "seed_area": "ke_nairobi"
+  },
+  {
+    "id": "mapillary_d267ae5246",
+    "source": "mapillary",
+    "file": "mapillary_d267ae5246.jpg",
+    "truth": {
+      "lat": 37.568972874332,
+      "lon": 126.98175431879
+    },
+    "context": {
+      "captured_utc": "2025-03-28 00:49:06",
+      "compass_angle": 100
+    },
+    "mapillary_id": "1188139759634785",
+    "seed_area": "kr_seoul"
+  },
+  {
+    "id": "mapillary_36bca76fb5",
+    "source": "mapillary",
+    "file": "mapillary_36bca76fb5.jpg",
+    "truth": {
+      "lat": 41.901871776605,
+      "lon": 12.500277380458
+    },
+    "context": {
+      "captured_utc": "2017-01-14 13:55:10",
+      "compass_angle": 278.52173471451
+    },
+    "mapillary_id": "211777200459777",
+    "seed_area": "it_rome"
+  },
+  {
+    "id": "mapillary_2eedbfc14b",
+    "source": "mapillary",
+    "file": "mapillary_2eedbfc14b.jpg",
+    "truth": {
+      "lat": 41.875374597503,
+      "lon": -87.633696906728
+    },
+    "context": {
+      "captured_utc": "2020-01-27 21:34:59",
+      "compass_angle": 160.52209472656
+    },
+    "mapillary_id": "2815707678680310",
+    "seed_area": "us_chicago"
   }
 ]
