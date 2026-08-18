@@ -1,0 +1,132 @@
+[
+  {
+    "id": "im2gps_a33bc4c242",
+    "source": "im2gps",
+    "file": "im2gps_a33bc4c242.jpg",
+    "truth": {
+      "lat": 40.807304,
+      "lon": -73.961393
+    },
+    "context": {
+      "captured_local": "2007-08-04 15:50:18"
+    },
+    "original_name": "nyc_00138_1022905709_ffa667da68_1040_70323761@N00.jpg"
+  },
+  {
+    "id": "im2gps_d6223a52f3",
+    "source": "im2gps",
+    "file": "im2gps_d6223a52f3.jpg",
+    "truth": {
+      "lat": 25.114046,
+      "lon": -77.126255
+    },
+    "context": {
+      "captured_local": "2006-12-30 18:58:03"
+    },
+    "original_name": "Bahamas_00006_343059190_9c31e29446_134_39595541@N00.jpg"
+  },
+  {
+    "id": "im2gps_2d187a1317",
+    "source": "im2gps",
+    "file": "im2gps_2d187a1317.jpg",
+    "truth": {
+      "lat": 51.243139,
+      "lon": -0.359823
+    },
+    "context": {
+      "captured_local": "2006-09-24 14:46:13"
+    },
+    "original_name": "england_00041_251424233_428738c274_111_11114422@N00.jpg"
+  },
+  {
+    "id": "im2gps_771cffef86",
+    "source": "im2gps",
+    "file": "im2gps_771cffef86.jpg",
+    "truth": {
+      "lat": -34.603691,
+      "lon": -58.381637
+    },
+    "context": {
+      "captured_local": "2004-08-03 22:53:07"
+    },
+    "original_name": "530405817_0673660c96_1209_7885919@N07.jpg"
+  },
+  {
+    "id": "im2gps_694f4bfbd7",
+    "source": "im2gps",
+    "file": "im2gps_694f4bfbd7.jpg",
+    "truth": {
+      "lat": 31.58895,
+      "lon": 74.311378
+    },
+    "context": {
+      "captured_local": "2006-11-23 06:41:31"
+    },
+    "original_name": "Lahore_00001_321085080_28863df64f_130_82503882@N00.jpg"
+  },
+  {
+    "id": "im2gps_0fc6f7a8d1",
+    "source": "im2gps",
+    "file": "im2gps_0fc6f7a8d1.jpg",
+    "truth": {
+      "lat": 42.640107,
+      "lon": 18.110811
+    },
+    "context": {
+      "captured_local": "2007-06-29 08:10:40"
+    },
+    "original_name": "Croatia_00029_965780821_723a75feee_1096_78247883@N00.jpg"
+  },
+  {
+    "id": "im2gps_8b6f42811a",
+    "source": "im2gps",
+    "file": "im2gps_8b6f42811a.jpg",
+    "truth": {
+      "lat": 48.861326,
+      "lon": 2.346954
+    },
+    "context": {
+      "captured_local": "2006-04-16 10:08:29"
+    },
+    "original_name": "Paris_00025_129504349_cdd20e3144_1_42485416@N00.jpg"
+  },
+  {
+    "id": "im2gps_db82bcd70c",
+    "source": "im2gps",
+    "file": "im2gps_db82bcd70c.jpg",
+    "truth": {
+      "lat": 33.988206,
+      "lon": -118.47536
+    },
+    "context": {
+      "captured_local": "2005-08-07 18:53:45"
+    },
+    "original_name": "LosAngeles_00023_349121428_aaa440bcc6_132_97332629@N00.jpg"
+  },
+  {
+    "id": "im2gps_04881af57a",
+    "source": "im2gps",
+    "file": "im2gps_04881af57a.jpg",
+    "truth": {
+      "lat": 52.504914,
+      "lon": 13.36284
+    },
+    "context": {
+      "captured_local": "2006-05-06 12:14:24"
+    },
+    "original_name": "980263629_f3373fa294_1253_9729483@N02.jpg"
+  },
+  {
+    "id": "im2gps_9b27118e24",
+    "source": "im2gps",
+    "file": "im2gps_9b27118e24.jpg",
+    "truth": {
+      "lat": 24.514718,
+      "lon": 121.60818
+    },
+    "context": {
+      "captured_local": "2007-02-20 11:58:02"
+    },
+    "original_name": "Taiwan_00044_406785882_413e3bba60_158_81421684@N00.jpg"
+  }
+]
