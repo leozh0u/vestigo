@@ -152,9 +152,11 @@ README paragraph on intended use.
 
 ### Working documents stay out of the repo
 
-`CLAUDE.md`, `PLAN.md`, and `PROGRESS.md` are gitignored. This file is not,
-because a decision log is a normal thing for a repo to carry and it is the
-record of reasoning I want to be able to point at later.
+Planning and progress notes stay local, excluded through `.git/info/exclude`
+rather than `.gitignore` so the exclusion list itself is not part of the
+repository. This file is the exception, because a decision log is a normal thing
+for a repo to carry and it is the record of reasoning I want to be able to point
+at later.
 
 ### Cost control moves ahead of the eval harness
 

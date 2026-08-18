@@ -1,8 +1,3 @@
-# Working documents, local only
-CLAUDE.md
-PLAN.md
-PROGRESS.md
-
 # Data: images are large and licence-encumbered (Mapillary is CC-BY-SA).
 # The manifest is committed so runs are reproducible; the pixels are not.
 data/images/
