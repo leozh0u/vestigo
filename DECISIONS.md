@@ -155,3 +155,23 @@ README paragraph on intended use.
 `CLAUDE.md`, `PLAN.md`, and `PROGRESS.md` are gitignored. This file is not,
 because a decision log is a normal thing for a repo to carry and it is the
 record of reasoning I want to be able to point at later.
+
+### Cost control moves ahead of the eval harness
+
+Originally sequenced after it. Rebuilding the cost estimate bottom-up showed
+why that is backwards: a full eval run over 100 images is 5 to 15 model calls
+per image, and it gets rerun a dozen or more times while iterating, which makes
+it the single largest expense in the project by a wide margin.
+
+So prompt caching and model routing land *before* the first full eval run
+rather than after. Caching the system prompt and tool definitions drops the
+cached portion to roughly a tenth of list price, and routing the observation
+extractor to a small model cuts the largest token consumer several times over,
+since image tokens dominate.
+
+Two more things follow from the same reasoning. Evals go through the batch
+endpoint, which is half price and costs nothing in convenience because no user
+is waiting on an eval. And the public demo serves precomputed evidence boards
+for a gallery of example photos by default, with live upload behind a hard rate
+limit, since most visitors want to see it work rather than submit their own
+photo. That turns an open-ended bill into a fixed one.
