@@ -7,12 +7,22 @@ bugs worth remembering. Newest at the bottom within each date.
 
 ## 2026-08-11
 
-### Name: Reckon
+### Name: Vestigo
 
-From dead reckoning, working out where you are from context you already hold: a
-known starting point, a heading, elapsed time. That is the thing that separates
-this from a pure image classifier, since the context (a date, an itinerary, a
-half-remembered story) is an input rather than a nuisance.
+Latin, first person: *I track, I trace, I search out*. From *vestigium*, a
+footprint or a trace. It names the actual operation, following the traces in an
+image back to the place they came from.
+
+Started as Reckon, after dead reckoning, which had the right idea: working out
+where you are from context you already hold. Changed for two reasons. Reckon
+Limited is a listed Australian accounting software company with marks in the
+same class, which is fine for a personal repo and not fine for anything
+promoted. And every sensible domain was taken or parked for resale, whereas
+vestigo.com was unregistered.
+
+A coined or arbitrary term is also a stronger mark than a descriptive one. Any
+name built from "loc" or "place" describes the category and is close to
+impossible to defend; a Latin verb does not.
 
 ### Answer at the granularity the evidence supports
 
