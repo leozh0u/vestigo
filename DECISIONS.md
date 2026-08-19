@@ -275,3 +275,116 @@ step in the pipeline, which is exactly the right job for a small local model.
 Sequencing: one provider until the pipeline runs end to end, then swap the
 cheap-path model and measure the quality delta. That delta is itself a result
 worth reporting.
+
+---
+
+## 2026-08-19
+
+### Phase 2 before Phase 1
+
+The plan had solar geometry first, on the argument that one verified tool beats
+six stubs. Phase 0 changed the order. The rural result and the Mexico case both
+say the useful work is going from country to city on textless images, every
+tool needs somewhere to attach its output, and the board as designed could not
+express the one kind of evidence Phase 0 proved matters. Solar geometry now
+becomes the first tool built against a contract that already exists, and it is
+testable against eight rural images whose coordinates are known.
+
+### Evidence is a fact, Support is a reading of it
+
+The first sketch put `strength` on the evidence record. That is wrong, because
+the same fact bears differently on different claims. A shadow measurement
+supports Mexico and refutes Kenya at the same time, and one number on the
+evidence cannot say both.
+
+So evidence records what happened and carries no opinion: which tool, what
+inputs, what came back. `Support` is the link from a claim to a piece of
+evidence and holds the direction and the weight. The cost is one more type. The
+gain is that the same evidence can be cited by several claims without the
+readings interfering, which is what an evidence board has to do.
+
+### One tool call is exactly one evidence record
+
+Considered letting a tool emit several evidence records per call. Rejected as
+untraceable: if a call produces four facts and one turns out to be wrong, there
+is no way back to the inputs that produced it.
+
+So a call becomes one record, and everything that call produced, constraints
+and candidate locations, cites that record. Tracing anything back gives the
+call, its inputs and its raw return. A tool wanting finer structure puts it
+inside the `value` payload, which stays verbatim.
+
+### Confidence is computed, never asserted
+
+`Claim` has no confidence field. Ask the board and it works the number out from
+the supporting evidence each time. What a model said about its own certainty is
+kept in `stated_confidence` and does nothing.
+
+That is Phase 0 read back. Stated medium confidence was bimodal from 0.1 km to
+1545 km with nothing in the output separating the two cases, so a stated
+confidence is data to calibrate against, not a number to act on.
+
+The combination rule: within a group of correlated evidence take the strongest
+and ignore the rest, across independent groups use noisy-OR. Correlation is
+computed by walking `derived_from` back to root observations, so two readings
+off the same signboard land in one group and count once. Without that, a model
+restating one observation four ways looks like four confirmations.
+
+### Constraints filter candidates, they do not vote
+
+The type Phase 0 asked for. A constraint is a region the answer has to be in or
+out of, with an `admits` score per point, and it never proposes a point of its
+own.
+
+Two properties fall out of that, and both are the Phase 0 failures inverted. A
+constraint that admits a candidate leaves it exactly where it was, which is
+what should have happened on the Thailand image where a correct band was turned
+into a point six times worse than the model's own guess. And a constraint can
+delete a candidate without improving any other one, which is what the capture
+timestamp did on the Mexico image when it stopped the answer flipping to Kenya.
+
+`weight` is separate from the admission score, and it is the certainty in the
+constraint itself. At 1.0 an outside point is dead. At 0.8 it keeps 0.2. Solar
+geometry read off a soft shadow edge should not be able to rule out the correct
+country outright, so a tool measuring something uncertain does not get to claim
+1.0.
+
+Bands also take a soft margin so the score falls off linearly past the edge
+rather than cutting. A band measured to within a few degrees should have edges
+that are a few degrees wide.
+
+### An unevaluated constraint abstains, never vetoes
+
+`RegionSet` needs a coordinate-to-country resolver, which is code, so it cannot
+survive the JSON cache. A constraint that cannot evaluate a point returns None
+and the point passes untouched.
+
+This is the one failure in the design that would be invisible. A vetoing
+default would look like a working system that had quietly started ruling out
+the truth, and it would show up as a slightly worse median that nobody could
+explain. It has its own test.
+
+### Tools cannot write claims
+
+The contract has no route for it. Tools return evidence, constraints and
+candidates. Only the board mints claims, and only citing evidence already on
+it.
+
+The dependency runs one way: the board knows nothing about tools, tools know
+about the board. That is why `attach` is a function in `tools/base.py` rather
+than a method on `Board`.
+
+### Cache keyed on tool version, and failures are results
+
+Tool results cache on disk under a key of name, version and inputs, so bumping
+a tool's version invalidates its cache without anyone remembering to clear
+anything. Only deterministic tools cache, and only successful calls.
+
+A tool that raises returns a result with `ok=False` and still lands on the
+board as evidence of a failed lookup. A failed Overpass query is a normal
+outcome and the record should say so, rather than the run ending.
+
+The reason to build this now rather than in Phase 4.5: the eval harness is the
+largest cost in the project and it reruns over the same images a dozen times.
+Retrofitting a cache around six tools that each grew their own signature is the
+expensive version of this.
