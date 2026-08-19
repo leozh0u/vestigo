@@ -21,8 +21,17 @@ What exists is the measurement that defines the problem, which is deliberate:
 the point of starting there was to find out whether a plain model call is
 already good enough before building anything on top of it. On top of that sits
 `vestigo/`, the evidence board and the contract every tool is written against,
-and the first tool, solar geometry. The types the board holds came out of what
-the baseline measured, so the order is the argument.
+the first tool, and the scoring that judges a claim on what it claimed. The
+types the board holds came out of what the baseline measured, so the order is
+the argument.
+
+```
+vestigo/board.py         claims, evidence, and constraints that filter candidates
+vestigo/solar.py         solar position, and the constraints built on it
+vestigo/scoring.py       granularity-aware correctness and calibration
+vestigo/tools/base.py    one contract for every tool
+eval/                    the three experiments, none of which need network access
+```
 
 ## The baseline
 
@@ -106,6 +115,51 @@ Full writeup in [results/solar.md](results/solar.md), including where it is
 weak: two of the eight images sit within four degrees of the horizon, where the
 daylight reading everything rests on is close to a coin flip.
 
+## Scoring it on what it claimed
+
+Distance error cannot see the thing this project is for. Given a night street in
+India with no legible signage, the model answered at country granularity, said
+so, and India was correct. Distance calls that a 502 km failure.
+
+So a claim now counts as correct if the truth falls inside the radius its level
+implies, using the standard IM2GPS bands rather than new numbers. On the same 28
+images that produced the table above:
+
+| source | n | correct at the level claimed | overclaimed | underclaimed |
+|---|---|---|---|---|
+| IM2GPS | 10 | 90% | 10% | 70% |
+| Mapillary, city centres | 10 | 90% | 10% | 80% |
+| Mapillary, rural roads | 8 | 88% | 12% | 62% |
+
+The rural row is the one that moves. By distance it is a 94 km median and reads
+as the half where the system fails. By what it claimed, 88% of those answers
+were right, and the gap to the other two rows is four points rather than a
+factor of 130. Both numbers are true; they answer different questions.
+
+Ten answers are correct under one metric and failures under the other. None go
+the other way, so the model was not sneaking precision past a loose metric.
+
+Two things fall out that distance had hidden.
+
+**It underclaims seven times as often as it overclaims**, 71% against 11%. On
+most images it stops at a coarser level than its own accuracy would support,
+claiming a country and landing 2.6 km away. Overclaiming is the failure worth
+driving to zero and it is already low. Underclaiming is not a failure, but that
+much specificity given up is its own problem, and a different one from being
+inaccurate.
+
+**Stated confidence is underconfident rather than overconfident.** High
+confidence is exactly calibrated: promised 90%, delivered 90%. Low confidence
+answers were correct at the level they claimed every time, because the model
+correctly coarsens its claim when it is unsure. Under distance scoring that
+looked like the honestly bad band. It is a coarse claim being kept.
+
+Phase 0's finding that medium confidence is bimodal survives and sharpens. Its
+worst answer landed 62 times further out than the level it claimed allows, where
+low confidence never broke its claim at all.
+
+Full writeup in [results/calibration.md](results/calibration.md).
+
 ## What this is aimed at
 
 On photographs with readable text or a recognisable landmark, a frontier model
@@ -125,6 +179,7 @@ python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
 ./.venv/bin/python scripts/ingest_mapillary.py    # needs a Mapillary token in .env
 ./.venv/bin/python eval/score.py eval/arm_a.json
 ./.venv/bin/python eval/solar_check.py    # needs no images and no network
+./.venv/bin/python eval/calibrate.py      # same
 ./.venv/bin/pytest
 ```
 

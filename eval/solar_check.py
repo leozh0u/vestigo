@@ -53,6 +53,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from vestigo.board import Board
 from vestigo.geo import LatLon, haversine
+from vestigo.scoring import spread_km as _spread
 from vestigo.solar import HORIZON_DEG, sun_position
 from vestigo.tools.base import attach
 from vestigo.tools.solar import SolarTool
@@ -176,17 +177,14 @@ def run_condition(entry, cands, oracle: bool) -> dict:
 
 
 def spread_km(cands, survivors_only: bool = True) -> float:
-    """Furthest two candidates from each other, in km.
+    """Furthest two surviving candidates from each other, in km.
 
-    How far apart two runs of the same model on the same photograph are allowed
-    to end up. This is the number a constraint is supposed to move, and the
-    median is the number it is not.
+    The number a constraint is supposed to move, and the median is the number
+    it is not. `vestigo.scoring.spread_km` does the geometry; this only picks
+    which candidates are still standing.
     """
-    pts = [c["point"] for c in cands
-           if not survivors_only or c["adm"] >= ELIMINATED]
-    if len(pts) < 2:
-        return 0.0
-    return max(haversine(a, b) for i, a in enumerate(pts) for b in pts[i + 1:])
+    return _spread([c["point"] for c in cands
+                    if not survivors_only or c["adm"] >= ELIMINATED])
 
 
 def weighted_median_error(cands) -> float:

@@ -478,3 +478,59 @@ had left refraction out.
 The lesson is about sequencing rather than about solar geometry. Two sessions
 on one repo need to agree on who owns a path before either starts, and the
 cheap version of that is reading what is already committed.
+
+### Score a claim on what it claimed, not on distance
+
+Distance error cannot see the design. The Bengaluru image answered at country
+granularity, said it was hedging because there was no legible text, and got
+India right. Distance calls that a 502 km failure, and a system tuned against
+distance learns to stop hedging, which is the failure mode the whole project
+exists to avoid.
+
+So a claim is correct if the truth falls inside the radius its level implies.
+The radii are the standard IM2GPS bands rather than new numbers, so results stay
+readable next to published ones. A radius is a proxy for the real test, which is
+whether the point falls inside the named administrative boundary, and it
+over-credits claims near the edge of a large country until there is a boundary
+lookup.
+
+Measured on the 28 baseline answers, this changes the reading of the rural half
+from a 94 km median failure to 88% correct at the level claimed. Ten answers
+flip from failure to success and none flip the other way, which is the check
+that the new metric is not just looser.
+
+### Underclaiming is not a failure, and it is still a problem
+
+The system claims coarser than it earned on 71% of images and finer on 11%.
+Both are reported and only overclaiming counts as a failure, because a metric
+that punished humility would push the system straight back to confident
+precision.
+
+But 71% is a lot of specificity left on the table, and naming it as a separate
+number rather than folding it into an accuracy score is what makes it visible
+as its own piece of work. The answers are already accurate enough; the system
+will not commit to them.
+
+### Overshoot is measured against the claim, not against the median
+
+First version of the band-splitting metric was worst error over median error in
+log10. It ranked high confidence as the most erratic band, because its median
+was 400 m and its worst case 30 km, while medium looked calmer at a 95 km
+median and a 1545 km worst.
+
+That is scoring by distance one level up. The fix is to measure the worst case
+against the radius the claim allows, so a 30 km miss is 0.04x for a country
+claim and 6x for a street one. Medium then reads 62x, which is the Phase 0
+bimodality finding restated in a form that can be compared across bands.
+
+### Stated confidence is underconfident once granularity is scored
+
+Phase 0 called low confidence "honestly bad" from its 285 km median. Scored on
+what those answers claimed, low confidence was correct every time, because the
+model coarsens its claim when unsure and then keeps the coarse claim.
+
+High confidence is exactly calibrated at 90% promised and 90% delivered. The
+error is not overconfidence anywhere in the range, which inverts what the
+distance-scored version of this table appeared to show, and it means the
+calibration work ahead is about getting the system to commit rather than about
+holding it back.
