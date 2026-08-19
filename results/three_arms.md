@@ -14,7 +14,7 @@ and a fresh sample of the model, so any difference could be either.
 | | median | mean |
 |---|---|---|
 | arm A | 94 km | 158 km |
-| arm A2 | 116 km | 2019 km |
+| arm A2 | 118 km | 2030 km |
 | arm B | 111 km | 121 km |
 
 Per image, `noise` is the distance between the two no-metadata runs and `effect`
