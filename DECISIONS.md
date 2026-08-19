@@ -388,3 +388,64 @@ The reason to build this now rather than in Phase 4.5: the eval harness is the
 largest cost in the project and it reruns over the same images a dozen times.
 Retrofitting a cache around six tools that each grew their own signature is the
 expensive version of this.
+
+### Solar geometry runs forwards, not backwards
+
+The plan said: measure a shadow, invert the equations, get a latitude band.
+That is the harder half of the problem and it discards the azimuth, which is
+the half that carries longitude.
+
+A constraint is asked `admits(point)` one point at a time, so there is no need
+to invert anything. Compute where the sun was at the candidate at that instant
+and compare it to what the photograph shows. Forward is exact where inversion
+is approximate, and there is no algebra to get wrong.
+
+This only became available because the board was built first. With a band as
+the output type, inversion is the only option. With a scoring function as the
+output type, the forward equations are enough. Phase 2 before Phase 1 paid for
+itself here.
+
+### Daylight is the constraint worth having
+
+Falls out of the same change. The strongest single solar constraint needs no
+shadow measurement and no sun in frame. It needs only that the photograph was
+taken in daylight, and fixing the instant then rules out the 49% of the earth
+that is in the dark.
+
+Measured on the eight rural images: the worst-case disagreement between two
+runs on the same photograph falls from 14,964 km to 537 km, and the median
+error does not move at all. That is the Phase 0 argument restated with a tool
+in place. It also means the cheapest reading in the whole pipeline carries most
+of the tool's value, so it gets weight 0.97 while the readings that need a
+judgement get 0.75 and 0.70.
+
+### The sun's bearing separates continents, not towns
+
+Measured, not assumed. On the twenty-four real baseline guesses, a perfect
+reading of the sun's direction changes nothing: same eliminations, same spread.
+On a decoy set built from the other images' true coordinates it takes
+elimination from 22% to 64%.
+
+Both are the same fact. The sun's bearing barely moves over a few hundred
+kilometres, which is where the real guesses already were, so it can only speak
+at continent scale. Worth knowing before building the observation half, since
+it means that half earns its cost on gross errors and not on precision.
+
+### Constraint types live with their subject matter
+
+`SolarElevation` and `SolarAzimuth` are in `vestigo/solar.py` next to the
+algorithm they call, not in `board.py`. Keeping every constraint in the board
+would have made it the place where all future domain knowledge accumulates.
+
+The cost is that a type in a module nobody imports cannot be deserialized, so
+`vestigo/__init__.py` has to import each one and `Constraint.from_dict` raises
+with that explanation rather than a bare KeyError. `register_constraint` and
+`soft_score` are public for the same reason.
+
+### The azimuth constraint abstains at night
+
+It could reasonably reject a point where the sun is below the horizon, since
+there is no bearing to match. It does not, because the elevation constraint has
+already ruled on exactly that. Scoring it twice would count one observation as
+two, which is the same error the independence rule exists to prevent, just
+appearing in the constraints rather than the evidence.

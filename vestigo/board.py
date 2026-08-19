@@ -249,8 +249,14 @@ class Candidate:
 CONSTRAINT_TYPES: dict[str, type["Constraint"]] = {}
 
 
-def _constraint(cls):
-    """Register a constraint type so boards can round-trip through JSON."""
+def register_constraint(cls):
+    """Register a constraint type so boards can round-trip through JSON.
+
+    Public, because constraint types live wherever their subject matter lives.
+    The solar ones are in `vestigo/solar.py` next to the algorithm they use, not
+    here. The cost of that is a decorator every new type has to remember and an
+    import in `vestigo/__init__.py`, which is what makes a saved board readable.
+    """
     CONSTRAINT_TYPES[cls.kind] = cls
     return cls
 
@@ -315,6 +321,11 @@ class Constraint(ABC):
 
     @classmethod
     def from_dict(cls, d: dict) -> "Constraint":
+        if d["kind"] not in CONSTRAINT_TYPES:
+            raise KeyError(
+                f"unknown constraint kind {d['kind']!r}. The module defining it "
+                "has not been imported, so it never registered."
+            )
         target = CONSTRAINT_TYPES[d["kind"]]
         return target(
             id=d["id"],
@@ -329,8 +340,8 @@ class Constraint(ABC):
         return dict(p)
 
 
-def _soft(excess: float, soft: float) -> float:
-    """Map "degrees outside the edge" to an admission score.
+def soft_score(excess: float, soft: float) -> float:
+    """Map "how far outside the edge" to an admission score.
 
     With no soft margin this is a hard in-or-out. With one, the score falls
     linearly to zero across the margin, which is the honest shape for a band
@@ -343,7 +354,7 @@ def _soft(excess: float, soft: float) -> float:
     return max(0.0, 1.0 - excess / soft)
 
 
-@_constraint
+@register_constraint
 @dataclass(frozen=True, kw_only=True, slots=True)
 class LatitudeBand(Constraint):
     """Latitude between lo and hi. What solar elevation gives you."""
@@ -357,13 +368,13 @@ class LatitudeBand(Constraint):
     def raw_admits(self, point: LatLon | None) -> float | None:
         if point is None:
             return None
-        return _soft(lat_band_excess(point.lat, self.lo, self.hi), self.soft_deg)
+        return soft_score(lat_band_excess(point.lat, self.lo, self.hi), self.soft_deg)
 
     def _params(self) -> dict:
         return {"lo": self.lo, "hi": self.hi, "soft_deg": self.soft_deg}
 
 
-@_constraint
+@register_constraint
 @dataclass(frozen=True, kw_only=True, slots=True)
 class LongitudeBand(Constraint):
     """Longitude in the band running east from lo to hi.
@@ -382,13 +393,13 @@ class LongitudeBand(Constraint):
     def raw_admits(self, point: LatLon | None) -> float | None:
         if point is None:
             return None
-        return _soft(lon_band_excess(point.lon, self.lo, self.hi), self.soft_deg)
+        return soft_score(lon_band_excess(point.lon, self.lo, self.hi), self.soft_deg)
 
     def _params(self) -> dict:
         return {"lo": self.lo, "hi": self.hi, "soft_deg": self.soft_deg}
 
 
-@_constraint
+@register_constraint
 @dataclass(frozen=True, kw_only=True, slots=True)
 class BoundingBox(Constraint):
     """Both bands at once. Useful for "somewhere in the Pacific Northwest"."""
@@ -404,8 +415,8 @@ class BoundingBox(Constraint):
     def raw_admits(self, point: LatLon | None) -> float | None:
         if point is None:
             return None
-        lat = _soft(lat_band_excess(point.lat, self.south, self.north), self.soft_deg)
-        lon = _soft(lon_band_excess(point.lon, self.west, self.east), self.soft_deg)
+        lat = soft_score(lat_band_excess(point.lat, self.south, self.north), self.soft_deg)
+        lon = soft_score(lon_band_excess(point.lon, self.west, self.east), self.soft_deg)
         return min(lat, lon)
 
     def _params(self) -> dict:
@@ -413,7 +424,7 @@ class BoundingBox(Constraint):
                 "east": self.east, "soft_deg": self.soft_deg}
 
 
-@_constraint
+@register_constraint
 @dataclass(frozen=True, kw_only=True, slots=True)
 class NearPoint(Constraint):
     """Within (or beyond) a radius of a point.
@@ -435,7 +446,7 @@ class NearPoint(Constraint):
             return None
         d = haversine(self.center, point)
         excess = (d - self.radius_km) if self.inside else (self.radius_km - d)
-        return _soft(excess, self.soft_km)
+        return soft_score(excess, self.soft_km)
 
     def _params(self) -> dict:
         return {"center": self.center.to_dict(), "radius_km": self.radius_km,
@@ -447,7 +458,7 @@ class NearPoint(Constraint):
                 "soft_km": p.get("soft_km", 0.0), "inside": p.get("inside", True)}
 
 
-@_constraint
+@register_constraint
 @dataclass(frozen=True, kw_only=True, slots=True)
 class RegionSet(Constraint):
     """Membership of a named set of regions, usually countries.

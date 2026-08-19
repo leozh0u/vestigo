@@ -13,14 +13,14 @@ nothing behind it does not count toward the answer.
 
 ## Status
 
-Early. There is no agent yet, and no tools.
+Early. There is no agent yet.
 
 What exists is the measurement that defines the problem, which is deliberate:
 the point of starting there was to find out whether a plain model call is
 already good enough before building anything on top of it. On top of that sits
-`vestigo/`, the evidence board and the contract every tool will be written
-against. The types it holds came out of what the baseline measured, so the
-order is the argument.
+`vestigo/`, the evidence board and the contract every tool is written against,
+and the first tool, solar geometry. The types the board holds came out of what
+the baseline measured, so the order is the argument.
 
 ## The baseline
 
@@ -69,6 +69,41 @@ Distance scoring calls that a 502 km failure.
 
 Full writeup in [results/baseline.md](results/baseline.md).
 
+## The first tool
+
+Solar geometry. Given the instant a photograph was taken and the fact that it
+was taken in daylight, it rules out everywhere the sun was below the horizon,
+which at any moment is 49% of the earth. No shadow measurement, no sun in the
+frame, no model in the loop. The plan had this working backwards, inverting the
+equations to get a latitude band; running them forwards against one candidate
+at a time is exact and needs no algebra.
+
+It is a filter and not an estimator. It proposes no location and there is no
+route in the tool contract for it to try.
+
+The baseline left twenty-four guesses across the eight rural images, so those
+became the candidates and the manifest timestamps became the constraint:
+
+| | before | after |
+|---|---|---|
+| candidates ruled out | | 1 of 24 |
+| best candidate cut by mistake | | 0 of 8 images |
+| median error over the set | 114 km | 114 km |
+| worst-case disagreement between runs | 14,964 km | 537 km |
+
+The median does not move and the worst case falls by a factor of 28. One image
+was answered as Mexico on one run and Kenya on an identical rerun, 14,970 km
+apart. At the capture instant the sun was 47 degrees up over Querétaro and 79
+degrees below the horizon over Nairobi, so the Kenya answer cannot be right and
+the tool removes it without touching the other one.
+
+That is the tool doing the only thing this class of evidence can do. It does
+not find the town. It stops the answer being on the wrong continent.
+
+Full writeup in [results/solar.md](results/solar.md), including where it is
+weak: two of the eight images sit within four degrees of the horizon, where the
+daylight reading everything rests on is close to a coin flip.
+
 ## What this is aimed at
 
 On photographs with readable text or a recognisable landmark, a frontier model
@@ -87,6 +122,7 @@ python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
 ./.venv/bin/python scripts/ingest_im2gps.py
 ./.venv/bin/python scripts/ingest_mapillary.py    # needs a Mapillary token in .env
 ./.venv/bin/python eval/score.py eval/arm_a.json
+./.venv/bin/python eval/solar_check.py    # needs no images and no network
 ./.venv/bin/pytest
 ```
 
