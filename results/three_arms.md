@@ -13,9 +13,9 @@ and a fresh sample of the model, so any difference could be either.
 
 | | median | mean |
 |---|---|---|
-| arm A | 80 km | 165 km |
-| arm A2 | 119 km | 2304 km |
-| arm B | 108 km | 122 km |
+| arm A | 94 km | 158 km |
+| arm A2 | 116 km | 2019 km |
+| arm B | 111 km | 121 km |
 
 Per image, `noise` is the distance between the two no-metadata runs and `effect`
 is the distance between arm A and arm B:
@@ -29,14 +29,15 @@ is the distance between arm A and arm B:
 | Mexico | 25 km | 14970 km | 45 km | 14951 km | 30 km |
 | United Kingdom | 167 km | 114 km | 108 km | 62 km | 65 km |
 | Thailand | 46 km | 199 km | 277 km | 165 km | 246 km |
+| Poland | 109 km | 113 km | 113 km | 14 km | 7 km |
 
 ## Run-to-run noise is large and heavy tailed
 
-Median 42 km, and on one image 14,951 km. Two runs of the same model on the same
+Median 40 km, and on one image 14,951 km. Two runs of the same model on the same
 photograph with an identical prompt can disagree by a continent.
 
-That settles the earlier question. The arm A to arm B median difference, 80 km
-against 108 km, sits well inside that noise. **Metadata produced no measurable
+That settles the earlier question. The arm A to arm B median difference, 94 km
+against 111 km, sits well inside that noise. **Metadata produced no measurable
 improvement in point accuracy**, which is what the physics predicts: solar
 position yields a latitude band and a longitude from solar time, so it is a
 coarse constraint and should not sharpen a local estimate.
