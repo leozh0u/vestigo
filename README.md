@@ -13,9 +13,14 @@ nothing behind it does not count toward the answer.
 
 ## Status
 
-Early. There is no agent yet. What exists is the measurement that defines the
-problem, which is deliberate: the point of starting here was to find out whether
-a plain model call is already good enough before building anything on top of it.
+Early. There is no agent yet, and no tools.
+
+What exists is the measurement that defines the problem, which is deliberate:
+the point of starting there was to find out whether a plain model call is
+already good enough before building anything on top of it. On top of that sits
+`vestigo/`, the evidence board and the contract every tool will be written
+against. The types it holds came out of what the baseline measured, so the
+order is the argument.
 
 ## The baseline
 
@@ -78,11 +83,15 @@ than I expected going in, and it is where the work belongs.
 ## Reproducing
 
 ```
-python3 -m venv .venv && ./.venv/bin/pip install pillow
+python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
 ./.venv/bin/python scripts/ingest_im2gps.py
 ./.venv/bin/python scripts/ingest_mapillary.py    # needs a Mapillary token in .env
 ./.venv/bin/python eval/score.py eval/arm_a.json
+./.venv/bin/pytest
 ```
+
+The package itself has no dependencies. Pillow is for the ingest scripts and
+pytest is for the tests.
 
 Images are not committed. The manifest holds the coordinates, so the fetch is
 reproducible without redistributing anyone's pixels.
