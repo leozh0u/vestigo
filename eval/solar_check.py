@@ -53,7 +53,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from vestigo.board import Board
 from vestigo.geo import LatLon, haversine
-from vestigo.solar import HORIZON_DEG, bearing_difference, sun_position
+from vestigo.solar import HORIZON_DEG, sun_position
 from vestigo.tools.base import attach
 from vestigo.tools.solar import SolarTool
 

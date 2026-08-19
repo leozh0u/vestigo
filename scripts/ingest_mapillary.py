@@ -16,9 +16,7 @@ spread across continents tests that harder than ten European roads would.
 import hashlib
 import io
 import json
-import os
 import pathlib
-import sys
 import time
 import urllib.parse
 import urllib.request

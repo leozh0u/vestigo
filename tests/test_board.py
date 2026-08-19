@@ -14,7 +14,6 @@ import pytest
 from vestigo.board import (
     Board,
     BoundingBox,
-    Claim,
     LatitudeBand,
     Level,
     LongitudeBand,
@@ -206,7 +205,7 @@ def test_a_constraint_that_cannot_be_evaluated_abstains():
     board.add_constraint(RegionSet(id="", description="LHT countries",
                                    codes=frozenset({"GB", "TH", "JP"}),
                                    evidence_ids=(ev.id,)))     # no resolver
-    cand = board.add_candidate(MEXICO, prior=1.0)
+    board.add_candidate(MEXICO, prior=1.0)
     assert board.rank_candidates()[0].admissibility == 1.0
 
 

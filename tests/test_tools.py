@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from vestigo.board import Board, Level, LongitudeBand
+from vestigo.board import Board, LongitudeBand
 from vestigo.geo import LatLon
 from vestigo.tools.base import (
     CandidateProposal,
