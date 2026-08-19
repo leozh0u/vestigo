@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date as _date, datetime, timedelta, timezone
 
 from .board import Constraint, register_constraint, soft_score
 from .geo import LatLon
@@ -166,6 +166,26 @@ def sun_position(point: LatLon, when: datetime) -> SunPosition:
         hour_angle_deg=hour_angle,
         equation_of_time_min=eq_time,
     )
+
+
+def solar_noon_utc(point: LatLon, day: _date) -> datetime:
+    """The UTC instant of local solar noon at `point`, on the given UTC date.
+
+    Solar noon is when the hour angle is zero, which is 12:00 local apparent
+    time less the equation of time and less four minutes per degree of
+    longitude. The equation of time barely moves within a day, so one
+    refinement pass converges to well under a second.
+
+    Useful on its own, and it is what makes the forward model testable across
+    the whole planet and the whole year: at solar noon the sun's elevation and
+    bearing both have closed forms to check against.
+    """
+    midnight = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    guess = midnight + timedelta(hours=12)
+    for _ in range(2):
+        eq_time = sun_position(point, guess).equation_of_time_min
+        guess = midnight + timedelta(minutes=720.0 - eq_time - 4.0 * point.lon)
+    return guess
 
 
 def bearing_difference(a: float, b: float) -> float:

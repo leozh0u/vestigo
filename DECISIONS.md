@@ -449,3 +449,32 @@ there is no bearing to match. It does not, because the elevation constraint has
 already ruled on exactly that. Scoring it twice would count one observation as
 two, which is the same error the independence rule exists to prevent, just
 appearing in the constraints rather than the evidence.
+
+### Duplicate solar tool, and what came out of it
+
+Two sessions built Phase 1 at once. One wrote `vestigo/solar.py`, running the
+geometry forwards over candidates. The other wrote a second implementation in
+`vestigo/tools/solar.py` that inverted the equations to solve for a latitude
+band, then removed it on realising the duplication. The removal took the tool
+wrapper and twenty-eight tests with it, because the inverted version had been
+written over the same paths. Restored from history.
+
+The forward version is the one that survives, for the reasons the removal
+commit gives. Inverting elevation and azimuth to a latitude is the spherical
+side-side-angle case and admits two answers, so an honest inverted tool has to
+return disjoint bands. Reading a hemisphere off the azimuth is only valid
+outside the tropics. Neither problem exists running forwards, because a
+candidate is only ever asked whether it fits.
+
+Two things kept from the duplicate. The argument for why this tool earns its
+place: text extraction needs signage, map queries need mapped features, a
+classifier needs training images, and the polar regions, the Sahara and the
+Amazon interior have none of those, while the sun behaves the same everywhere.
+And the verification method, sweeping the forward model across the planet and
+the year rather than checking it at named instants, which is now six swept
+tests and caught nothing in the geometry but did catch two tests of my own that
+had left refraction out.
+
+The lesson is about sequencing rather than about solar geometry. Two sessions
+on one repo need to agree on who owns a path before either starts, and the
+cheap version of that is reading what is already committed.

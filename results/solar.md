@@ -37,6 +37,32 @@ that are true by definition rather than a table:
 | azimuth at local solar noon, 51.5N | 180 | 180.0 |
 | elevation at local solar noon | 90 - abs(lat - decl) | within 0.1 |
 
+Then swept, rather than only checked at named instants, because a sign error or
+a hemisphere assumption can sit quietly inside a formula that happens to be
+right on the one date anyone tested:
+
+| swept check | result |
+|---|---|
+| noon elevation against its closed form plus refraction, 132 place-dates | within 0.01 |
+| noon bearing due south or due north by the declination, 100+ place-dates | within 0.5 |
+| solar noon lands on a zero hour angle, 7 longitudes | within 0.02 |
+| antipodal elevations cancel once refraction is removed, 61 pairs | within 0.005 |
+| share of the earth lit, 12 dates through the year | 49% to 53% |
+| elevation peaks at solar noon and falls either side | holds |
+
+The bearing sweep is there for a specific trap. "Sun in the south means northern
+hemisphere" holds outside the tropics and fails inside them, because what the
+bearing at noon reports is which side of the subsolar latitude you stand on,
+and that latitude swings 23.4 degrees either way across the year. Running the
+geometry forwards sidesteps the trap rather than solving it, since a candidate
+is only ever asked whether it fits.
+
+Two of these failed first time and neither was a fault in the geometry. Both
+were refraction: the closed forms give the true elevation and `sun_position`
+returns the apparent one, so the residual was exactly the refraction every
+time. The tests now include refraction and are checked ten times tighter than
+they were when they failed.
+
 ## The sun at ground truth
 
 | image | country | capture, UTC | elevation | sun bearing |
@@ -124,6 +150,14 @@ elimination, identical spread. That is not a contradiction, it is the shape of
 the tool. **The sun's bearing separates continents and says nothing within a
 country**, because it barely changes over a few hundred kilometres, and a few
 hundred kilometres is where all but one of the real guesses already were.
+
+## Where it is worth the most
+
+It needs nothing from the scene. Text extraction needs signage, a map query
+needs mapped features, and a classifier needs training images from somewhere
+near the answer. The polar regions, the Sahara and the interior of the Amazon
+have none of those. The sun behaves the same everywhere, so this is the one
+tool whose accuracy does not fall off where every other tool stops working.
 
 ## What this fixes and what it does not
 

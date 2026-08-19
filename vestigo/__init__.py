@@ -28,12 +28,18 @@ from .board import (
     soft_score,
 )
 from .geo import LatLon, haversine
-from .solar import SolarAzimuth, SolarElevation, SunPosition, sun_position
+from .solar import (
+    SolarAzimuth,
+    SolarElevation,
+    SunPosition,
+    solar_noon_utc,
+    sun_position,
+)
 
 __all__ = [
     "Board", "BoundingBox", "Candidate", "Claim", "Constraint", "Evidence",
     "EvidenceKind", "LatLon", "LatitudeBand", "Level", "LongitudeBand",
     "NearPoint", "RegionSet", "Resolution", "ScoredCandidate", "SolarAzimuth",
     "SolarElevation", "SunPosition", "Support", "haversine",
-    "register_constraint", "soft_score", "sun_position",
+    "register_constraint", "soft_score", "solar_noon_utc", "sun_position",
 ]
