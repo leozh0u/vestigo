@@ -1,0 +1,9 @@
+[
+{"file":"rural_2dafd2f200.jpg","country":"Brazil","lat":-20.44,"lon":-54.63,"granularity":"region","confidence":"medium"},
+{"file":"rural_1e85f5921d.jpg","country":"Spain","lat":41.55,"lon":-4.55,"granularity":"region","confidence":"medium"},
+{"file":"rural_58bb638a1b.jpg","country":"Chile","lat":-34.75,"lon":-71.15,"granularity":"region","confidence":"medium"},
+{"file":"rural_42816b32de.jpg","country":"Germany","lat":52.1,"lon":11.2,"granularity":"country","confidence":"medium"},
+{"file":"rural_cb06bab2f5.jpg","country":"Thailand","lat":14.9,"lon":102.1,"granularity":"country","confidence":"low"},
+{"file":"rural_97a65d8135.jpg","country":"United Kingdom","lat":51.9,"lon":-1.0,"granularity":"country","confidence":"medium"},
+{"file":"rural_7ee09e498b.jpg","country":"Kenya","lat":-1.85,"lon":37.10,"granularity":"country","confidence":"low"}
+]
