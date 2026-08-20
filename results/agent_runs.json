@@ -1,0 +1,57 @@
+{
+  "ran_utc": "2026-08-20 06:48:45",
+  "preset": "cheap",
+  "samples": 2,
+  "dry": true,
+  "spent_usd": 0.0138,
+  "runs": [
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "scripted",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 20.0,
+      "lon": -100.0,
+      "error_km": 3379.420067917664,
+      "cost_usd": 0.00345,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "scripted",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 20.0,
+      "lon": -100.0,
+      "error_km": 3379.420067917664,
+      "cost_usd": 0.00345,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "scripted",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 20.0,
+      "lon": -100.0,
+      "error_km": 2413.3082711549237,
+      "cost_usd": 0.00345,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "scripted",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 20.0,
+      "lon": -100.0,
+      "error_km": 2413.3082711549237,
+      "cost_usd": 0.00345,
+      "rejected": []
+    }
+  ]
+}
