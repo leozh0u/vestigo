@@ -577,3 +577,64 @@ country once read.
 Same split as Evidence against Support, one level down, and for the same
 reason: an observation can bear on several claims differently, so the number
 that varies per claim cannot live on the observation.
+
+### One interface over every provider, decided before any code calls a model
+
+Nothing above `llm.py` names a vendor. The agent asks for a job, a router picks
+the model, a provider carries it out. Swapping Sonnet for Kimi or for something
+on the laptop is a config line.
+
+Written before `agent.py` rather than after, because the alternative is finding
+the vendor's name in forty places later. At the point this was written the
+project had made zero API calls, which is the cheapest moment this decision
+will ever be available.
+
+Two reasons beyond tidiness. The eval is the largest expense and it exists to
+run the same images repeatedly, so caching is not an optimisation here, it is
+the difference between a rerun costing forty dollars and costing nothing. And
+the thesis is calibration, which is a property of the model rather than of this
+code, so running the same eval against two vendors turns "which model" from a
+cost decision into a result.
+
+Raw HTTP through the standard library rather than each vendor's SDK. The
+package still has no dependencies, an SDK per vendor is three dependencies to
+reach two APIs, and the wire formats are small enough that the adapter is
+shorter than the integration would be. Two classes cover nearly everything,
+since Kimi, DeepSeek, Together, Groq, vLLM and Ollama all speak the OpenAI chat
+format.
+
+### The cache key carries a sample index
+
+Repeat sampling and caching pull in opposite directions. Every eval has to
+sample each image more than once, because a single sample reports a median that
+moves 40 km on rerun. Caching wants the same request to give the same answer.
+
+Putting the sample index in the key gets both. Samples 0, 1 and 2 are three
+separate entries, so the first run makes three calls and every rerun makes none
+while still carrying three distinct answers. Without it one of those two
+properties has to be given up, and neither is optional.
+
+### An unpriced model costs unknown, never zero
+
+A model absent from the price table reports its cost as `None`, and a budget
+refuses it unless told explicitly to allow it.
+
+This is the one failure a budget must not have. Reporting zero for a model
+whose rate nobody recorded looks like everything is fine right up until the
+invoice, and it fails in exactly the direction that hurts. Kimi is deliberately
+left out of the table for this reason: its rates move and depend on the host,
+so a stale number would make the budget confident and wrong.
+
+The pre-flight check also bills `max_tokens` as though it were all used, so it
+refuses before the call rather than after. A budget that only notices afterwards
+has already let the spend happen.
+
+### Route by job, not by preference
+
+Reading a photograph and listing what is in it is high volume, image heavy, and
+barely reasons. Deciding which of five clues to chase next is where a better
+model shows, and it runs a handful of times per image rather than constantly.
+
+Sending both to the same model is the most expensive mistake available here,
+and it is the default everywhere unless a router exists. The extractor belongs
+on a local model, where the marginal cost is zero rather than merely low.

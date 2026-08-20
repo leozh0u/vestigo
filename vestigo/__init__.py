@@ -28,6 +28,16 @@ from .board import (
     soft_score,
 )
 from .geo import LatLon, haversine
+from .llm import (
+    Budget,
+    Completion,
+    CompletionCache,
+    Image,
+    Message,
+    Request,
+    Router,
+    Usage,
+)
 from .observe import (
     Modality,
     Observation,
@@ -45,11 +55,12 @@ from .solar import (
 )
 
 __all__ = [
-    "Board", "BoundingBox", "Candidate", "Claim", "Constraint", "Evidence",
-    "EvidenceKind", "LatLon", "LatitudeBand", "Level", "LongitudeBand",
+    "Board", "BoundingBox", "Budget", "Candidate", "Claim", "Completion",
+    "CompletionCache", "Constraint", "Evidence", "EvidenceKind", "Image",
+    "LatLon", "LatitudeBand", "Level", "LongitudeBand", "Message",
     "Modality", "NearPoint", "Observation", "ObservationSet", "Region",
-    "RegionSet", "Resolution", "ScoredCandidate", "SolarAzimuth",
-    "SolarElevation", "SunPosition", "Support", "attach_observations",
-    "haversine", "parse_observations", "register_constraint", "soft_score",
-    "solar_noon_utc", "sun_position",
+    "RegionSet", "Request", "Resolution", "Router", "ScoredCandidate",
+    "SolarAzimuth", "SolarElevation", "SunPosition", "Support", "Usage",
+    "attach_observations", "haversine", "parse_observations",
+    "register_constraint", "soft_score", "solar_noon_utc", "sun_position",
 ]
