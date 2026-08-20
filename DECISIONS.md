@@ -534,3 +534,46 @@ error is not overconfidence anywhere in the range, which inverts what the
 distance-scored version of this table appeared to show, and it means the
 calibration work ahead is about getting the system to commit rather than about
 holding it back.
+
+### Observations are the roots, and region overlap is what merges them
+
+The board's independence rule counts correlated evidence once by walking
+`derived_from` back to root observations. Until now those roots were bare
+strings, so the rule had nothing underneath it: nothing knew that two readings
+of one signboard were two readings of one signboard.
+
+`observe.py` is that layer, and its real job is deciding which readings are the
+same reading. The test is that two observations share a modality and their
+image regions overlap by at least 0.4 IoU. Both halves are needed. Modality
+alone merges every tree in a forest. Region alone merges a shop sign with the
+building behind it, which are two separate pieces of evidence that happen to
+sit in the same place.
+
+The threshold is deliberately loose. Merging two genuinely separate objects
+costs a little confidence. Missing a merge produces a claim that looks
+corroborated when one observation is doing all the work, which is the
+confabulation failure the rule exists to catch.
+
+Merging is done by having the later observation declare the earlier one as its
+parent, rather than by inventing a synthetic node for the object. That means
+the board needs no change at all, and the record reads correctly: these are
+readings of that thing.
+
+### Regions are required in the extractor schema, not optional
+
+An extractor that omits them is not degraded, it is silently wrong, because
+every duplicate reading then arrives as fresh corroboration and confidence
+inflates with nothing in the output to show it. Required in the schema, and a
+malformed reply raises rather than dropping the observation, for the same
+reason: a quietly discarded observation is a claim losing its support and a
+number nobody can account for.
+
+### Certainty on an observation is not strength on a support
+
+Certainty is whether the thing is there. Strength is what it implies about a
+location. A blurred sign can be read with low certainty and still settle a
+country once read.
+
+Same split as Evidence against Support, one level down, and for the same
+reason: an observation can bear on several claims differently, so the number
+that varies per claim cannot live on the observation.
