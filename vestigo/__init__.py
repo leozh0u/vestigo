@@ -8,6 +8,7 @@ Importing the package registers every constraint type, which is what lets a
 saved board be read back. A constraint type defined in a module nobody imports
 cannot be deserialized, so new ones belong in the import list below.
 """
+from .agent import Agent, Run
 from .board import (
     Board,
     BoundingBox,
@@ -55,11 +56,11 @@ from .solar import (
 )
 
 __all__ = [
-    "Board", "BoundingBox", "Budget", "Candidate", "Claim", "Completion",
+    "Agent", "Board", "BoundingBox", "Budget", "Candidate", "Claim", "Completion",
     "CompletionCache", "Constraint", "Evidence", "EvidenceKind", "Image",
     "LatLon", "LatitudeBand", "Level", "LongitudeBand", "Message",
     "Modality", "NearPoint", "Observation", "ObservationSet", "Region",
-    "RegionSet", "Request", "Resolution", "Router", "ScoredCandidate",
+    "RegionSet", "Request", "Resolution", "Router", "Run", "ScoredCandidate",
     "SolarAzimuth", "SolarElevation", "SunPosition", "Support", "Usage",
     "attach_observations", "haversine", "parse_observations",
     "register_constraint", "soft_score", "solar_noon_utc", "sun_position",
