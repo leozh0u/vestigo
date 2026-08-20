@@ -27,11 +27,20 @@ the argument.
 
 ```
 vestigo/board.py         claims, evidence, and constraints that filter candidates
+vestigo/observe.py       structured readings, and which of them are the same reading
 vestigo/solar.py         solar position, and the constraints built on it
 vestigo/scoring.py       granularity-aware correctness and calibration
+vestigo/agent.py         the loop
+vestigo/llm.py           one interface over every provider, with a budget
 vestigo/tools/base.py    one contract for every tool
-eval/                    the three experiments, none of which need network access
+eval/                    the experiments, none of which need network access
 ```
+
+The loop is observe, guess, use tools, claim, resolve. The second step is the
+one that looks wrong and is not: a bare model call is already good, so the
+unaided guess is kept as a candidate and the tools filter it rather than
+replace it. Nothing can reach the answer except through the board, and a claim
+citing evidence that does not exist is rejected and the rejection is reported.
 
 ## The baseline
 
@@ -203,6 +212,32 @@ archive material, your own travel photos.
 
 There is no face recognition anywhere in the pipeline and there will not be. The
 hosted version is rate limited. Please do not use this to locate people.
+
+## Cost
+
+The eval is the expensive part, because its whole point is running the same
+images repeatedly. Three things keep that affordable, and all three are in the
+code rather than in a plan.
+
+Responses cache on disk keyed partly on a sample index, so three samples of an
+image cost three calls the first time and nothing on any rerun while still
+carrying three distinct answers. Repeat sampling is not optional here: run-to-run
+noise on this data is a 40 km median with a 14,951 km tail, so one sample cannot
+tell an improvement from a reroll.
+
+Each job goes to its own model. Reading a photograph is high volume and barely
+reasons; deciding which clue to chase next runs a handful of times per image.
+Sending both to the same model is the most expensive mistake available.
+
+The budget refuses rather than warns, checking before the call and recording the
+real figure after. A model with no price on file reports its cost as unknown and
+is refused unless explicitly allowed, because a budget that reads unpriced as
+free looks fine until the invoice arrives.
+
+No part of the codebase names a vendor above `llm.py`, so running the same eval
+against a second provider is a config line. That matters beyond cost: calibration
+is a property of the model rather than of this code, so comparing two of them is
+a result rather than an expense.
 
 ## Decisions
 

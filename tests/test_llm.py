@@ -429,3 +429,40 @@ def test_a_custom_price_can_be_registered():
         Budget(1.0).check("test-model")
     finally:
         del PRICING["test-model"]
+
+
+# -- the presets -----------------------------------------------------------
+
+def test_the_presets_route_as_advertised():
+    from vestigo.config import build
+    router, budget = build("cheap", limit_usd=5.0)
+    assert router.for_job("extract").model == HAIKU
+    assert router.for_job("reason").model == SONNET
+    assert budget.limit_usd == 5.0
+
+
+def test_the_quality_preset_puts_everything_on_one_model():
+    from vestigo.config import build
+    router, _ = build("quality")
+    assert router.for_job("extract").model == router.for_job("reason").model
+
+
+def test_the_local_preset_keeps_extraction_off_the_wire():
+    """The highest-volume call is the one where marginal cost should be zero
+    rather than merely low."""
+    from vestigo.config import build
+    router, _ = build("local")
+    assert router.for_job("extract").name == "local"
+    assert router.for_job("reason").name == "anthropic"
+
+
+def test_every_provider_in_a_preset_shares_one_budget():
+    from vestigo.config import build
+    router, budget = build("cheap")
+    assert all(p.budget is budget for p in router.providers())
+
+
+def test_an_unknown_preset_says_what_the_options_are():
+    from vestigo.config import build
+    with pytest.raises(ValueError, match="cheap, quality, local or kimi"):
+        build("whatever-is-cheapest")
