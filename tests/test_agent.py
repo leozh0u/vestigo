@@ -310,3 +310,124 @@ def test_describe_says_what_happened(photo):
     agent, _, _ = build([OBSERVATIONS, GUESS, CLAIMS])
     text = agent.run(photo).describe()
     assert "Mexico" in text and "evidence" in text and "$" in text
+
+
+# -- context -----------------------------------------------------------------
+#
+# The tool loop used to rebuild one giant message every turn, which meant the
+# prompt changed from byte zero each time and no prompt cache could ever hold
+# any of it. These pin the shape that fixes that.
+
+from vestigo.llm import Text                                       # noqa: E402
+
+
+def prompt_chars(request):
+    return sum(len(p.text) for m in request.messages
+               for p in m.content if isinstance(p, Text))
+
+
+def tool_loop_calls(provider):
+    return [c for c in provider.calls if c.tools]
+
+
+def many_observations(n=20):
+    return {"observations": [
+        {"modality": "road", "what": f"road furniture number {i}", "certainty": 0.8,
+         "region": {"x0": i / 40, "y0": 0.5, "x1": i / 40 + 0.02, "y1": 0.9}}
+        for i in range(n)]}
+
+
+def solar_loop(turns):
+    return [tool_reply(captured_utc=CAPTURE, lighting="daylight")] * turns
+
+
+def test_the_opening_message_is_identical_every_turn(photo):
+    """So a provider's prompt cache can hold it and bill it at about a tenth."""
+    agent, provider, _ = build(
+        [many_observations(), GUESS] + solar_loop(4) + [CLAIMS],
+        tools=Registry([SolarTool()]), max_turns=4)
+    agent.run(photo)
+    openings = {c.messages[0].content[0].text for c in tool_loop_calls(provider)}
+    assert len(openings) == 1
+    assert len(openings.pop()) > 200        # and it is the substantial part
+
+
+def test_the_prompt_grows_linearly_rather_than_by_the_square(photo):
+    agent, provider, _ = build(
+        [many_observations(), GUESS] + solar_loop(6) + [CLAIMS],
+        tools=Registry([SolarTool()]), max_turns=6)
+    agent.run(photo)
+    sizes = [prompt_chars(c) for c in tool_loop_calls(provider)]
+    assert len(sizes) == 6
+    steps = [b - a for a, b in zip(sizes, sizes[1:])]
+    # Each turn adds about the same amount, rather than more each time.
+    assert max(steps) - min(steps) < max(steps) * 0.5
+
+
+def test_most_of_every_prompt_is_the_cacheable_prefix(photo):
+    """The honest statement of the win.
+
+    Raw characters sent are much the same either way, since the whole
+    conversation goes over the wire each turn regardless. What changed is that
+    the opening is now byte-identical, so a provider's prompt cache can hold it
+    and bill it at about a tenth. Rebuilt into one message it differed from
+    byte zero every turn and none of it could ever be cached.
+    """
+    agent, provider, _ = build(
+        [many_observations(), GUESS] + solar_loop(6) + [CLAIMS],
+        tools=Registry([SolarTool()]), max_turns=6)
+    agent.run(photo)
+    calls = tool_loop_calls(provider)
+    prefix = len(calls[0].messages[0].content[0].text)
+    assert prefix / prompt_chars(calls[-1]) > 0.4         # by the last turn
+    assert prefix / prompt_chars(calls[0]) > 0.9          # and nearly all of the first
+
+
+def test_evidence_is_sent_once_rather_than_relisted_every_turn(photo):
+    agent, provider, _ = build(
+        [many_observations(4), GUESS] + solar_loop(3) + [CLAIMS],
+        tools=Registry([SolarTool()]), max_turns=3)
+    agent.run(photo)
+    last = tool_loop_calls(provider)[-1]
+    whole = "\n".join(p.text for m in last.messages
+                      for p in m.content if isinstance(p, Text))
+    assert whole.count("road furniture number 0") == 1
+
+
+def test_new_evidence_from_a_tool_reaches_the_next_turn(photo):
+    """Dropping the middle of a conversation must not drop what a tool found."""
+    agent, provider, _ = build(
+        [many_observations(2), GUESS] + solar_loop(2) + [CLAIMS],
+        tools=Registry([SolarTool()]), max_turns=2)
+    agent.run(photo)
+    second = tool_loop_calls(provider)[1]
+    whole = "\n".join(p.text for m in second.messages
+                      for p in m.content if isinstance(p, Text))
+    assert "solar_position" in whole
+    assert "New evidence" in whole
+
+
+def test_a_long_conversation_is_trimmed_from_the_middle():
+    """The opening carries the observations, so it is the one message that has
+    to survive. The oldest tool results are the most expendable, because what
+    they found is already on the board."""
+    from vestigo.agent import MAX_CONTEXT_CHARS, Agent
+    from vestigo.llm import Message
+
+    opening = Message.user("OPENING " + "o" * 500)
+    filler = [Message.user("x" * (MAX_CONTEXT_CHARS // 4)) for _ in range(8)]
+    recent = Message.user("MOST RECENT")
+    trimmed = Agent._trimmed([opening, *filler, recent])
+
+    text = "\n".join(p.text for m in trimmed for p in m.content)
+    assert text.startswith("OPENING")
+    assert "MOST RECENT" in text
+    assert "dropped to stay inside the context window" in text
+    assert sum(len(p.text) for m in trimmed for p in m.content) <= MAX_CONTEXT_CHARS * 1.1
+
+
+def test_a_short_conversation_is_left_alone():
+    from vestigo.agent import Agent
+    from vestigo.llm import Message
+    messages = [Message.user("a"), Message.assistant("b"), Message.user("c")]
+    assert Agent._trimmed(messages) == messages

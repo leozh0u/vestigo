@@ -638,3 +638,40 @@ model shows, and it runs a handful of times per image rather than constantly.
 Sending both to the same model is the most expensive mistake available here,
 and it is the default everywhere unless a router exists. The extractor belongs
 on a local model, where the marginal cost is zero rather than merely low.
+
+### The tool loop is a conversation, not a message rebuilt each turn
+
+First version built one large user message every turn, holding the whole
+evidence list and the whole tool history so far. It worked, and it had two
+faults.
+
+The prompt differed from byte zero on every turn, so no prompt cache could ever
+hold any of it. Caching bills a repeated prefix at about a tenth, and this shape
+made that impossible to collect.
+
+And every evidence record was relisted in full on every turn, so twenty
+observations over six turns were paid for six times.
+
+Now the opening message is byte-identical across turns and each turn appends
+only what is new. Measured over six turns with twenty observations, the opening
+is over 40% of even the last prompt and nearly all of the first, and that
+portion is now cacheable.
+
+Worth being accurate about the size of this: raw characters sent are much the
+same either way, because the whole conversation goes over the wire each turn
+regardless. The saving is the cache, plus not relisting evidence. It is not a
+reduction in tokens sent, it is a reduction in tokens billed at full rate.
+
+### The transcript is forgetful and the board is not
+
+Past a context ceiling the conversation is trimmed from the middle, keeping the
+opening and the most recent exchanges and leaving a note saying how many were
+dropped.
+
+Safe because the board holds the real state. Whatever an early tool found is an
+evidence record, and the claims are built from the board rather than from the
+transcript. The conversation exists to tell the model what has already been
+tried, so the oldest tool results are the most expendable thing in it.
+
+The opening is the one message that cannot be dropped, since it carries the
+observations and whatever context shipped with the photograph.

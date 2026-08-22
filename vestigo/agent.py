@@ -25,15 +25,21 @@ recorded as rejected, not quietly dropped and not quietly accepted.
 from __future__ import annotations
 
 import pathlib
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from .board import Board, Level, Resolution, Support
 from .geo import LatLon
-from .llm import Budget, Image, Message, Request, Router, Usage
+from .llm import Budget, Image, Message, Request, Router, Text, Usage
 from .observe import OBSERVATION_SCHEMA, attach_observations, parse_observations
 from .tools.base import Registry
 
 MAX_TOOL_TURNS = 6
+
+# Roughly 25k tokens of conversation. The board holds the real state, so the
+# transcript is allowed to be forgetful; it exists to tell the model what has
+# already been tried.
+MAX_CONTEXT_CHARS = 100_000
 
 SYSTEM = """You work out where a photograph was taken.
 
@@ -118,6 +124,10 @@ CLAIM_SCHEMA = {
     },
     "required": ["claims"],
 }
+
+
+def _size(message: Message) -> int:
+    return sum(len(p.text) for p in message.content if isinstance(p, Text))
 
 
 @dataclass(slots=True)
@@ -243,26 +253,41 @@ class Agent:
                            f"{guess['lat']:.3f},{guess['lon']:.3f} "
                            f"({guess.get('granularity')}, {guess.get('confidence')})")
 
+    def _brief(self, board: Board, ids: Iterable[str]) -> str:
+        return "\n".join(f"{board.evidence[e].id}: {board.evidence[e].summary}"
+                         for e in ids)
+
     def _use_tools(self, board: Board, context: str, trace: Trace, sample: int) -> int:
         """Let the model call tools until it stops asking.
 
-        Tools add evidence, constraints and candidates. None of them can write a
-        claim, so nothing here can reach the answer without going through the
-        board.
+        Written as a conversation that grows rather than as one message rebuilt
+        each turn. The first version rebuilt the whole evidence list and the
+        whole tool history every turn, which sends the same text once per turn
+        and grows with the square of the turn count. Six turns over twenty
+        observations paid for those observations six times.
+
+        Here the opening message is byte-identical on every turn, so a
+        provider's prompt cache can hold it and bill it at about a tenth. Each
+        turn appends only what is new. Growth is linear, and most of it is
+        cached.
+
+        Tools add evidence, constraints and candidates. None can write a claim,
+        so nothing here reaches the answer except through the board.
         """
         if not len(self.tools):
             return 0
+
+        opening = ("Evidence so far:\n" + self._brief(board, board.evidence)
+                   + (f"\n\nContext supplied with the photograph:\n{context}" if context else "")
+                   + "\n\nCall a tool if one would narrow this down. If none would, "
+                     "say so and stop.")
+        messages: list[Message] = [Message.user(opening)]
+        seen = set(board.evidence)
         turns = 0
-        history: list[str] = []
+
         while turns < self.max_turns:
-            summary = "\n".join(f"{e.id}: {e.summary}" for e in board.evidence.values())
             reply = self.router.complete("reason", Request(
-                messages=(Message.user(
-                    f"Evidence so far:\n{summary}\n"
-                    + (f"\nContext:\n{context}\n" if context else "")
-                    + ("\nTool results this run:\n" + "\n".join(history) if history else "")
-                    + "\n\nCall a tool if one would narrow this down. If none "
-                      "would, say so and stop."),),
+                messages=tuple(self._trimmed(messages)),
                 system=SYSTEM,
                 tools=tuple(self.tools.specs()),
                 sample=sample,
@@ -270,17 +295,55 @@ class Agent:
             if not reply.tool_calls:
                 trace.add("tools", f"stopped after {turns} turns")
                 break
+
+            called, results = [], []
             for call in reply.tool_calls:
                 name = call.get("name", "")
+                called.append(name)
                 if name not in self.tools:
                     trace.add("tools", f"asked for unknown tool {name!r}")
-                    history.append(f"{name}: no such tool")
+                    results.append(f"{name}: no such tool")
                     continue
                 result = self.tools.call(board, name, **call.get("input", {}))
-                history.append(f"{name}: {result.summary}")
+                results.append(f"{name}: {result.summary}")
                 trace.add("tools", f"{name} -> {result.summary}")
+
+            fresh = [eid for eid in board.evidence if eid not in seen]
+            seen.update(board.evidence)
+            messages.append(Message.assistant("Called: " + ", ".join(called)))
+            messages.append(Message.user(
+                "\n".join(results)
+                + (f"\n\nNew evidence:\n{self._brief(board, fresh)}" if fresh else "")
+                + "\n\nCall another tool, or stop."))
             turns += 1
         return turns
+
+    @staticmethod
+    def _trimmed(messages: list[Message]) -> list[Message]:
+        """Keep the opening and the most recent exchanges, drop the middle.
+
+        The opening carries the observations and the context, so it is the one
+        message that must survive. The oldest tool results are the most
+        expendable, because whatever they found is already on the board and the
+        board is what the answer is built from. The conversation is a working
+        note, not the record.
+        """
+        budget = MAX_CONTEXT_CHARS
+        if sum(_size(m) for m in messages) <= budget:
+            return messages
+        head, tail = messages[:1], []
+        budget -= _size(head[0])
+        for message in reversed(messages[1:]):
+            if budget - _size(message) < 0:
+                break
+            tail.insert(0, message)
+            budget -= _size(message)
+        dropped = len(messages) - len(head) - len(tail)
+        if dropped:
+            head = head + [Message.user(
+                f"({dropped} earlier exchanges dropped to stay inside the context "
+                "window. Everything they found is on the board.)")]
+        return head + tail
 
     def _make_claims(self, board: Board, trace: Trace,
                      sample: int) -> list[str]:
