@@ -484,3 +484,26 @@ def test_an_unknown_preset_says_what_the_options_are():
     from vestigo.config import build
     with pytest.raises(ValueError, match="cheap, quality, local, kimi or openrouter"):
         build("whatever-is-cheapest")
+
+
+def test_a_key_appended_below_an_earlier_line_wins(tmp_path, monkeypatch):
+    """Appending a real key under a placeholder is the ordinary mistake, and
+    taking the first match left the placeholder in charge and produced a 401
+    that pointed nowhere near the cause."""
+    from vestigo.providers import _from_dotenv
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text(
+        "# a comment\n"
+        "ANTHROPIC_API_KEY=sk-ant-paste-here\n"
+        "OTHER=ignored\n"
+        "ANTHROPIC_API_KEY='sk-ant-the-real-one'\n"
+    )
+    assert _from_dotenv("ANTHROPIC_API_KEY") == "sk-ant-the-real-one"
+    assert _from_dotenv("MISSING") is None
+
+
+def test_a_commented_out_key_is_not_read(tmp_path, monkeypatch):
+    from vestigo.providers import _from_dotenv
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text("#ANTHROPIC_API_KEY=sk-ant-old\n")
+    assert _from_dotenv("ANTHROPIC_API_KEY") is None

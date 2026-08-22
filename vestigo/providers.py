@@ -60,16 +60,27 @@ def _require_key(env_var: str, given: str | None) -> str:
 
 
 def _from_dotenv(name: str) -> str | None:
-    """Read one key out of .env without pulling in a dotenv library."""
+    """Read one key out of .env without pulling in a dotenv library.
+
+    Last occurrence wins, which is what a shell does with a repeated export and
+    what someone expects after appending a second line. The first version took
+    the first match, so appending a real key below a placeholder left the
+    placeholder in charge and produced a 401 that pointed nowhere near the
+    cause. Quotes are stripped, since a pasted key often arrives wearing them.
+    """
     import pathlib
     path = pathlib.Path(".env")
     if not path.exists():
         return None
+    found = None
     for line in path.read_text().splitlines():
         line = line.strip()
-        if line.startswith(f"{name}=") and not line.startswith("#"):
-            return line.split("=", 1)[1].strip().strip("'\"")
-    return None
+        if line.startswith("#") or not line.startswith(f"{name}="):
+            continue
+        value = line.split("=", 1)[1].strip().strip("'\"")
+        if value:
+            found = value
+    return found
 
 
 # --------------------------------------------------------------------------
