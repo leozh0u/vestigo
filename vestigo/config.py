@@ -12,7 +12,12 @@ the right home for the extractor.
 from __future__ import annotations
 
 from .llm import Budget, CompletionCache, Provider, Router
-from .providers import AnthropicProvider, LocalProvider, MoonshotProvider
+from .providers import (
+    AnthropicProvider,
+    LocalProvider,
+    MoonshotProvider,
+    OpenRouterProvider,
+)
 
 # The largest single lever, and it is a one-line decision. Reading a photograph
 # and listing what is in it is the highest-volume, most image-heavy and least
@@ -63,5 +68,11 @@ def build(preset: str = "cheap", *, limit_usd: float | None = 5.0,
         return Router(MoonshotProvider(**common),
                       {"extract": LocalProvider(cache=cache, budget=budget)}), budget
 
+    if preset == "openrouter":
+        # One key, two vendors, so the cross-model comparison the calibration
+        # thesis wants is a string change rather than a second integration.
+        return Router(OpenRouterProvider("anthropic/claude-sonnet-5", **common),
+                      {"extract": OpenRouterProvider("moonshotai/kimi-k2", **common)}), budget
+
     raise ValueError(f"unknown preset {preset!r}. "
-                     "Try cheap, quality, local or kimi.")
+                     "Try cheap, quality, local, kimi or openrouter.")

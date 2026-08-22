@@ -382,6 +382,24 @@ def test_the_vendor_subclasses_only_change_the_endpoint():
     assert MoonshotProvider("m", api_key="x").key_env == "MOONSHOT_API_KEY"
 
 
+def test_openrouter_carries_the_vendor_in_the_model_name():
+    from vestigo.providers import OpenRouterProvider
+    p = OpenRouterProvider("moonshotai/kimi-k2", api_key="x")
+    assert p.base_url.startswith("https://openrouter.ai")
+    assert p.key_env == "OPENROUTER_API_KEY"
+    assert "/" in p.model
+
+
+def test_the_openrouter_preset_runs_two_vendors_off_one_key():
+    """What makes the cross-model calibration comparison cheap: one
+    integration, one key, one bill."""
+    from vestigo.config import build
+    router, _ = build("openrouter")
+    assert router.for_job("reason").model.startswith("anthropic/")
+    assert router.for_job("extract").model.startswith("moonshotai/")
+    assert len({p.key_env for p in router.providers()}) == 1
+
+
 def test_kimi_is_deliberately_unpriced():
     """Their rates move and depend on the host, so a stale number here would
     make the budget confident and wrong."""
@@ -464,5 +482,5 @@ def test_every_provider_in_a_preset_shares_one_budget():
 
 def test_an_unknown_preset_says_what_the_options_are():
     from vestigo.config import build
-    with pytest.raises(ValueError, match="cheap, quality, local or kimi"):
+    with pytest.raises(ValueError, match="cheap, quality, local, kimi or openrouter"):
         build("whatever-is-cheapest")

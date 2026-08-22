@@ -275,6 +275,26 @@ class MoonshotProvider(OpenAICompatProvider):
     key_env = "MOONSHOT_API_KEY"
 
 
+class OpenRouterProvider(OpenAICompatProvider):
+    """One key, most models.
+
+    Worth more here than the price difference. The calibration thesis wants the
+    same eval run against two vendors, and doing that through one endpoint makes
+    the comparison a string change rather than a second integration. Model names
+    carry the vendor, as in "anthropic/claude-sonnet-5" or
+    "moonshotai/kimi-k2".
+
+    Nothing is in PRICING for it, on purpose. Rates vary per underlying model
+    and change, so the budget will refuse until a real figure is added, which is
+    the intended behaviour.
+    """
+
+    name = "openrouter"
+    default_model = "anthropic/claude-sonnet-5"
+    base_url = "https://openrouter.ai/api/v1/chat/completions"
+    key_env = "OPENROUTER_API_KEY"
+
+
 class LocalProvider(OpenAICompatProvider):
     """A model on this machine, through Ollama or vLLM.
 
