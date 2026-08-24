@@ -675,3 +675,20 @@ tried, so the oldest tool results are the most expendable thing in it.
 
 The opening is the one message that cannot be dropped, since it carries the
 observations and whatever context shipped with the photograph.
+
+### A per-run budget is the wrong unit for a monthly cap
+
+`Budget` guards one run and nothing stopped a two dollar eval being run ten
+times in a week. `Ledger` persists in `.cache/`, groups spend by calendar
+month, and refuses once the month is used up. The harness checks it before
+starting and folds the run in afterwards.
+
+Two ceilings, and they are not redundant. This one is enforced by code that
+could have a bug in it. The one in the provider's console is enforced by the
+provider and is the ceiling that actually holds. Set both, and treat the
+console one as the real limit.
+
+A corrupt ledger refuses rather than reading as zero spent, for the same reason
+an unpriced model reports unknown rather than free. A damaged file resetting to
+a clean slate would let the month start over every time something went wrong
+with it, which is the failure direction that costs money.

@@ -33,6 +33,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from vestigo.agent import Agent
 from vestigo.geo import LatLon
+from vestigo.ledger import Ledger
 from vestigo.llm import Budget, BudgetExceeded, Router
 from vestigo.scoring import (
     Scored,
@@ -116,12 +117,25 @@ def main() -> int:
                     help="half price, and nothing is waiting on an eval")
     ap.add_argument("--dry", action="store_true",
                     help="scripted replies, no key and no spend")
+    ap.add_argument("--monthly", type=float, default=20.0,
+                    help="ceiling for the calendar month, across every run. Set "
+                         "your provider's own cap as well; that one is the only "
+                         "ceiling a bug here cannot get past")
     ap.add_argument("--out", default="results/agent_runs.json")
     args = ap.parse_args()
 
     if args.samples < 2:
         print("warning: below 2 samples the spread column is meaningless, and a "
               "median that moves 40 km on rerun will look like a result.\n")
+
+    ledger = Ledger(monthly_limit_usd=None if args.dry else args.monthly)
+    if not args.dry:
+        try:
+            ledger.check(args.limit)
+        except BudgetExceeded as exc:
+            print(f"refused before starting: {exc}")
+            return 1
+        print(f"  {ledger.summary()}\n")
 
     if args.dry:
         budget = Budget(None, allow_unpriced=True)
@@ -246,6 +260,9 @@ def main() -> int:
     print("COST")
     print("=" * 78)
     print(f"  {budget.summary()}")
+    if not args.dry:
+        ledger.absorb(budget)
+        print(f"  {ledger.summary()}")
     for label, spend in budget.by_label().items():
         print(f"    {label:<12}${spend:>9.4f}")
     if scored:
