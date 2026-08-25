@@ -29,6 +29,7 @@ import base64
 import hashlib
 import json
 import pathlib
+import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
@@ -232,6 +233,11 @@ class Budget:
         self.limit_usd = limit_usd
         self.allow_unpriced = allow_unpriced
         self.entries: list[tuple[str, Usage]] = []
+        # Images run in parallel, so check-then-record is a read-modify-write
+        # across threads. Without the lock several calls can each see room that
+        # only one of them has, and the ceiling leaks by roughly the number of
+        # workers times the cost of one call.
+        self._lock = threading.Lock()
 
     @property
     def spent_usd(self) -> float:
@@ -246,6 +252,10 @@ class Budget:
         return sum(1 for _, u in self.entries if u.cost_usd is None)
 
     def check(self, model: str, estimated_usd: float = 0.0) -> None:
+        with self._lock:
+            self._check(model, estimated_usd)
+
+    def _check(self, model: str, estimated_usd: float) -> None:
         if model not in PRICING and not self.allow_unpriced:
             raise BudgetExceeded(
                 f"no price on file for {model!r}. Add it to PRICING, or build the "
@@ -258,7 +268,8 @@ class Budget:
             )
 
     def record(self, label: str, usage: Usage) -> None:
-        self.entries.append((label, usage))
+        with self._lock:
+            self.entries.append((label, usage))
 
     def by_label(self) -> dict[str, float]:
         """Where the money went, which is the number worth looking at."""

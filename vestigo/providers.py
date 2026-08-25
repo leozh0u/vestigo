@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import json
 import os
+import random
+import time
 import urllib.error
 import urllib.request
 from dataclasses import replace
@@ -33,20 +35,43 @@ from .llm import (
 )
 
 TIMEOUT_S = 120.0
+MAX_ATTEMPTS = 5
+
+# Worth retrying: rate limited, overloaded, and the usual transient server
+# errors. Everything else is a bad request and will be just as bad next time.
+RETRY_CODES = {408, 409, 429, 500, 502, 503, 504, 529}
 
 
 def _post(url: str, headers: dict, payload: dict) -> dict:
+    """POST with backoff on the codes that mean "later", not "no".
+
+    Running images in parallel makes rate limiting a normal event rather than
+    an exceptional one, and an hour of eval should not be lost to one 429.
+    Backoff is exponential with jitter, so a fleet of workers that all get
+    limited at once does not all come back at once.
+    """
     body = json.dumps(payload).encode()
-    req = urllib.request.Request(url, data=body, method="POST",
-                                 headers={"content-type": "application/json", **headers})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_S) as resp:
-            return json.loads(resp.read())
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode(errors="replace")[:400]
-        raise LLMError(f"{exc.code} from {url}: {detail}") from None
-    except urllib.error.URLError as exc:
-        raise LLMError(f"could not reach {url}: {exc.reason}") from None
+    last = ""
+    for attempt in range(MAX_ATTEMPTS):
+        req = urllib.request.Request(
+            url, data=body, method="POST",
+            headers={"content-type": "application/json", **headers})
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT_S) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode(errors="replace")[:400]
+            last = f"{exc.code} from {url}: {detail}"
+            if exc.code not in RETRY_CODES or attempt == MAX_ATTEMPTS - 1:
+                raise LLMError(last) from None
+            delay = float(exc.headers.get("retry-after") or 0) or 2.0 ** attempt
+        except urllib.error.URLError as exc:
+            last = f"could not reach {url}: {exc.reason}"
+            if attempt == MAX_ATTEMPTS - 1:
+                raise LLMError(last) from None
+            delay = 2.0 ** attempt
+        time.sleep(min(delay, 30.0) + random.uniform(0, 0.5))
+    raise LLMError(last)
 
 
 def _require_key(env_var: str, given: str | None) -> str:

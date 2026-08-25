@@ -23,6 +23,7 @@ here rather than on a statement.
     ./.venv/bin/python eval/harness.py --source mapillary_rural --samples 5
 """
 import argparse
+import concurrent.futures
 import json
 import pathlib
 import statistics
@@ -74,32 +75,48 @@ def context_for(entry: dict) -> str:
 
 
 def dry_router(budget: Budget) -> Router:
-    """A scripted provider, so the whole pipeline can be exercised with no key.
+    """A scripted provider, so the whole pipeline runs with no key and no spend.
 
-    Worth having beyond convenience: it means a change to the harness can be
-    checked before spending anything on finding out it was wrong.
+    Dispatches on the shape of the request rather than on call order. A
+    positional script cannot survive images being handled in parallel, because
+    two threads popping from one list get each other's replies. Answering by
+    what was asked for is both thread safe and closer to how a real model
+    behaves.
+
+    Worth having beyond convenience: a change to the harness can be checked
+    before spending anything on finding out it was wrong.
     """
-    from vestigo.providers import FakeProvider
-    from vestigo.llm import Completion, Usage
+    from vestigo.agent import CLAIM_SCHEMA, GUESS_SCHEMA
+    from vestigo.llm import Completion, Provider, Usage
+    from vestigo.observe import OBSERVATION_SCHEMA
 
-    def script():
-        return [
-            {"observations": [
-                {"modality": "road", "what": "unmarked asphalt", "certainty": 0.9,
-                 "region": {"x0": 0.0, "y0": 0.6, "x1": 1.0, "y1": 1.0}},
-                {"modality": "vegetation", "what": "dry scrub", "certainty": 0.7,
-                 "region": {"x0": 0.1, "y0": 0.4, "x1": 0.4, "y1": 0.8}},
-            ]},
-            {"lat": 20.0, "lon": -100.0, "place": "somewhere dry",
-             "granularity": "country", "confidence": "medium",
-             "reasoning": "scripted, not a real reading"},
-            Completion("no tool would narrow this", "fake-1",
-                       Usage(50, 10, model="claude-sonnet-5")),
-            {"claims": [{"level": "country", "value": "scripted", "confidence": "medium",
-                         "supports": [{"evidence_id": "e1", "strength": 0.7}]}]},
-        ]
+    class Scripted(Provider):
+        name = "scripted"
+        default_model = "scripted-1"
 
-    return Router(FakeProvider(script() * 200, model="claude-sonnet-5", budget=budget))
+        def _send(self, request, model):
+            usage = Usage(200, 60, model="claude-sonnet-5")
+            if request.schema is OBSERVATION_SCHEMA:
+                answer = {"observations": [
+                    {"modality": "road", "what": "unmarked asphalt", "certainty": 0.9,
+                     "region": {"x0": 0.0, "y0": 0.6, "x1": 1.0, "y1": 1.0}},
+                    {"modality": "vegetation", "what": "dry scrub", "certainty": 0.7,
+                     "region": {"x0": 0.1, "y0": 0.4, "x1": 0.4, "y1": 0.8}},
+                ]}
+            elif request.schema is GUESS_SCHEMA:
+                answer = {"lat": 20.0, "lon": -100.0, "place": "somewhere dry",
+                          "granularity": "country", "confidence": "medium",
+                          "reasoning": "scripted, not a real reading"}
+            elif request.schema is CLAIM_SCHEMA:
+                answer = {"claims": [{"level": "country", "value": "scripted",
+                                      "confidence": "medium",
+                                      "supports": [{"evidence_id": "e1",
+                                                    "strength": 0.7}]}]}
+            else:
+                return Completion("no tool would narrow this", model, usage)
+            return Completion(json.dumps(answer), model, usage, structured=answer)
+
+    return Router(Scripted(budget=budget))
 
 
 def main() -> int:
@@ -121,6 +138,10 @@ def main() -> int:
                     help="ceiling for the calendar month, across every run. Set "
                          "your provider's own cap as well; that one is the only "
                          "ceiling a bug here cannot get past")
+    ap.add_argument("--workers", type=int, default=6,
+                    help="images handled at once. The calls are network bound, "
+                         "so this is close to a linear speedup until the "
+                         "provider starts rate limiting")
     ap.add_argument("--out", default="results/agent_runs.json")
     args = ap.parse_args()
 
@@ -166,51 +187,77 @@ def main() -> int:
     summaries = []
     declined = 0
     records = []
+    stopped = None
 
-    for entry in entries:
+    def one_image(entry: dict):
+        """Everything for a single photograph. Independent of every other one,
+        which is what makes the fan-out safe: the samples within an image share
+        nothing, and the board is rebuilt per run."""
         path = ROOT / "data/images" / entry["file"]
-        truth = LatLon(entry["truth"]["lat"], entry["truth"]["lon"])
-        runs, rows, points = [], [], []
+        return entry, agent.run_samples(path, n=args.samples, subject=entry["id"],
+                                        context=context_for(entry))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futures = {pool.submit(one_image, e): e for e in entries}
         try:
-            runs = agent.run_samples(path, n=args.samples, subject=entry["id"],
-                                     context=context_for(entry))
-        except BudgetExceeded as exc:
-            print(f"\nstopped: {exc}")
-            break
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    entry, runs = future.result()
+                except BudgetExceeded as exc:
+                    stopped = str(exc)
+                    for other in futures:
+                        other.cancel()
+                    continue
+                except Exception as exc:                # one bad image, not the run
+                    print(f"{futures[future]['id']:<20}failed: {exc}")
+                    continue
 
-        for run in runs:
-            if run.answer is None or run.best_point is None:
-                declined += 1
-                continue
-            row = Scored(
-                subject=entry["id"],
-                claimed=run.answer.level,
-                error_km=truth.distance_km(run.best_point),
-                confidence=run.answer.stated_confidence,
-                source=entry["source"],
-            )
-            rows.append(row)
-            points.append(run.best_point)
-            scored.append(row)
-            records.append({
-                "id": entry["id"], "source": entry["source"],
-                "claim": run.answer.value, "level": run.answer.level.label,
-                "confidence": run.answer.stated_confidence,
-                "lat": run.best_point.lat, "lon": run.best_point.lon,
-                "error_km": row.error_km, "cost_usd": run.cost_usd,
-                "rejected": run.rejected,
-            })
+                truth = LatLon(entry["truth"]["lat"], entry["truth"]["lon"])
+                rows, points = [], []
+                for run in runs:
+                    if run.answer is None or run.best_point is None:
+                        declined += 1
+                        continue
+                    row = Scored(
+                        subject=entry["id"],
+                        claimed=run.answer.level,
+                        error_km=truth.distance_km(run.best_point),
+                        confidence=run.answer.stated_confidence,
+                        source=entry["source"],
+                    )
+                    rows.append(row)
+                    points.append(run.best_point)
+                    scored.append(row)
+                    records.append({
+                        "id": entry["id"], "source": entry["source"],
+                        "claim": run.answer.value, "level": run.answer.level.label,
+                        "confidence": run.answer.stated_confidence,
+                        "lat": run.best_point.lat, "lon": run.best_point.lon,
+                        "error_km": row.error_km, "cost_usd": run.cost_usd,
+                        "rejected": run.rejected,
+                    })
 
-        if rows:
-            summary = summarise_repeats(entry["id"], rows, points)
-            summaries.append(summary)
-            print(f"{entry['id']:<20}{entry['source']:<17}"
-                  f"{summary.median_error_km:>9.1f} km  spread {summary.spread_km:>8.0f} km"
-                  f"  {summary.hit_rate:>4.0%} correct  {'' if summary.stable else 'unstable'}")
+                if rows:
+                    summary = summarise_repeats(entry["id"], rows, points)
+                    summaries.append(summary)
+                    print(f"{entry['id']:<20}{entry['source']:<17}"
+                          f"{summary.median_error_km:>9.1f} km  "
+                          f"spread {summary.spread_km:>8.0f} km"
+                          f"  {summary.hit_rate:>4.0%} correct  "
+                          f"{'' if summary.stable else 'unstable'}", flush=True)
+        except KeyboardInterrupt:
+            stopped = "interrupted"
+            pool.shutdown(wait=False, cancel_futures=True)
+
+    if stopped:
+        print(f"\nstopped: {stopped}")
 
     if not scored:
         print("\nno scorable runs")
         return 1
+
+    summaries.sort(key=lambda s: s.subject)
+    records.sort(key=lambda r: (r["id"], r["error_km"]))
 
     print("\n" + "=" * 78)
     print("CORRECT AT THE LEVEL CLAIMED, by source")
