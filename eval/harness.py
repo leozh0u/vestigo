@@ -234,6 +234,15 @@ def main() -> int:
                         "confidence": run.answer.stated_confidence,
                         "lat": run.best_point.lat, "lon": run.best_point.lon,
                         "error_km": row.error_km, "cost_usd": run.cost_usd,
+                        # The board resolves on computed confidence, not on the
+                        # stated word. Fitting thresholds against anything else
+                        # fits a proxy, so both go in the record.
+                        "computed_confidence": run.resolution.confidences.get(
+                            run.answer.id, 0.0),
+                        "all_levels": {c.level.label: run.resolution.confidences[c.id]
+                                       for c in run.resolution.chain},
+                        "evidence": len(run.board.evidence),
+                        "constraints": len(run.board.constraints),
                         "rejected": run.rejected,
                     })
 

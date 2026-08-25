@@ -692,3 +692,50 @@ A corrupt ledger refuses rather than reading as zero spent, for the same reason
 an unpriced model reports unknown rather than free. A damaged file resetting to
 a clean slate would let the month start over every time something went wrong
 with it, which is the failure direction that costs money.
+
+### The first agent run lost to its own baseline, and that is the result
+
+21 of 28 images, 61 runs. Bare model call: 89% correct at the level claimed,
+11% overclaimed. Agent: 72% and 28%. Worse on the metric the whole design is
+built around.
+
+The cause is in the level distribution. The baseline never once claimed point
+level. The agent does on 15% of runs, and 38% of its point and district claims
+miss. The board enforces that a claim cites evidence; it does not enforce that
+the level claimed is warranted by how strong that evidence is, and the claim
+step invites the model to reach.
+
+PLAN.md said to say so if the thesis did not show up in the numbers. It did not
+show up, and the six rural images the run never reached are the half where it
+would have had its best chance.
+
+### Fitting thresholds against the stated word was fitting the wrong variable
+
+Wrote a fitter for the board's confidence thresholds, which were guessed before
+any agent existed. Then checked it: simulating the current thresholds on the
+recorded runs predicted a 9% overclaim rate where the run produced 28%.
+
+The simulation was not modelling the mechanism. The board resolves on computed
+confidence, evidence strength times admissibility, and the results file only
+held the stated confidence word. Fitting against that is fitting a proxy that
+happens to correlate.
+
+Kept the fitter, labelled with what it is and with the 9-against-28 gap stated
+in its own output, because the direction it points is still informative. The
+harness now records computed confidence per claim and per level, which is what
+makes the next fit a real one.
+
+The lesson is the cheap one: a number that comes out of a model of a system
+should be checked against the system before it is believed. It took one
+comparison and it would have taken a long time to notice otherwise.
+
+### A fitted value sitting at the edge of its grid is a warning, not a result
+
+The fit put the city threshold at 0.00, the lowest value it could take. That
+usually means the objective is mis-specified or the data is too thin, rather
+than that zero is right.
+
+What it is saying underneath is worth keeping: the agent's point claims tend to
+be accurate to roughly a city, so demoting them to city level costs almost
+nothing and removes most of the overclaiming. That is plausible and testable
+once the rural half exists.

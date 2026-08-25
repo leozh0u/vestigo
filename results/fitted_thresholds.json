@@ -1,0 +1,26 @@
+{
+  "fitted": {
+    "continent": 0.65,
+    "country": 0.65,
+    "region": 0.65,
+    "city": 0.0,
+    "district": 0.65,
+    "point": 0.65
+  },
+  "before": {
+    "stated": 35,
+    "overclaim": 0.08571428571428572,
+    "depth": 3.257142857142857,
+    "silent": 20
+  },
+  "after": {
+    "stated": 31,
+    "overclaim": 0.03225806451612903,
+    "depth": 3.935483870967742,
+    "silent": 24
+  },
+  "target_overclaim": 0.1,
+  "fitted_on": "results/agent_full.json",
+  "runs": 55,
+  "caveat": "fitted and scored on the same runs, rural half missing"
+}
