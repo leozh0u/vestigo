@@ -37,7 +37,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
 from typing import Any, ClassVar
 
-from ..board import Board, Constraint, Evidence, EvidenceKind, LatLon
+from ..board import Board, Constraint, Evidence, EvidenceKind, LatLon, Level
 
 CACHE_DIR = pathlib.Path(".cache/tools")
 
@@ -82,6 +82,11 @@ class ToolResult:
     constraints: tuple[Constraint, ...] = ()
     candidates: tuple[CandidateProposal, ...] = ()
     derived_from: tuple[str, ...] = ()
+    # How finely this result could locate a photograph, and the most any one
+    # claim may lean on it. A tool that constrains without localising, like
+    # solar geometry, says so here rather than leaving it to whoever cites it.
+    resolves_to: int | None = None
+    max_strength: float = 1.0
     error: str | None = None
     cached: bool = False
     elapsed_s: float = 0.0
@@ -97,6 +102,8 @@ class ToolResult:
             "constraints": [c.to_dict() for c in self.constraints],
             "candidates": [c.to_dict() for c in self.candidates],
             "derived_from": list(self.derived_from),
+            "resolves_to": self.resolves_to,
+            "max_strength": self.max_strength,
             "error": self.error,
             "elapsed_s": self.elapsed_s,
         }
@@ -113,6 +120,8 @@ class ToolResult:
             constraints=tuple(Constraint.from_dict(c) for c in d.get("constraints", ())),
             candidates=tuple(CandidateProposal.from_dict(c) for c in d.get("candidates", ())),
             derived_from=tuple(d.get("derived_from", ())),
+            resolves_to=d.get("resolves_to"),
+            max_strength=float(d.get("max_strength", 1.0)),
             error=d.get("error"),
             elapsed_s=d.get("elapsed_s", 0.0),
         )
@@ -136,6 +145,8 @@ def attach(board: Board, result: ToolResult) -> Evidence:
         inputs=result.inputs,
         result=result.value,
         derived_from=result.derived_from,
+        resolves_to=Level(result.resolves_to) if result.resolves_to else None,
+        max_strength=result.max_strength,
     )
     for constraint in result.constraints:
         board.add_constraint(
@@ -283,6 +294,8 @@ class Tool(ABC):
         constraints: tuple[Constraint, ...] = (),
         candidates: tuple[CandidateProposal, ...] = (),
         derived_from: tuple[str, ...] = (),
+        resolves_to: Level | int | None = None,
+        max_strength: float = 1.0,
         ok: bool = True,
     ) -> ToolResult:
         """Helper for `_run` so subclasses do not restate the boilerplate."""
@@ -296,6 +309,8 @@ class Tool(ABC):
             constraints=tuple(constraints),
             candidates=tuple(candidates),
             derived_from=tuple(derived_from),
+            resolves_to=int(resolves_to) if resolves_to else None,
+            max_strength=max_strength,
         )
 
     @abstractmethod

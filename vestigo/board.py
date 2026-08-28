@@ -87,6 +87,18 @@ class Evidence:
     `derived_from` is what makes independence computable. It holds the ids of
     the evidence or observation this one rests on. Two pieces of evidence that
     share a root are correlated and are not allowed to compound.
+
+    `resolves_to` and `max_strength` are the reach of the evidence, and they
+    belong to the evidence rather than to whoever cites it. The first agent run
+    overclaimed on 28% of answers against the bare model's 11%, and the reason
+    was that the model wrote the strength numbers on its own citations. It could
+    put 0.9 on "dry scrub" and push a point claim through a threshold. Citing
+    evidence was enforced; grading it was not.
+
+    Dry scrub cannot locate a street whatever number is attached to it. So each
+    record carries the finest level it could ever justify and the most any one
+    citation of it may be worth, and the board clamps to both. A claim can be
+    argued down by the evidence and never up.
     """
 
     id: str
@@ -96,6 +108,16 @@ class Evidence:
     inputs: dict[str, Any] = field(default_factory=dict)
     result: Any = None              # what came back, kept verbatim
     derived_from: tuple[str, ...] = ()
+    resolves_to: "Level" = None      # finest level this could justify
+    max_strength: float = 1.0        # ceiling on any one citation of it
+
+    def __post_init__(self) -> None:
+        if self.resolves_to is None:
+            # Most evidence is a general impression of a place. Country is as
+            # fine as that goes, and anything sharper has to say so.
+            object.__setattr__(self, "resolves_to", Level.COUNTRY)
+        if not 0.0 <= self.max_strength <= 1.0:
+            raise ValueError(f"max_strength must be in [0, 1], got {self.max_strength}")
 
     def to_dict(self) -> dict:
         return {
@@ -106,6 +128,8 @@ class Evidence:
             "inputs": self.inputs,
             "result": self.result,
             "derived_from": list(self.derived_from),
+            "resolves_to": int(self.resolves_to),
+            "max_strength": self.max_strength,
         }
 
     @classmethod
@@ -118,6 +142,8 @@ class Evidence:
             inputs=d.get("inputs", {}),
             result=d.get("result"),
             derived_from=tuple(d.get("derived_from", ())),
+            resolves_to=Level(d["resolves_to"]) if d.get("resolves_to") else None,
+            max_strength=float(d.get("max_strength", 1.0)),
         )
 
 
@@ -597,6 +623,8 @@ class Board:
         inputs: dict | None = None,
         result: Any = None,
         derived_from: Sequence[str] = (),
+        resolves_to: Level | None = None,
+        max_strength: float = 1.0,
     ) -> Evidence:
         for parent in derived_from:
             if parent not in self.evidence:
@@ -609,6 +637,8 @@ class Board:
             inputs=dict(inputs or {}),
             result=result,
             derived_from=tuple(derived_from),
+            resolves_to=resolves_to,
+            max_strength=max_strength,
         )
         self.evidence[ev.id] = ev
         return ev
@@ -630,6 +660,25 @@ class Board:
                 raise KeyError(f"claim cites unknown evidence {s.evidence_id!r}")
         if parent is not None and parent not in self.claims:
             raise KeyError(f"claim cites unknown parent {parent!r}")
+
+        # Clamp every citation to what its evidence is worth. Whoever writes
+        # the supports does not get to decide what the evidence is worth, for
+        # the same reason a claim does not get to assert its own confidence.
+        supports = tuple(
+            replace(s, strength=min(s.strength, self.evidence[s.evidence_id].max_strength))
+            for s in supports
+        )
+
+        # And cap the level at the reach of the best evidence behind it. Six
+        # point-level claims in the first agent run were backed by nothing that
+        # could locate a point. Capping rather than rejecting is the design
+        # working: the answer survives at the granularity it can defend.
+        reach = max((self.evidence[s.evidence_id].resolves_to
+                     for s in supports if s.supports), default=None)
+        capped_from = None
+        if reach is not None and level > reach:
+            capped_from, level = level, reach
+
         claim = Claim(
             id=self._next("c"),
             level=level,
@@ -638,7 +687,10 @@ class Board:
             supports=supports,
             parent=parent,
             stated_confidence=stated_confidence,
-            note=note,
+            note=note if capped_from is None else
+            (f"{note} " if note else "") +
+            f"capped from {capped_from.label}: no evidence reaches finer than "
+            f"{level.label}",
         )
         self.claims[claim.id] = claim
         return claim

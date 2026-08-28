@@ -418,3 +418,18 @@ def test_the_sun_peaks_at_solar_noon_and_falls_away_either_side():
         for offset in (-180, -60, -20, 20, 60, 180):
             other = sun_position(point, noon + timedelta(minutes=offset)).elevation_deg
             assert other < peak, f"{lat}N, {offset} min from noon"
+
+
+def test_solar_rules_places_out_without_ruling_one_in():
+    """It emits constraints, and constraints eliminate. No claim may lean on
+    the citation itself to reach past a country."""
+    from vestigo.board import Board, Level, Support
+    result = SolarTool()(captured_utc=MEXICO_CAPTURE, lighting="daylight")
+    assert result.resolves_to == int(Level.COUNTRY)
+    assert result.max_strength == pytest.approx(0.4)
+
+    board = Board("t")
+    ev = attach(board, result)
+    claim = board.add_claim(Level.CITY, "Queretaro", supports=[Support(ev.id, 0.9)])
+    assert claim.level is Level.COUNTRY
+    assert claim.supports[0].strength == pytest.approx(0.4)

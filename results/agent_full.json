@@ -1,9 +1,9 @@
 {
-  "ran_utc": "2026-08-25 05:17:47",
+  "ran_utc": "2026-08-28 03:23:18",
   "preset": "cheap",
   "samples": 3,
   "dry": false,
-  "spent_usd": 2.926448,
+  "spent_usd": 0,
   "runs": [
     {
       "id": "im2gps_04881af57a",
@@ -14,7 +14,13 @@
       "lat": 50.0,
       "lon": 10.0,
       "error_km": 363.7265054460583,
-      "cost_usd": 0.17928,
+      "cost_usd": 0,
+      "computed_confidence": 0.6736,
+      "all_levels": {
+        "continent": 0.6736
+      },
+      "evidence": 13,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -26,7 +32,13 @@
       "lat": 50.0,
       "lon": 10.0,
       "error_km": 363.7265054460583,
-      "cost_usd": 0.172989,
+      "cost_usd": 0,
+      "computed_confidence": 0.616,
+      "all_levels": {
+        "continent": 0.616
+      },
+      "evidence": 9,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -38,7 +50,13 @@
       "lat": 50.0,
       "lon": 10.0,
       "error_km": 363.7265054460583,
-      "cost_usd": 0.224439,
+      "cost_usd": 0,
+      "computed_confidence": 0.6399999999999999,
+      "all_levels": {
+        "continent": 0.6399999999999999
+      },
+      "evidence": 12,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -51,6 +69,13 @@
       "lon": 18.094400000000007,
       "error_km": 1.785806552425848,
       "cost_usd": 0,
+      "computed_confidence": 0.8623744,
+      "all_levels": {
+        "continent": 0.5,
+        "region": 0.8623744
+      },
+      "evidence": 11,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -63,6 +88,12 @@
       "lon": 18.094400000000007,
       "error_km": 1.785806552425848,
       "cost_usd": 0,
+      "computed_confidence": 0.93577472,
+      "all_levels": {
+        "region": 0.93577472
+      },
+      "evidence": 14,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -75,6 +106,13 @@
       "lon": 18.094400000000007,
       "error_km": 1.785806552425848,
       "cost_usd": 0,
+      "computed_confidence": 0.828084304,
+      "all_levels": {
+        "continent": 0.5,
+        "region": 0.828084304
+      },
+      "evidence": 11,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -87,6 +125,13 @@
       "lon": -0.5,
       "error_km": 30.17366837502707,
       "cost_usd": 0,
+      "computed_confidence": 0.552,
+      "all_levels": {
+        "continent": 0.75,
+        "country": 0.552
+      },
+      "evidence": 6,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -99,6 +144,12 @@
       "lon": -0.5,
       "error_km": 30.17366837502707,
       "cost_usd": 0,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999
+      },
+      "evidence": 6,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -111,6 +162,12 @@
       "lon": -1.0,
       "error_km": 95.05685276240978,
       "cost_usd": 0,
+      "computed_confidence": 0.7696,
+      "all_levels": {
+        "continent": 0.7696
+      },
+      "evidence": 6,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -123,6 +180,14 @@
       "lon": 74.31029999999998,
       "error_km": 0.12509949096887454,
       "cost_usd": 0,
+      "computed_confidence": 0.9460216,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.75,
+        "point": 0.9460216
+      },
+      "evidence": 15,
+      "constraints": 2,
       "rejected": []
     },
     {
@@ -135,6 +200,14 @@
       "lon": 74.31029999999998,
       "error_km": 0.17246826974197849,
       "cost_usd": 0,
+      "computed_confidence": 0.997,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.9,
+        "point": 0.997
+      },
+      "evidence": 17,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -147,6 +220,14 @@
       "lon": 74.31029999999998,
       "error_km": 0.9561858732763828,
       "cost_usd": 0,
+      "computed_confidence": 0.895,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.916,
+        "point": 0.895
+      },
+      "evidence": 11,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -159,6 +240,14 @@
       "lon": -58.38159999999999,
       "error_km": 0.00353118911151473,
       "cost_usd": 0,
+      "computed_confidence": 0.895,
+      "all_levels": {
+        "country": 0.92,
+        "city": 0.928,
+        "district": 0.895
+      },
+      "evidence": 17,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -171,6 +260,14 @@
       "lon": -58.38159999999999,
       "error_km": 0.00353118911151473,
       "cost_usd": 0,
+      "computed_confidence": 0.8656,
+      "all_levels": {
+        "country": 0.8,
+        "city": 0.895,
+        "district": 0.8656
+      },
+      "evidence": 13,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -183,6 +280,14 @@
       "lon": -58.38159999999999,
       "error_km": 0.00353118911151473,
       "cost_usd": 0,
+      "computed_confidence": 0.87456,
+      "all_levels": {
+        "country": 0.8,
+        "city": 0.75,
+        "district": 0.87456
+      },
+      "evidence": 16,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -195,6 +300,14 @@
       "lon": 2.2944999999999993,
       "error_km": 3.8510708512546286,
       "cost_usd": 0,
+      "computed_confidence": 0.8432,
+      "all_levels": {
+        "country": 0.99,
+        "city": 0.997,
+        "district": 0.8432
+      },
+      "evidence": 9,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -207,6 +320,14 @@
       "lon": 2.2944999999999993,
       "error_km": 3.8510708512546286,
       "cost_usd": 0,
+      "computed_confidence": 0.9874,
+      "all_levels": {
+        "country": 0.99,
+        "city": 0.99874,
+        "district": 0.9874
+      },
+      "evidence": 9,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -219,6 +340,14 @@
       "lon": 2.2944999999999993,
       "error_km": 3.8510708512546286,
       "cost_usd": 0,
+      "computed_confidence": 0.997648,
+      "all_levels": {
+        "country": 0.97,
+        "city": 0.99244,
+        "point": 0.997648
+      },
+      "evidence": 9,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -230,7 +359,14 @@
       "lat": 24.45,
       "lon": 121.42000000000002,
       "error_km": 20.35768426311733,
-      "cost_usd": 0.28896900000000003,
+      "cost_usd": 0,
+      "computed_confidence": 0.52,
+      "all_levels": {
+        "continent": 0.44000000000000006,
+        "country": 0.52
+      },
+      "evidence": 9,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -242,7 +378,13 @@
       "lat": 24.35,
       "lon": 121.35000000000002,
       "error_km": 31.91611869290613,
-      "cost_usd": 0.275942,
+      "cost_usd": 0,
+      "computed_confidence": 0.5680000000000001,
+      "all_levels": {
+        "continent": 0.5680000000000001
+      },
+      "evidence": 10,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -255,6 +397,13 @@
       "lon": -74.1737,
       "error_km": 19.53507135515461,
       "cost_usd": 0,
+      "computed_confidence": 0.808,
+      "all_levels": {
+        "country": 0.6080000000000001,
+        "point": 0.808
+      },
+      "evidence": 14,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -267,6 +416,14 @@
       "lon": -81.3612,
       "error_km": 622.1864786073502,
       "cost_usd": 0,
+      "computed_confidence": 0.808,
+      "all_levels": {
+        "country": 0.72,
+        "region": 0.4,
+        "city": 0.808
+      },
+      "evidence": 12,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -279,6 +436,14 @@
       "lon": -84.5027,
       "error_km": 916.7119736219305,
       "cost_usd": 0,
+      "computed_confidence": 0.88,
+      "all_levels": {
+        "country": 0.6799999999999999,
+        "city": 0.8,
+        "point": 0.88
+      },
+      "evidence": 12,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -291,6 +456,12 @@
       "lon": 148.0,
       "error_km": 15367.210819747834,
       "cost_usd": 0,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 1,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -303,6 +474,12 @@
       "lon": 115.39999999999998,
       "error_km": 17740.423478790326,
       "cost_usd": 0,
+      "computed_confidence": 0.855972928,
+      "all_levels": {
+        "region": 0.855972928
+      },
+      "evidence": 11,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -314,7 +491,16 @@
       "lat": 34.1808,
       "lon": -118.3856,
       "error_km": 22.955501069256506,
-      "cost_usd": 0.39374699999999996,
+      "cost_usd": 0,
+      "computed_confidence": 0.97942,
+      "all_levels": {
+        "country": 0.895,
+        "region": 0.9706,
+        "city": 0.94,
+        "district": 0.97942
+      },
+      "evidence": 15,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -326,7 +512,16 @@
       "lat": 34.1808,
       "lon": -118.3672,
       "error_km": 23.618656876018164,
-      "cost_usd": 0.33249300000000004,
+      "cost_usd": 0,
+      "computed_confidence": 0.8655999999999999,
+      "all_levels": {
+        "country": 0.93,
+        "region": 0.895,
+        "city": 0.88,
+        "point": 0.8655999999999999
+      },
+      "evidence": 16,
+      "constraints": 2,
       "rejected": []
     },
     {
@@ -338,7 +533,16 @@
       "lat": 34.1808,
       "lon": -118.3608,
       "error_km": 23.873206842744427,
-      "cost_usd": 0.123483,
+      "cost_usd": 0,
+      "computed_confidence": 0.9,
+      "all_levels": {
+        "country": 0.874,
+        "region": 0.8600000000000001,
+        "city": 0.91,
+        "district": 0.9
+      },
+      "evidence": 15,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -350,7 +554,14 @@
       "lat": 41.9022,
       "lon": 12.501300000000015,
       "error_km": 0.09216718811099227,
-      "cost_usd": 0.32029700000000005,
+      "cost_usd": 0,
+      "computed_confidence": 0.9039999999999999,
+      "all_levels": {
+        "country": 0.96,
+        "city": 0.9039999999999999
+      },
+      "evidence": 17,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -362,7 +573,14 @@
       "lat": 41.9028,
       "lon": 12.496399999999994,
       "error_km": 0.337085540413059,
-      "cost_usd": 0.3171259999999998,
+      "cost_usd": 0,
+      "computed_confidence": 0.8655999999999999,
+      "all_levels": {
+        "country": 0.99,
+        "city": 0.8655999999999999
+      },
+      "evidence": 16,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -374,7 +592,14 @@
       "lat": 41.9028,
       "lon": 12.514999999999986,
       "error_km": 1.2228188484776614,
-      "cost_usd": 0.29333200000000015,
+      "cost_usd": 0,
+      "computed_confidence": 0.916,
+      "all_levels": {
+        "country": 0.99,
+        "city": 0.916
+      },
+      "evidence": 16,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -386,7 +611,15 @@
       "lat": 19.436,
       "lon": -99.136,
       "error_km": 0.8053539072429599,
-      "cost_usd": 0.489276,
+      "cost_usd": 0,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "country": 0.86,
+        "city": 0.7,
+        "district": 0.776
+      },
+      "evidence": 15,
+      "constraints": 3,
       "rejected": []
     },
     {
@@ -398,7 +631,14 @@
       "lat": 19.4342,
       "lon": -99.1386,
       "error_km": 0.9049372784033496,
-      "cost_usd": 0.5256620000000001,
+      "cost_usd": 0,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "country": 0.853,
+        "city": 0.72
+      },
+      "evidence": 19,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -410,7 +650,14 @@
       "lat": 19.437,
       "lon": -99.137,
       "error_km": 0.9581667237184318,
-      "cost_usd": 0.590333,
+      "cost_usd": 0,
+      "computed_confidence": 0.6,
+      "all_levels": {
+        "country": 0.8824,
+        "city": 0.6
+      },
+      "evidence": 18,
+      "constraints": 3,
       "rejected": []
     },
     {
@@ -422,7 +669,14 @@
       "lat": 28.6,
       "lon": 77.19999999999999,
       "error_km": 1738.6742999461937,
-      "cost_usd": 0.3760610000000001,
+      "cost_usd": 0,
+      "computed_confidence": 0.76,
+      "all_levels": {
+        "continent": 0.8320000000000001,
+        "country": 0.76
+      },
+      "evidence": 11,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -434,7 +688,13 @@
       "lat": 28.6139,
       "lon": 77.209,
       "error_km": 1740.1979225824264,
-      "cost_usd": 0.230428,
+      "cost_usd": 0,
+      "computed_confidence": 0.91936,
+      "all_levels": {
+        "country": 0.91936
+      },
+      "evidence": 11,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -446,7 +706,13 @@
       "lat": 31.2304,
       "lon": 121.47370000000001,
       "error_km": 4914.317669337606,
-      "cost_usd": 0.27966899999999995,
+      "cost_usd": 0,
+      "computed_confidence": 0.919,
+      "all_levels": {
+        "country": 0.919
+      },
+      "evidence": 12,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -458,7 +724,13 @@
       "lat": 41.7151,
       "lon": 44.8271,
       "error_km": 1323.4722745025692,
-      "cost_usd": 0.316194,
+      "cost_usd": 0,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "region": 0.776
+      },
+      "evidence": 15,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -470,7 +742,13 @@
       "lat": 41.7151,
       "lon": 44.8271,
       "error_km": 1323.4722745025692,
-      "cost_usd": 0.3956869999999999,
+      "cost_usd": 0,
+      "computed_confidence": 0.51,
+      "all_levels": {
+        "country": 0.51
+      },
+      "evidence": 16,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -482,7 +760,14 @@
       "lat": 41.7151,
       "lon": 44.8271,
       "error_km": 1323.4722745025692,
-      "cost_usd": 0.28305400000000014,
+      "cost_usd": 0,
+      "computed_confidence": 0.712,
+      "all_levels": {
+        "country": 0.51,
+        "region": 0.712
+      },
+      "evidence": 13,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -494,7 +779,15 @@
       "lat": -33.9285,
       "lon": 18.463599999999985,
       "error_km": 3.6279451611930305,
-      "cost_usd": 0.258335,
+      "cost_usd": 0,
+      "computed_confidence": 0.895,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.9,
+        "district": 0.895
+      },
+      "evidence": 14,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -506,7 +799,15 @@
       "lat": -33.9285,
       "lon": 18.463599999999985,
       "error_km": 3.6279451611930305,
-      "cost_usd": 0.376803,
+      "cost_usd": 0,
+      "computed_confidence": 0.8432,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.85,
+        "district": 0.8432
+      },
+      "evidence": 14,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -518,7 +819,15 @@
       "lat": -33.9285,
       "lon": 18.463599999999985,
       "error_km": 3.6279451611930305,
-      "cost_usd": 0.3683909999999999,
+      "cost_usd": 0,
+      "computed_confidence": 0.9616,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.9,
+        "district": 0.9616
+      },
+      "evidence": 15,
+      "constraints": 2,
       "rejected": []
     },
     {
@@ -530,7 +839,15 @@
       "lat": -1.2864,
       "lon": 36.817200000000014,
       "error_km": 0.6169500364495227,
-      "cost_usd": 0.43215099999999995,
+      "cost_usd": 0,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "continent": 0.7,
+        "country": 0.776,
+        "city": 0.776
+      },
+      "evidence": 16,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -542,7 +859,14 @@
       "lat": -1.2833,
       "lon": 36.8167,
       "error_km": 0.956393979566644,
-      "cost_usd": 0.31229400000000007,
+      "cost_usd": 0,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.72,
+        "country": 0.6799999999999999
+      },
+      "evidence": 13,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -554,7 +878,15 @@
       "lat": -1.2833,
       "lon": 36.8167,
       "error_km": 0.956393979566644,
-      "cost_usd": 0.270629,
+      "cost_usd": 0,
+      "computed_confidence": 0.6759999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.6399999999999999,
+        "city": 0.6759999999999999
+      },
+      "evidence": 12,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -566,7 +898,14 @@
       "lat": 52.2297,
       "lon": 21.012200000000007,
       "error_km": 0.2365057679908497,
-      "cost_usd": 0.371355,
+      "cost_usd": 0,
+      "computed_confidence": 0.6599999999999999,
+      "all_levels": {
+        "country": 0.97,
+        "city": 0.6599999999999999
+      },
+      "evidence": 18,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -578,7 +917,14 @@
       "lat": 52.2297,
       "lon": 21.012200000000007,
       "error_km": 0.2365057679908497,
-      "cost_usd": 0.35670099999999993,
+      "cost_usd": 0,
+      "computed_confidence": 0.8432,
+      "all_levels": {
+        "country": 0.9400000000000001,
+        "city": 0.8432
+      },
+      "evidence": 15,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -590,7 +936,14 @@
       "lat": 52.2337,
       "lon": 21.005600000000015,
       "error_km": 0.8387571316080448,
-      "cost_usd": 0.353746,
+      "cost_usd": 0,
+      "computed_confidence": 0.91425,
+      "all_levels": {
+        "country": 0.96,
+        "city": 0.91425
+      },
+      "evidence": 16,
+      "constraints": 2,
       "rejected": []
     },
     {
@@ -602,7 +955,13 @@
       "lat": 40.42,
       "lon": -3.703800000000001,
       "error_km": 0.17445853521126753,
-      "cost_usd": 0.332214,
+      "cost_usd": 0,
+      "computed_confidence": 0.832,
+      "all_levels": {
+        "country": 0.832
+      },
+      "evidence": 13,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -614,7 +973,14 @@
       "lat": 40.42,
       "lon": -3.7024999999999864,
       "error_km": 0.27454027973677786,
-      "cost_usd": 0.38728399999999996,
+      "cost_usd": 0,
+      "computed_confidence": 0.7696000000000001,
+      "all_levels": {
+        "country": 0.9657,
+        "region": 0.7696000000000001
+      },
+      "evidence": 12,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -626,7 +992,14 @@
       "lat": 40.42,
       "lon": -3.7024999999999864,
       "error_km": 0.27454027973677786,
-      "cost_usd": 0.3736630000000001,
+      "cost_usd": 0,
+      "computed_confidence": 0.7312000000000001,
+      "all_levels": {
+        "country": 0.94624,
+        "district": 0.7312000000000001
+      },
+      "evidence": 13,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -638,7 +1011,15 @@
       "lat": 37.5013,
       "lon": 127.03960000000001,
       "error_km": 9.090642475689716,
-      "cost_usd": 0.38224100000000005,
+      "cost_usd": 0,
+      "computed_confidence": 0.956992,
+      "all_levels": {
+        "country": 0.9,
+        "city": 0.75,
+        "point": 0.956992
+      },
+      "evidence": 18,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -650,7 +1031,16 @@
       "lat": 37.5125,
       "lon": 127.05899999999997,
       "error_km": 9.26376256172946,
-      "cost_usd": 0.39211700000000005,
+      "cost_usd": 0,
+      "computed_confidence": 0.97408,
+      "all_levels": {
+        "country": 0.93,
+        "city": 0.85,
+        "district": 0.892,
+        "point": 0.97408
+      },
+      "evidence": 16,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -662,7 +1052,14 @@
       "lat": 37.4009,
       "lon": 127.10579999999999,
       "error_km": 21.658024570119352,
-      "cost_usd": 0.29035200000000017,
+      "cost_usd": 0,
+      "computed_confidence": 0.8079999999999999,
+      "all_levels": {
+        "country": 0.82,
+        "city": 0.8079999999999999
+      },
+      "evidence": 14,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -674,7 +1071,14 @@
       "lat": -22.5,
       "lon": -48.5,
       "error_km": 5.282348609057111,
-      "cost_usd": 0.3683049999999999,
+      "cost_usd": 0,
+      "computed_confidence": 0.616,
+      "all_levels": {
+        "country": 0.8655999999999999,
+        "region": 0.616
+      },
+      "evidence": 14,
+      "constraints": 2,
       "rejected": []
     },
     {
@@ -686,7 +1090,13 @@
       "lat": -22.0,
       "lon": -47.900000000000006,
       "error_km": 85.95187339761263,
-      "cost_usd": 0.0,
+      "cost_usd": 0,
+      "computed_confidence": 0.9328000000000001,
+      "all_levels": {
+        "country": 0.9328000000000001
+      },
+      "evidence": 14,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -698,7 +1108,14 @@
       "lat": -22.0,
       "lon": -47.900000000000006,
       "error_km": 85.95187339761263,
-      "cost_usd": 0.38570400000000005,
+      "cost_usd": 0,
+      "computed_confidence": 0.74912,
+      "all_levels": {
+        "country": 0.9568,
+        "region": 0.74912
+      },
+      "evidence": 13,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -710,7 +1127,13 @@
       "lat": 52.2,
       "lon": 19.0,
       "error_km": 121.25667715748311,
-      "cost_usd": 0.1841529999999998,
+      "cost_usd": 0,
+      "computed_confidence": 0.5680000000000001,
+      "all_levels": {
+        "continent": 0.5680000000000001
+      },
+      "evidence": 10,
+      "constraints": 0,
       "rejected": []
     },
     {
@@ -722,7 +1145,13 @@
       "lat": 52.0,
       "lon": 19.0,
       "error_km": 135.52000434764184,
-      "cost_usd": 0.3772,
+      "cost_usd": 0,
+      "computed_confidence": 0.595,
+      "all_levels": {
+        "continent": 0.595
+      },
+      "evidence": 13,
+      "constraints": 1,
       "rejected": []
     },
     {
@@ -734,7 +1163,14 @@
       "lat": 52.0,
       "lon": 19.0,
       "error_km": 135.52000434764184,
-      "cost_usd": 0.27814400000000017,
+      "cost_usd": 0,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "continent": 0.712,
+        "region": 0.72
+      },
+      "evidence": 11,
+      "constraints": 1,
       "rejected": []
     }
   ]

@@ -28,7 +28,31 @@ from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any
 
-from .board import Board, Evidence, EvidenceKind
+from .board import Board, Evidence, EvidenceKind, Level
+
+# How far each kind of observation can locate a photograph on its own.
+#
+# This is the ceiling the first agent run needed and did not have. It
+# overclaimed on 28% of answers against the bare model's 11%, and six of those
+# were point-level claims backed by scenery. Vegetation narrows a climate band
+# and a continent. It cannot find a street, whatever strength a model writes
+# next to it.
+#
+# Text is the exception, and Phase 0 measured why: nearly every street-level
+# answer in the baseline came from reading something. A legible sign can name
+# the place outright, so text is allowed to reach a district and everything
+# else stops at country or region.
+MODALITY_REACH: dict["Modality", Level] = {
+    "text": Level.DISTRICT,
+    "infrastructure": Level.REGION,   # utility markings and cabinets carry codes
+    "road": Level.REGION,             # route markers and paint schemes are regional
+    "architecture": Level.REGION,
+    "vehicle": Level.COUNTRY,         # plates and models are national at best
+    "vegetation": Level.COUNTRY,
+    "terrain": Level.COUNTRY,
+    "sky": Level.COUNTRY,             # the solar tool constrains; the sight of it does not
+    "other": Level.COUNTRY,
+}
 
 # Two readings of the same modality count as one object when their image
 # regions overlap by at least this much. Chosen loose rather than tight: the
@@ -274,6 +298,12 @@ def attach_observations(board: Board, observations: ObservationSet) -> list[Evid
     written: dict[str, Evidence] = {}
     for obs in observations:
         parent = written.get(obs.parent) if obs.parent else None
+        reach = MODALITY_REACH.get(str(obs.modality), Level.COUNTRY)
+        if obs.modality is Modality.TEXT and not (obs.text or "").strip():
+            # Text that could not be read is a sign, not a place name, and a
+            # sign nobody can read locates nothing finer than the rest of the
+            # scene does.
+            reach = Level.COUNTRY
         written[obs.id] = board.add_evidence(
             source="observe",
             summary=obs.what,
@@ -282,6 +312,11 @@ def attach_observations(board: Board, observations: ObservationSet) -> list[Evid
                     "region": obs.region.to_dict() if obs.region else None},
             result={"what": obs.what, "text": obs.text, "certainty": obs.certainty},
             derived_from=(parent.id,) if parent else (),
+            resolves_to=reach,
+            # How sure the extractor is the thing is there caps how much any
+            # claim may lean on it. Seeing something faintly cannot support a
+            # claim more strongly than seeing it clearly.
+            max_strength=obs.certainty,
         )
     return list(written.values())
 

@@ -12,7 +12,14 @@ it lies needs the camera heading as well, so both of those get less.
 """
 from __future__ import annotations
 
-from ..solar import HORIZON_DEG, NAUTICAL_TWILIGHT_DEG, SolarAzimuth, SolarElevation, _parse_utc
+from ..board import Level
+from ..solar import (
+    HORIZON_DEG,
+    NAUTICAL_TWILIGHT_DEG,
+    SolarAzimuth,
+    SolarElevation,
+    _parse_utc,
+)
 from .base import Tool, ToolResult
 
 # Elevation bands for the three readings a model can make about the height of
@@ -153,4 +160,9 @@ class SolarTool(Tool):
             },
             summary=f"{stamp} UTC, {', '.join(notes)}",
             constraints=tuple(constraints),
+            # Solar geometry rules places out. It never rules one in, so no
+            # claim may lean on it to reach past a country, and the constraints
+            # it emits do the real work rather than this citation.
+            resolves_to=Level.COUNTRY,
+            max_strength=0.4,
         )

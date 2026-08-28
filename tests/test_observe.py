@@ -270,3 +270,53 @@ def test_a_set_round_trips_and_keeps_its_links():
 def test_adding_to_a_revived_set_does_not_reuse_an_id():
     s = ObservationSet.from_list(build_set().to_list())
     assert s.observe(Modality.ROAD, "yellow centre line", region=VERGE).id == "o4"
+
+
+# -- how far an observation can locate a photograph -------------------------
+
+def test_text_reaches_further_than_scenery():
+    """Phase 0 measured why: nearly every street-level answer in the baseline
+    came from reading something. Vegetation narrows a continent."""
+    from vestigo.board import Board, Level
+    board = Board("t")
+    s = ObservationSet()
+    s.observe(Modality.TEXT, "sign reading BAN KRUT", region=SIGN, text="BAN KRUT")
+    s.observe(Modality.VEGETATION, "acacia scrub", region=VERGE)
+    attach_observations(board, s)
+    assert board.evidence["e1"].resolves_to is Level.DISTRICT
+    assert board.evidence["e2"].resolves_to is Level.COUNTRY
+
+
+def test_illegible_text_reaches_no_further_than_the_scene():
+    """A sign nobody could read is a sign, not a place name."""
+    from vestigo.board import Board, Level
+    board = Board("t")
+    s = ObservationSet()
+    s.observe(Modality.TEXT, "a sign, too blurred to read", region=SIGN)
+    attach_observations(board, s)
+    assert board.evidence["e1"].resolves_to is Level.COUNTRY
+
+
+def test_certainty_becomes_the_strength_ceiling():
+    """Seeing something faintly cannot support a claim as strongly as seeing it
+    clearly, whatever number gets written on the citation."""
+    from vestigo.board import Board, Level, Support
+    board = Board("t")
+    s = ObservationSet()
+    s.observe(Modality.VEGETATION, "possibly agave, hard to tell",
+              region=VERGE, certainty=0.3)
+    attach_observations(board, s)
+    claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support("e1", 0.95)])
+    assert claim.supports[0].strength == pytest.approx(0.3)
+
+
+def test_a_point_claim_off_scenery_is_capped_to_country():
+    """The failure this exists to stop: six point-level claims in the first
+    agent run were backed by nothing that could locate a point."""
+    from vestigo.board import Board, Level, Support
+    board = Board("t")
+    s = ObservationSet()
+    s.observe(Modality.VEGETATION, "dry scrub", region=VERGE, certainty=0.9)
+    attach_observations(board, s)
+    claim = board.add_claim(Level.POINT, "a precise spot", supports=[Support("e1", 0.9)])
+    assert claim.level is Level.COUNTRY

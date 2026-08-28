@@ -283,9 +283,14 @@ def test_resolve_stops_at_the_granularity_the_evidence_supports():
 
 
 def test_resolve_reaches_a_point_when_the_evidence_is_there():
+    """Evidence has to declare that it reaches that far. A shopfront name and a
+    unique Overpass match can locate a point; generic scenery cannot, whatever
+    strength is attached to it."""
     board = Board("t")
-    a = board.add_evidence("ocr", "town name on a shopfront")
-    b = board.add_evidence("overpass", "only one match within 300 m")
+    a = board.add_evidence("ocr", "town name on a shopfront",
+                           resolves_to=Level.CITY)
+    b = board.add_evidence("overpass", "only one match within 300 m",
+                           resolves_to=Level.POINT)
     country = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(a.id, 0.9)])
     city = board.add_claim(Level.CITY, "Queretaro", supports=[Support(a.id, 0.8)],
                            parent=country.id)
@@ -300,7 +305,7 @@ def test_resolve_reaches_a_point_when_the_evidence_is_there():
 
 def test_resolve_follows_the_parent_chain_rather_than_stacking_best_guesses():
     board = Board("t")
-    a = board.add_evidence("ocr", "town name")
+    a = board.add_evidence("ocr", "town name", resolves_to=Level.CITY)
     weak_country = board.add_claim(Level.COUNTRY, "Kenya", supports=[Support(a.id, 0.99)])
     real_country = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(a.id, 0.9)])
     board.add_claim(Level.CITY, "Queretaro", supports=[Support(a.id, 0.9)],
@@ -375,3 +380,88 @@ def test_ids_are_sequential_so_two_runs_can_be_diffed():
     board = Board("t")
     assert [board.add_evidence("x", "y").id for _ in range(3)] == ["e1", "e2", "e3"]
     assert board.add_candidate(MEXICO).id == "n1"
+
+
+# -- reach and strength ceilings -------------------------------------------
+#
+# The first agent run overclaimed on 28% of answers against the bare model's
+# 11%, because whoever wrote a citation also wrote the number on it. Six point
+# claims were backed by nothing that could locate a point.
+
+def test_a_claim_is_capped_at_the_reach_of_its_evidence():
+    board = Board("t")
+    scrub = board.add_evidence("observe", "dry scrub and an unmarked road")
+    claim = board.add_claim(Level.POINT, "a precise spot",
+                            supports=[Support(scrub.id, 0.95)])
+    assert claim.level is Level.COUNTRY
+    assert "capped from point" in claim.note
+
+
+def test_capping_keeps_the_answer_rather_than_dropping_it():
+    """The design working. A claim that reached too far is not a claim to
+    throw away, it is a claim made at the wrong level."""
+    board = Board("t")
+    scrub = board.add_evidence("observe", "acacia scrub")
+    claim = board.add_claim(Level.DISTRICT, "Mexico",
+                            supports=[Support(scrub.id, 0.9)])
+    assert board.confidence(claim) == pytest.approx(0.9)
+    assert board.resolve().answer is claim
+
+
+def test_evidence_that_reaches_further_is_not_capped():
+    board = Board("t")
+    sign = board.add_evidence("ocr", "sign reading BAN KRUT",
+                              resolves_to=Level.DISTRICT)
+    claim = board.add_claim(Level.DISTRICT, "Ban Krut", supports=[Support(sign.id, 0.8)])
+    assert claim.level is Level.DISTRICT
+    assert claim.note == ""
+
+
+def test_the_best_evidence_sets_the_reach():
+    board = Board("t")
+    scrub = board.add_evidence("observe", "scrub")
+    sign = board.add_evidence("ocr", "a street name", resolves_to=Level.DISTRICT)
+    claim = board.add_claim(Level.DISTRICT, "somewhere",
+                            supports=[Support(scrub.id, 0.4), Support(sign.id, 0.7)])
+    assert claim.level is Level.DISTRICT
+
+
+def test_refuting_evidence_does_not_extend_the_reach():
+    """Evidence arguing against a claim should not license claiming finer."""
+    board = Board("t")
+    scrub = board.add_evidence("observe", "scrub")
+    sign = board.add_evidence("ocr", "a street name", resolves_to=Level.DISTRICT)
+    claim = board.add_claim(Level.DISTRICT, "somewhere",
+                            supports=[Support(scrub.id, 0.6),
+                                      Support(sign.id, 0.9, supports=False)])
+    assert claim.level is Level.COUNTRY
+
+
+def test_a_citation_cannot_be_worth_more_than_its_evidence():
+    """Whoever writes the citation does not get to decide what the evidence is
+    worth, for the same reason a claim cannot assert its own confidence."""
+    board = Board("t")
+    vague = board.add_evidence("observe", "a general impression", max_strength=0.3)
+    claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(vague.id, 0.99)])
+    assert claim.supports[0].strength == pytest.approx(0.3)
+    assert board.confidence(claim) == pytest.approx(0.3)
+
+
+def test_a_strength_below_the_ceiling_is_left_alone():
+    board = Board("t")
+    ev = board.add_evidence("observe", "something", max_strength=0.8)
+    claim = board.add_claim(Level.COUNTRY, "x", supports=[Support(ev.id, 0.5)])
+    assert claim.supports[0].strength == pytest.approx(0.5)
+
+
+def test_an_impossible_ceiling_is_rejected():
+    with pytest.raises(ValueError):
+        Board("t").add_evidence("observe", "x", max_strength=1.5)
+
+
+def test_reach_and_ceiling_survive_a_round_trip():
+    board = Board("t")
+    board.add_evidence("ocr", "a sign", resolves_to=Level.DISTRICT, max_strength=0.7)
+    revived = Board.from_dict(json.loads(json.dumps(board.to_dict())))
+    assert revived.evidence["e1"].resolves_to is Level.DISTRICT
+    assert revived.evidence["e1"].max_strength == pytest.approx(0.7)

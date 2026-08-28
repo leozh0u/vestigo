@@ -739,3 +739,52 @@ What it is saying underneath is worth keeping: the agent's point claims tend to
 be accurate to roughly a city, so demoting them to city level costs almost
 nothing and removes most of the overclaiming. That is plausible and testable
 once the rural half exists.
+
+### Evidence carries its own reach and its own ceiling
+
+The 28% overclaim rate has one root cause: the model wrote the strength numbers
+on its own citations. It could put 0.9 on "dry scrub" and push a point claim
+past a threshold. Citing evidence was enforced. Grading it was not, and the
+grader was the party with an interest in the answer.
+
+So each evidence record now carries two things that belong to it rather than to
+whoever cites it. `resolves_to` is the finest level it could ever justify, and
+`max_strength` is the most any one citation of it may be worth. The board
+clamps to both. A claim can be argued down by its evidence and never up.
+
+Where the numbers come from. Observations get their reach from modality:
+text reaches a district, road and infrastructure and architecture reach a
+region, and vegetation, terrain, vehicles and sky stop at a country. Text is
+the exception because Phase 0 measured it as the exception, since nearly every
+street-level answer in the baseline came from reading something. Text nobody
+could read drops back to country, because an illegible sign is a sign and not a
+place name. An observation's `certainty` becomes its strength ceiling: seeing
+something faintly cannot support a claim as strongly as seeing it clearly.
+
+Tools declare their own. Solar geometry reaches a country and caps at 0.4,
+because it rules places out and never rules one in. Its constraints do the real
+work and the citation should not be able to stand in for them.
+
+**Capping rather than rejecting.** A claim that reached too far is not a claim
+to throw away, it is a claim made at the wrong level, and the whole design says
+to answer at the level the evidence supports. So the level comes down, the note
+records what it was capped from, and the answer survives.
+
+Refuting evidence does not extend the reach. Something arguing against a claim
+should not license claiming more finely.
+
+### Two failure modes in the overclaims, and only one of them is fixable here
+
+The 17 overclaims split evenly. Nine reached too far on granularity, claiming
+city or finer with nothing behind it that could locate a city. Eight were
+simply wrong about the country: "Oceania" at 15,367 km, "Tropical coastal
+region" at 17,740 km.
+
+The reach ceiling addresses the first nine. It does nothing for the other
+eight, which are the model not knowing, and no rule about levels fixes not
+knowing. Those need either better evidence or an honest refusal, and the
+refusal path runs through thresholds on computed confidence rather than through
+reach.
+
+Worth separating in the writeup, because reporting a single overclaim rate
+hides that half of it is a different problem.
