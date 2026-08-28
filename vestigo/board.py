@@ -812,14 +812,31 @@ class Board:
     def explain_point(self, point: LatLon | None) -> dict[str, float]:
         return {cid: c.admits(point) for cid, c in self.constraints.items()}
 
+    def locate(self, claim: Claim) -> LatLon | None:
+        """Where a claim is, for the purpose of testing it against constraints.
+
+        Its own point if it has one, otherwise the board's best candidate. Most
+        claims arrive without coordinates, because a model asked to name a
+        country names a country. Treating those as unlocatable meant every
+        constraint abstained on them, and the constraints were the half of the
+        design meant to catch exactly this.
+
+        The Mexico image is what forced it. Solar geometry correctly scored the
+        answer at 0.03, that answer had no coordinate on it, so the constraint
+        abstained and the board stated it anyway, 13,599 km out.
+        """
+        if claim.point is not None:
+            return claim.point
+        ranked = self.rank_candidates()
+        return ranked[0].point if ranked else None
+
     def confidence(self, claim: Claim) -> float:
         """The number the answer is built on.
 
-        Evidence raises it, constraints scale it down. A claim carrying no
-        point is not something the constraints can speak to, so it is scored on
-        evidence alone.
+        Evidence raises it, constraints scale it down. Nothing can raise it
+        past what its evidence carries.
         """
-        return self.evidence_confidence(claim) * self.admissibility(claim.point)
+        return self.evidence_confidence(claim) * self.admissibility(self.locate(claim))
 
     def rank_candidates(self) -> list[ScoredCandidate]:
         """Apply every constraint to every candidate and rank what survives.
@@ -839,6 +856,18 @@ class Board:
             scored = [replace(s, score=s.score / total) for s in scored]
         scored.sort(key=lambda s: s.score, reverse=True)
         return scored
+
+    def best_admissibility(self) -> float:
+        """How well the best candidate survives the constraints.
+
+        Read this and not the top score. Scores are normalised across the
+        candidate set, so a single candidate always scores 1.0 no matter how
+        badly it fits. That is fine for ranking and useless as a signal, and it
+        is how a photograph the sun proves was not taken in Namibia was
+        answered with Namibia at full confidence.
+        """
+        ranked = self.rank_candidates()
+        return ranked[0].admissibility if ranked else 1.0
 
     def resolve(self, thresholds: dict[Level, float] | None = None) -> Resolution:
         """The most specific claim the evidence supports, and the chain to it.

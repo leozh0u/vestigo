@@ -62,6 +62,27 @@ GUESS_SCHEMA = {
         "lat": {"type": "number"},
         "lon": {"type": "number"},
         "place": {"type": "string", "description": "What you think this is, in words."},
+        "alternatives": {
+            "type": "array",
+            "description": (
+                "Up to three other places this could plausibly be, each somewhere "
+                "you would look next if the first answer were wrong. Name real "
+                "alternatives rather than points near your first guess. This is "
+                "what the tools test against, so a guess with no alternatives "
+                "cannot be checked."
+            ),
+            "items": {
+                "type": "object",
+                "properties": {
+                    "lat": {"type": "number"},
+                    "lon": {"type": "number"},
+                    "place": {"type": "string"},
+                    "why": {"type": "string",
+                            "description": "What in the image points here."},
+                },
+                "required": ["lat", "lon", "place"],
+            },
+        },
         "granularity": {
             "type": "string",
             "enum": ["continent", "country", "region", "city", "district", "point"],
@@ -249,9 +270,37 @@ class Agent:
             origin="first_pass",
             evidence_ids=(evidence.id,),
         )
+
+        # The alternatives are what makes a constraint able to do anything. A
+        # constraint eliminates candidates, so with one candidate it has
+        # nothing to eliminate in favour of and the ranking normalises straight
+        # back to 1.0 however badly the answer fits.
+        #
+        # Phase 0 wrote this case down before the code existed. Arm A answered
+        # Mexico and named Kenyan acacia scrub as a plausible alternative; the
+        # rerun took the alternative and went 14,970 km wrong. Both on the
+        # board, solar geometry settles it, because the sun was 47 degrees up
+        # over one and 79 below the horizon over the other.
+        alternatives = guess.get("alternatives") or []
+        for alt in alternatives[:3]:
+            try:
+                point = LatLon(float(alt["lat"]), float(alt["lon"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+            board.add_candidate(
+                point,
+                label=alt.get("place", ""),
+                # Lower than the first guess, since the model preferred that
+                # one. Enough to win if a constraint rules the first one out.
+                prior=0.4,
+                origin="alternative",
+                evidence_ids=(evidence.id,),
+            )
         trace.add("guess", f"{guess.get('place', '?')} at "
                            f"{guess['lat']:.3f},{guess['lon']:.3f} "
-                           f"({guess.get('granularity')}, {guess.get('confidence')})")
+                           f"({guess.get('granularity')}, {guess.get('confidence')})"
+                           + (f", {len(alternatives)} alternatives" if alternatives else
+                              ", no alternatives offered"))
 
     def _brief(self, board: Board, ids: Iterable[str]) -> str:
         return "\n".join(f"{board.evidence[e].id}: {board.evidence[e].summary}"

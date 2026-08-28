@@ -431,3 +431,56 @@ def test_a_short_conversation_is_left_alone():
     from vestigo.llm import Message
     messages = [Message.user("a"), Message.assistant("b"), Message.user("c")]
     assert Agent._trimmed(messages) == messages
+
+
+# -- alternatives -----------------------------------------------------------
+
+GUESS_WITH_ALTS = {**GUESS, "alternatives": [
+    {"lat": -22.57, "lon": 17.08, "place": "Windhoek, Namibia",
+     "why": "arid savannah looks similar"},
+    {"lat": -1.29, "lon": 36.82, "place": "Nairobi, Kenya"},
+]}
+
+
+def test_alternatives_become_candidates_the_tools_can_test(photo):
+    agent, _, _ = build([OBSERVATIONS, GUESS_WITH_ALTS, CLAIMS])
+    run = agent.run(photo)
+    origins = sorted(c.origin for c in run.board.candidates.values())
+    assert origins == ["alternative", "alternative", "first_pass"]
+    priors = {c.origin: c.prior for c in run.board.candidates.values()}
+    assert priors["first_pass"] > priors["alternative"]
+
+
+def test_the_mexico_case_end_to_end_with_an_alternative(photo):
+    """Phase 0 wrote this down before the code existed. Arm A answered Mexico
+    and named Kenyan scrub as a plausible alternative; the rerun took the
+    alternative and went 14,970 km wrong. With both on the board, solar
+    geometry settles it."""
+    wrong_first = {**GUESS, "lat": -22.57, "lon": 17.08, "place": "Windhoek",
+                   "alternatives": [{"lat": 20.45, "lon": -100.47,
+                                     "place": "Bajio, Mexico"}]}
+    agent, _, _ = build(
+        [OBSERVATIONS, wrong_first,
+         tool_reply(captured_utc=CAPTURE, lighting="daylight"),
+         stop_reply(), CLAIMS],
+        tools=Registry([SolarTool()]))
+    run = agent.run(photo)
+    top = run.board.rank_candidates()[0]
+    assert top.candidate.origin == "alternative"
+    assert "Mexico" in top.candidate.label
+    assert run.best_point.lat == pytest.approx(20.45)
+
+
+def test_a_malformed_alternative_is_skipped_not_fatal(photo):
+    broken = {**GUESS, "alternatives": [
+        {"place": "no coordinates"}, {"lat": "x", "lon": 1.0, "place": "bad"},
+        {"lat": 10.0, "lon": 10.0, "place": "fine"}]}
+    agent, _, _ = build([OBSERVATIONS, broken, CLAIMS])
+    run = agent.run(photo)
+    assert len(run.board.candidates) == 2          # the guess plus the good one
+
+
+def test_no_alternatives_offered_is_recorded(photo):
+    agent, _, _ = build([OBSERVATIONS, GUESS, CLAIMS])
+    run = agent.run(photo)
+    assert any("no alternatives offered" in d for _, d in run.trace.steps)

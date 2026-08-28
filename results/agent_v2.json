@@ -1,0 +1,1543 @@
+{
+  "ran_utc": "2026-08-28 22:14:39",
+  "preset": "cheap",
+  "samples": 3,
+  "dry": false,
+  "spent_usd": 0.779979,
+  "runs": [
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0,
+      "lon": 10.0,
+      "error_km": 363.7265054460583,
+      "cost_usd": 0,
+      "computed_confidence": 0.6736,
+      "all_levels": {
+        "continent": 0.6736
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0,
+      "lon": 10.0,
+      "error_km": 363.7265054460583,
+      "cost_usd": 0,
+      "computed_confidence": 0.616,
+      "all_levels": {
+        "continent": 0.616
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": null,
+      "lat": 50.0,
+      "lon": 10.0,
+      "error_km": 363.7265054460583,
+      "cost_usd": 0,
+      "computed_confidence": 0.6399999999999999,
+      "all_levels": {
+        "continent": 0.6399999999999999
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (possibly Dalmatian coast, Adriatic Sea)",
+      "level": "region",
+      "confidence": "low",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0,
+      "computed_confidence": 0.8623744,
+      "all_levels": {
+        "continent": 0.5,
+        "region": 0.8623744
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Adriatic coast (Dalmatia region, Croatia/Montenegro)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0,
+      "computed_confidence": 0.93577472,
+      "all_levels": {
+        "region": 0.93577472
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (Adriatic, likely Dalmatia, Croatia)",
+      "level": "region",
+      "confidence": "low",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0,
+      "computed_confidence": 0.828084304,
+      "all_levels": {
+        "continent": 0.5,
+        "region": 0.828084304
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 30.17366837502707,
+      "cost_usd": 0,
+      "computed_confidence": 0.552,
+      "all_levels": {
+        "continent": 0.75,
+        "country": 0.552
+      },
+      "evidence": 6,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 30.17366837502707,
+      "cost_usd": 0,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999
+      },
+      "evidence": 6,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 52.0,
+      "lon": -1.0,
+      "error_km": 95.05685276240978,
+      "cost_usd": 0,
+      "computed_confidence": 0.7696,
+      "all_levels": {
+        "continent": 0.7696
+      },
+      "evidence": 6,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque main gateway, Lahore",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 31.5883,
+      "lon": 74.31029999999998,
+      "error_km": 0.12509949096887454,
+      "cost_usd": 0,
+      "computed_confidence": 0.9460216,
+      "all_levels": {
+        "country": 0.75,
+        "region": 0.9460216
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "region",
+      "confidence": "high",
+      "lat": 31.5877,
+      "lon": 74.31029999999998,
+      "error_km": 0.17246826974197849,
+      "cost_usd": 0,
+      "computed_confidence": 0.997,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.997
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Lahore",
+      "level": "region",
+      "confidence": "high",
+      "lat": 31.5804,
+      "lon": 74.31029999999998,
+      "error_km": 0.9561858732763828,
+      "cost_usd": 0,
+      "computed_confidence": 0.916,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.916
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Buenos Aires",
+      "level": "region",
+      "confidence": "high",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0,
+      "computed_confidence": 0.928,
+      "all_levels": {
+        "country": 0.92,
+        "region": 0.928
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Buenos Aires",
+      "level": "region",
+      "confidence": "high",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0,
+      "computed_confidence": 0.895,
+      "all_levels": {
+        "country": 0.8,
+        "region": 0.895
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Avenida 9 de Julio / Obelisco area",
+      "level": "region",
+      "confidence": "medium",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0,
+      "computed_confidence": 0.87456,
+      "all_levels": {
+        "country": 0.75,
+        "region": 0.87456
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0,
+      "computed_confidence": 0.997,
+      "all_levels": {
+        "country": 0.99,
+        "region": 0.997
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0,
+      "computed_confidence": 0.99874,
+      "all_levels": {
+        "country": 0.99,
+        "region": 0.99874
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Eiffel Tower area, along the Seine River, Paris",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0,
+      "computed_confidence": 0.997648,
+      "all_levels": {
+        "country": 0.97,
+        "region": 0.997648
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Taiwan",
+      "level": "country",
+      "confidence": "low",
+      "lat": 24.45,
+      "lon": 121.42000000000002,
+      "error_km": 20.35768426311733,
+      "cost_usd": 0,
+      "computed_confidence": 0.52,
+      "all_levels": {
+        "continent": 0.44000000000000006,
+        "country": 0.52
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Asia",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 24.35,
+      "lon": 121.35000000000002,
+      "error_km": 31.91611869290613,
+      "cost_usd": 0,
+      "computed_confidence": 0.5680000000000001,
+      "all_levels": {
+        "continent": 0.5680000000000001
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent Hall or similarly named building, likely a law-related or library building named 'Kent'",
+      "level": "country",
+      "confidence": "low",
+      "lat": 40.7365,
+      "lon": -74.1737,
+      "error_km": 19.53507135515461,
+      "cost_usd": 0,
+      "computed_confidence": 0.808,
+      "all_levels": {
+        "country": 0.808
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent, Ohio",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.1567,
+      "lon": -81.3612,
+      "error_km": 622.1864786073502,
+      "cost_usd": 0,
+      "computed_confidence": 0.808,
+      "all_levels": {
+        "country": 0.808
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Building named 'KENT' with Latin legal motto 'IUS EST ARS BONI ET AEQUI', likely a law-related civic building (e.g., Kent County Courthouse or law school) in a place called Kent, USA",
+      "level": "country",
+      "confidence": "low",
+      "lat": 39.1355,
+      "lon": -84.5027,
+      "error_km": 916.7119736219305,
+      "cost_usd": 0,
+      "computed_confidence": 0.88,
+      "all_levels": {
+        "country": 0.88
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Oceania",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": -20.0,
+      "lon": 148.0,
+      "error_km": 15367.210819747834,
+      "cost_usd": 0,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 1,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Tropical coastal region (volcanic island beach)",
+      "level": "region",
+      "confidence": "low",
+      "lat": -8.5,
+      "lon": 115.39999999999998,
+      "error_km": 17740.423478790326,
+      "cost_usd": 0,
+      "computed_confidence": 0.855972928,
+      "all_levels": {
+        "region": 0.855972928
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "State Route 170 corridor near North Hollywood/Studio City (approaching US-101 interchange)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 34.1808,
+      "lon": -118.3856,
+      "error_km": 22.955501069256506,
+      "cost_usd": 0,
+      "computed_confidence": 0.97942,
+      "all_levels": {
+        "country": 0.94,
+        "region": 0.97942
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "CA State Route 170 South near Hollywood Freeway (US-101) interchange, San Fernando Valley, Los Angeles",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 34.1808,
+      "lon": -118.3672,
+      "error_km": 23.618656876018164,
+      "cost_usd": 0,
+      "computed_confidence": 0.8655999999999999,
+      "all_levels": {
+        "country": 0.88,
+        "region": 0.8655999999999999
+      },
+      "evidence": 16,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "Los Angeles",
+      "level": "country",
+      "confidence": "high",
+      "lat": 34.1808,
+      "lon": -118.3608,
+      "error_km": 23.873206842744427,
+      "cost_usd": 0,
+      "computed_confidence": 0.91,
+      "all_levels": {
+        "country": 0.91
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_2eedbfc14b",
+      "source": "mapillary_urban",
+      "claim": "Printers Row / South Loop, Chicago",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 41.8676,
+      "lon": -87.627,
+      "error_km": 1.0270516027105734,
+      "cost_usd": 0,
+      "computed_confidence": 0.9397888,
+      "all_levels": {
+        "country": 0.982,
+        "region": 0.9397888
+      },
+      "evidence": 13,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_2eedbfc14b",
+      "source": "mapillary_urban",
+      "claim": "Printers Row / South Loop, Chicago",
+      "level": "region",
+      "confidence": null,
+      "lat": 41.8676,
+      "lon": -87.627,
+      "error_km": 1.0270516027105734,
+      "cost_usd": 0,
+      "computed_confidence": 0.97942,
+      "all_levels": {
+        "country": 0.94,
+        "region": 0.97942
+      },
+      "evidence": 15,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_2eedbfc14b",
+      "source": "mapillary_urban",
+      "claim": "Chicago",
+      "level": "region",
+      "confidence": "high",
+      "lat": 41.8664,
+      "lon": -87.6295,
+      "error_km": 1.0567070497874134,
+      "cost_usd": 0.037239,
+      "computed_confidence": 0.9755,
+      "all_levels": {
+        "country": 0.96,
+        "region": 0.9755
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Italy",
+      "level": "country",
+      "confidence": "high",
+      "lat": 41.9022,
+      "lon": 12.501300000000015,
+      "error_km": 0.09216718811099227,
+      "cost_usd": 0,
+      "computed_confidence": 0.96,
+      "all_levels": {
+        "country": 0.96
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Rome",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 41.9028,
+      "lon": 12.496399999999994,
+      "error_km": 0.337085540413059,
+      "cost_usd": 0,
+      "computed_confidence": 0.8655999999999999,
+      "all_levels": {
+        "country": 0.99,
+        "region": 0.8655999999999999
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Near a tourist/transit hub in central Rome",
+      "level": "region",
+      "confidence": "low",
+      "lat": 41.9028,
+      "lon": 12.514999999999986,
+      "error_km": 1.2228188484776614,
+      "cost_usd": 0,
+      "computed_confidence": 0.6639999999999999,
+      "all_levels": {
+        "country": 0.888,
+        "region": 0.6639999999999999
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_385508af73",
+      "source": "mapillary_urban",
+      "claim": "Mexico",
+      "level": "country",
+      "confidence": null,
+      "lat": 19.436,
+      "lon": -99.136,
+      "error_km": 0.8053539072429599,
+      "cost_usd": 0,
+      "computed_confidence": 0.86,
+      "all_levels": {
+        "country": 0.86
+      },
+      "evidence": 15,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_385508af73",
+      "source": "mapillary_urban",
+      "claim": "Mexico City",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 19.4342,
+      "lon": -99.1386,
+      "error_km": 0.9049372784033496,
+      "cost_usd": 0,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "country": 0.853,
+        "region": 0.72
+      },
+      "evidence": 19,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_385508af73",
+      "source": "mapillary_urban",
+      "claim": "Mexico",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 19.437,
+      "lon": -99.137,
+      "error_km": 0.9581667237184318,
+      "cost_usd": 0,
+      "computed_confidence": 0.8824,
+      "all_levels": {
+        "country": 0.8824
+      },
+      "evidence": 18,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "China",
+      "level": "country",
+      "confidence": "low",
+      "lat": 28.6,
+      "lon": 77.19999999999999,
+      "error_km": 1738.6742999461937,
+      "cost_usd": 0,
+      "computed_confidence": 0.76,
+      "all_levels": {
+        "continent": 0.8320000000000001,
+        "country": 0.76
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "India",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 28.6139,
+      "lon": 77.209,
+      "error_km": 1740.1979225824264,
+      "cost_usd": 0,
+      "computed_confidence": 0.91936,
+      "all_levels": {
+        "country": 0.91936
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "China",
+      "level": "country",
+      "confidence": null,
+      "lat": 31.2304,
+      "lon": 121.47370000000001,
+      "error_km": 4914.317669337606,
+      "cost_usd": 0,
+      "computed_confidence": 0.919,
+      "all_levels": {
+        "country": 0.919
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_4524de2ded",
+      "source": "mapillary_urban",
+      "claim": "Eastern Europe/Caucasus (post-Soviet urban area)",
+      "level": "region",
+      "confidence": "low",
+      "lat": 41.7151,
+      "lon": 44.8271,
+      "error_km": 1323.4722745025692,
+      "cost_usd": 0,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "region": 0.776
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_4524de2ded",
+      "source": "mapillary_urban",
+      "claim": "Tbilisi",
+      "level": "region",
+      "confidence": "low",
+      "lat": 41.7151,
+      "lon": 44.8271,
+      "error_km": 1323.4722745025692,
+      "cost_usd": 0,
+      "computed_confidence": 0.552,
+      "all_levels": {
+        "country": 0.51,
+        "region": 0.552
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_4524de2ded",
+      "source": "mapillary_urban",
+      "claim": "Post-Soviet space / Eastern Europe or Caucasus",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 41.7151,
+      "lon": 44.8271,
+      "error_km": 1323.4722745025692,
+      "cost_usd": 0,
+      "computed_confidence": 0.712,
+      "all_levels": {
+        "country": 0.51,
+        "region": 0.712
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "South Africa",
+      "level": "country",
+      "confidence": "high",
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0,
+      "computed_confidence": 0.9,
+      "all_levels": {
+        "country": 0.9
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "South Africa",
+      "level": "country",
+      "confidence": "high",
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0,
+      "computed_confidence": 0.9,
+      "all_levels": {
+        "country": 0.9
+      },
+      "evidence": 14,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "Woodstock, Cape Town",
+      "level": "region",
+      "confidence": "medium",
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0,
+      "computed_confidence": 0.9616,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.9616
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "claim": "Nairobi",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.2864,
+      "lon": 36.817200000000014,
+      "error_km": 0.6169500364495227,
+      "cost_usd": 0,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "continent": 0.7,
+        "country": 0.776,
+        "region": 0.776
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "claim": "Kenya",
+      "level": "country",
+      "confidence": "low",
+      "lat": -1.2833,
+      "lon": 36.8167,
+      "error_km": 0.956393979566644,
+      "cost_usd": 0,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.72,
+        "country": 0.6799999999999999
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "claim": "Nairobi",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.2833,
+      "lon": 36.8167,
+      "error_km": 0.956393979566644,
+      "cost_usd": 0,
+      "computed_confidence": 0.6759999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.6399999999999999,
+        "region": 0.6759999999999999
+      },
+      "evidence": 12,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": "low",
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0,
+      "computed_confidence": 0.6599999999999999,
+      "all_levels": {
+        "country": 0.97,
+        "region": 0.6599999999999999
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": null,
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0,
+      "computed_confidence": 0.8432,
+      "all_levels": {
+        "country": 0.9400000000000001,
+        "region": 0.8432
+      },
+      "evidence": 15,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.2337,
+      "lon": 21.005600000000015,
+      "error_km": 0.8387571316080448,
+      "cost_usd": 0,
+      "computed_confidence": 0.91425,
+      "all_levels": {
+        "country": 0.96,
+        "region": 0.91425
+      },
+      "evidence": 16,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "high",
+      "lat": 40.42,
+      "lon": -3.703800000000001,
+      "error_km": 0.17445853521126753,
+      "cost_usd": 0,
+      "computed_confidence": 0.832,
+      "all_levels": {
+        "country": 0.832
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Historic pedestrian shopping district of a major Spanish city",
+      "level": "region",
+      "confidence": "low",
+      "lat": 40.42,
+      "lon": -3.7024999999999864,
+      "error_km": 0.27454027973677786,
+      "cost_usd": 0,
+      "computed_confidence": 0.7696000000000001,
+      "all_levels": {
+        "country": 0.9657,
+        "region": 0.7696000000000001
+      },
+      "evidence": 12,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Pedestrian shopping street in a Spanish city center",
+      "level": "region",
+      "confidence": "low",
+      "lat": 40.42,
+      "lon": -3.7024999999999864,
+      "error_km": 0.27454027973677786,
+      "cost_usd": 0,
+      "computed_confidence": 0.7312000000000001,
+      "all_levels": {
+        "country": 0.94624,
+        "region": 0.7312000000000001
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "HiKR Ground, KTO Tower, Gangnam-gu, Seoul",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 37.5013,
+      "lon": 127.03960000000001,
+      "error_km": 9.090642475689716,
+      "cost_usd": 0,
+      "computed_confidence": 0.956992,
+      "all_levels": {
+        "country": 0.75,
+        "region": 0.956992
+      },
+      "evidence": 18,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "HiKR Ground, COEX, Seoul",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 37.5125,
+      "lon": 127.05899999999997,
+      "error_km": 9.26376256172946,
+      "cost_usd": 0,
+      "computed_confidence": 0.97408,
+      "all_levels": {
+        "country": 0.97408
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "Seongnam, South Korea",
+      "level": "region",
+      "confidence": null,
+      "lat": 37.4009,
+      "lon": 127.10579999999999,
+      "error_km": 21.658024570119352,
+      "cost_usd": 0,
+      "computed_confidence": 0.8079999999999999,
+      "all_levels": {
+        "country": 0.82,
+        "region": 0.8079999999999999
+      },
+      "evidence": 14,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 40.9,
+      "lon": -3.9000000000000057,
+      "error_km": 78.767780662361,
+      "cost_usd": 0,
+      "computed_confidence": 0.7951999999999999,
+      "all_levels": {
+        "country": 0.7951999999999999
+      },
+      "evidence": 10,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.0,
+      "lon": -3.5,
+      "error_km": 96.95407869735126,
+      "cost_usd": 0,
+      "computed_confidence": 0.870528,
+      "all_levels": {
+        "continent": 0.804,
+        "country": 0.870528
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 41.0,
+      "lon": -3.5,
+      "error_km": 96.95407869735126,
+      "cost_usd": 0.016707,
+      "computed_confidence": 0.83816,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.83816
+      },
+      "evidence": 11,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "claim": "Interior S\u00e3o Paulo/Minas Gerais region (terra roxa belt)",
+      "level": "region",
+      "confidence": "low",
+      "lat": -22.5,
+      "lon": -48.5,
+      "error_km": 5.282348609057111,
+      "cost_usd": 0,
+      "computed_confidence": 0.616,
+      "all_levels": {
+        "country": 0.8655999999999999,
+        "region": 0.616
+      },
+      "evidence": 14,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "claim": "Brazil",
+      "level": "country",
+      "confidence": "high",
+      "lat": -22.0,
+      "lon": -47.900000000000006,
+      "error_km": 85.95187339761263,
+      "cost_usd": 0,
+      "computed_confidence": 0.9328000000000001,
+      "all_levels": {
+        "country": 0.9328000000000001
+      },
+      "evidence": 14,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "claim": "Interior of Brazil (small/mid-sized inland town)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": -22.0,
+      "lon": -47.900000000000006,
+      "error_km": 85.95187339761263,
+      "cost_usd": 0,
+      "computed_confidence": 0.74912,
+      "all_levels": {
+        "country": 0.9568,
+        "region": 0.74912
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Central Europe (likely Poland)",
+      "level": "country",
+      "confidence": "low",
+      "lat": 52.2,
+      "lon": 19.0,
+      "error_km": 121.25667715748311,
+      "cost_usd": 0,
+      "computed_confidence": 0.5,
+      "all_levels": {
+        "continent": 0.5680000000000001,
+        "country": 0.5
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 52.0,
+      "lon": 19.0,
+      "error_km": 135.52000434764184,
+      "cost_usd": 0,
+      "computed_confidence": 0.595,
+      "all_levels": {
+        "continent": 0.595
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Central/Eastern Europe",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.0,
+      "lon": 19.0,
+      "error_km": 135.52000434764184,
+      "cost_usd": 0,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "continent": 0.712,
+        "region": 0.72
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.045075,
+      "computed_confidence": 0.856,
+      "all_levels": {
+        "continent": 0.712,
+        "country": 0.856
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.345895,
+      "computed_confidence": 0.81793,
+      "all_levels": {
+        "continent": 0.804,
+        "country": 0.81793
+      },
+      "evidence": 12,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": null,
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.229033,
+      "computed_confidence": 0.6,
+      "all_levels": {
+        "continent": 0.7,
+        "country": 0.6
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "claim": "Chile",
+      "level": "country",
+      "confidence": "medium",
+      "lat": -34.6,
+      "lon": -71.2,
+      "error_km": 53.295886011489934,
+      "cost_usd": 0.054813,
+      "computed_confidence": 0.8824,
+      "all_levels": {
+        "continent": 0.6,
+        "country": 0.8824
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "claim": "Chile",
+      "level": "country",
+      "confidence": "medium",
+      "lat": -34.6,
+      "lon": -71.2,
+      "error_km": 53.295886011489934,
+      "cost_usd": 0.400728,
+      "computed_confidence": 0.85664,
+      "all_levels": {
+        "continent": 0.7648,
+        "country": 0.85664
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "claim": "Chile",
+      "level": "country",
+      "confidence": null,
+      "lat": -34.6,
+      "lon": -71.2,
+      "error_km": 53.295886011489934,
+      "cost_usd": 0.23540899999999998,
+      "computed_confidence": 0.91768,
+      "all_levels": {
+        "continent": 0.79,
+        "country": 0.91768
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_7ee09e498b",
+      "source": "mapillary_rural",
+      "claim": "Windhoek",
+      "level": "region",
+      "confidence": "low",
+      "lat": -22.5,
+      "lon": 17.079999999999984,
+      "error_km": 13596.961977174138,
+      "cost_usd": 0.41045200000000004,
+      "computed_confidence": 0.6928,
+      "all_levels": {
+        "continent": 0.804,
+        "country": 0.744,
+        "region": 0.6928
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_7ee09e498b",
+      "source": "mapillary_rural",
+      "claim": "Namibia",
+      "level": "country",
+      "confidence": "low",
+      "lat": -22.5594,
+      "lon": 17.083200000000005,
+      "error_km": 13598.509186783607,
+      "cost_usd": 0.27184,
+      "computed_confidence": 0.6259999999999999,
+      "all_levels": {
+        "continent": 0.72,
+        "country": 0.6259999999999999
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_7ee09e498b",
+      "source": "mapillary_rural",
+      "claim": "Southern Africa (arid savanna, possibly Namibia)",
+      "level": "country",
+      "confidence": "low",
+      "lat": -22.5597,
+      "lon": 17.083200000000005,
+      "error_km": 13598.515358938967,
+      "cost_usd": 0.08097999999999994,
+      "computed_confidence": 0.744,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.744
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 165.86797260437112,
+      "cost_usd": 0.216614,
+      "computed_confidence": 0.552,
+      "all_levels": {
+        "continent": 0.874,
+        "country": 0.552
+      },
+      "evidence": 11,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "Western Europe (UK-like temperate agricultural countryside)",
+      "level": "country",
+      "confidence": null,
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 165.86797260437112,
+      "cost_usd": 0.21914599999999998,
+      "computed_confidence": 0.744,
+      "all_levels": {
+        "continent": 0.8208,
+        "country": 0.744
+      },
+      "evidence": 13,
+      "constraints": 3,
+      "rejected": []
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 165.86797260437112,
+      "cost_usd": 0.177487,
+      "computed_confidence": 0.744,
+      "all_levels": {
+        "continent": 0.6080000000000001,
+        "country": 0.744
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "Southeast Asia",
+      "level": "region",
+      "confidence": "low",
+      "lat": 14.5,
+      "lon": 100.5,
+      "error_km": 46.10070722826463,
+      "cost_usd": 0.025674,
+      "computed_confidence": 0.712,
+      "all_levels": {
+        "continent": 0.68896,
+        "region": 0.712
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "Africa",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": -1.5,
+      "lon": 35.0,
+      "error_km": 7400.566052223895,
+      "cost_usd": 0,
+      "computed_confidence": 0.7984,
+      "all_levels": {
+        "continent": 0.7984
+      },
+      "evidence": 9,
+      "constraints": 2,
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "Southern/East Africa",
+      "level": "region",
+      "confidence": null,
+      "lat": -15.5,
+      "lon": 30.0,
+      "error_km": 8421.710473928411,
+      "cost_usd": 0.373759,
+      "computed_confidence": 0.8208,
+      "all_levels": {
+        "continent": 0.8320000000000001,
+        "region": 0.8208
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "rejected": []
+    }
+  ]
+}

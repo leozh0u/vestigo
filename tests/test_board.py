@@ -465,3 +465,87 @@ def test_reach_and_ceiling_survive_a_round_trip():
     revived = Board.from_dict(json.loads(json.dumps(board.to_dict())))
     assert revived.evidence["e1"].resolves_to is Level.DISTRICT
     assert revived.evidence["e1"].max_strength == pytest.approx(0.7)
+
+
+# -- constraints need something to choose between ---------------------------
+#
+# The first full agent run answered a Mexican photograph with Namibia, 13,599
+# km out. The solar constraint had correctly scored that answer at 0.03. It
+# changed nothing, for two separate reasons, and both are pinned here.
+
+def test_a_lone_candidate_scores_top_however_badly_it_fits():
+    """Scores are normalised across the set, so one candidate takes all of it.
+
+    The weight here is 0.97, which is what the solar tool actually uses, and it
+    is the dangerous case rather than a contrived one. A rejected point keeps a
+    0.03 residue, the set sums to 0.03, and normalising hands that single
+    candidate a score of 1.0. That is how a photograph the sun proves was not
+    taken in Namibia came back as Namibia at full confidence.
+    """
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_constraint(LatitudeBand(id="", description="far away", lo=60.0, hi=70.0,
+                                      weight=0.97, evidence_ids=(ev.id,)))
+    board.add_candidate(MEXICO, label="the only option", prior=1.0)
+    top = board.rank_candidates()[0]
+    assert top.score == pytest.approx(1.0)          # says nothing
+    assert top.admissibility == pytest.approx(0.03)  # says everything
+    assert board.best_admissibility() == pytest.approx(0.03)
+
+
+def test_a_hard_veto_does_zero_a_lone_candidate():
+    """At weight 1.0 there is no residue to normalise, so the score is zero.
+    Which is why the soft case above is the one that gets through."""
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_constraint(LatitudeBand(id="", description="far away", lo=60.0, hi=70.0,
+                                      weight=1.0, evidence_ids=(ev.id,)))
+    board.add_candidate(MEXICO, prior=1.0)
+    assert board.rank_candidates()[0].score == 0.0
+    assert board.best_admissibility() == 0.0
+
+
+def test_an_alternative_lets_the_constraint_act():
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_constraint(LatitudeBand(id="", description="northern", lo=15.0, hi=25.0,
+                                      weight=0.97, evidence_ids=(ev.id,)))
+    wrong = board.add_candidate(LatLon(-22.57, 17.08), label="Windhoek", prior=1.0)
+    right = board.add_candidate(MEXICO, label="Queretaro", prior=0.4)
+    ranked = {s.candidate.id: s for s in board.rank_candidates()}
+    assert ranked[right.id].score > ranked[wrong.id].score
+    assert board.rank_candidates()[0].candidate.id == right.id
+
+
+def test_a_claim_with_no_point_is_tested_at_the_best_candidate():
+    """Most claims arrive without coordinates, because a model asked to name a
+    country names a country. Treating those as unlocatable meant every
+    constraint abstained on exactly the claims that mattered."""
+    board = Board("t")
+    ev = board.add_evidence("observe", "arid savannah")
+    board.add_candidate(LatLon(-22.57, 17.08), label="Windhoek", prior=1.0)
+    board.add_constraint(LatitudeBand(id="", description="northern", lo=15.0, hi=25.0,
+                                      weight=0.97, evidence_ids=(ev.id,)))
+    claim = board.add_claim(Level.COUNTRY, "Namibia", supports=[Support(ev.id, 0.9)])
+    assert claim.point is None
+    assert board.locate(claim) is not None
+    assert board.confidence(claim) < 0.05          # would have been 0.90
+    assert board.resolve().answer is None          # so it declines instead
+
+
+def test_a_claim_with_its_own_point_uses_that():
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_candidate(LatLon(-22.57, 17.08), label="somewhere else", prior=1.0)
+    claim = board.add_claim(Level.COUNTRY, "Mexico", point=MEXICO,
+                            supports=[Support(ev.id, 0.9)])
+    assert board.locate(claim) == MEXICO
+
+
+def test_an_unconstrained_board_leaves_everything_alone():
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_candidate(MEXICO, prior=1.0)
+    claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(ev.id, 0.9)])
+    assert board.best_admissibility() == 1.0
+    assert board.confidence(claim) == pytest.approx(0.9)
