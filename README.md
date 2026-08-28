@@ -1,5 +1,7 @@
 # Vestigo
 
+[![ci](https://github.com/leozh0u/vestigo/actions/workflows/ci.yml/badge.svg)](https://github.com/leozh0u/vestigo/actions/workflows/ci.yml)
+
 Works out where a photograph was taken, at the most specific level the evidence
 actually supports.
 
