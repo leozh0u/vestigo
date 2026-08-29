@@ -549,3 +549,31 @@ def test_an_unconstrained_board_leaves_everything_alone():
     claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(ev.id, 0.9)])
     assert board.best_admissibility() == 1.0
     assert board.confidence(claim) == pytest.approx(0.9)
+
+
+def test_a_claim_is_located_at_the_guess_it_came_from_not_the_top_candidate():
+    """Adding alternatives put other places on the board, and testing a claim
+    against whichever of them ranked top scored it against somewhere it was
+    never about. Three images answered to within a kilometre were refused."""
+    board = Board("t")
+    ev = board.add_evidence("observe", "a European street")
+    paris = board.add_candidate(LatLon(48.857, 2.352), label="Paris",
+                                prior=1.0, origin="first_pass")
+    board.add_candidate(LatLon(52.520, 13.405), label="Berlin",
+                        prior=0.4, origin="alternative")
+    # A constraint that rules out Paris and admits Berlin.
+    board.add_constraint(LongitudeBand(id="", description="east", lo=10.0, hi=20.0,
+                                       weight=0.97, evidence_ids=(ev.id,)))
+    claim = board.add_claim(Level.CITY, "Paris", supports=[Support(ev.id, 0.9)])
+
+    assert board.locate(claim) == paris.point          # not the top candidate
+    assert board.rank_candidates()[0].candidate.label == "Berlin"
+    assert board.confidence(claim) < 0.05              # Paris is ruled out, so decline
+
+
+def test_with_no_first_pass_it_falls_back_to_the_ranking():
+    board = Board("t")
+    ev = board.add_evidence("observe", "x")
+    board.add_candidate(MEXICO, label="only option", prior=1.0, origin="overpass")
+    claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(ev.id, 0.9)])
+    assert board.locate(claim) == MEXICO

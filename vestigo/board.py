@@ -824,9 +824,21 @@ class Board:
         The Mexico image is what forced it. Solar geometry correctly scored the
         answer at 0.03, that answer had no coordinate on it, so the constraint
         abstained and the board stated it anyway, 13,599 km out.
+
+        Which candidate stands in matters, and the first attempt got it wrong.
+        Using the top-ranked one meant a claim was tested against wherever the
+        ranking had ended up, which after alternatives were added could be a
+        different continent. A claim naming Paris was scored against an
+        alternative in Berlin, and three images the system had answered to
+        within a kilometre were refused. So the stand-in is the candidate the
+        claim was reasoned from, the unaided first pass, and the ranking is
+        left to do its own separate job.
         """
         if claim.point is not None:
             return claim.point
+        for cand in self.candidates.values():
+            if cand.origin == "first_pass":
+                return cand.point
         ranked = self.rank_candidates()
         return ranked[0].point if ranked else None
 
