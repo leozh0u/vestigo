@@ -29,3 +29,6 @@ venv/
 
 # macOS
 .DS_Store
+
+# Training imagery: large, CC-BY-SA, and regenerable from the index
+data/train/
