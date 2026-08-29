@@ -224,11 +224,28 @@ class SolarElevation(Constraint):
     lo_deg: float
     hi_deg: float
     soft_deg: float = 3.0
+    # Whether the timestamp is UTC or a reading off a local clock. Getting this
+    # wrong is not a small error: a local time treated as UTC is out by the
+    # timezone offset, three hours for Argentina, which is 45 degrees of
+    # longitude. That mistake made this constraint reject correct answers at
+    # 0.03 on every IM2GPS image, because those carry local capture time and
+    # the tool input was named for UTC.
+    basis: str = "utc"
+
+    def _instant(self, point: LatLon):
+        when = _parse_utc(self.captured_utc)
+        if self.basis != "local":
+            return when
+        # A local clock is roughly longitude over fifteen, so the same forward
+        # calculation works once the candidate pays for its own offset. Weaker
+        # than real UTC, because timezone borders and daylight saving move it
+        # by an hour or more, which is what the softer edges are for.
+        return when - timedelta(hours=round(point.lon / 15.0))
 
     def raw_admits(self, point: LatLon | None) -> float | None:
         if point is None:
             return None
-        elevation = sun_position(point, _parse_utc(self.captured_utc)).elevation_deg
+        elevation = sun_position(point, self._instant(point)).elevation_deg
         if elevation < self.lo_deg:
             excess = self.lo_deg - elevation
         elif elevation > self.hi_deg:
@@ -239,7 +256,8 @@ class SolarElevation(Constraint):
 
     def _params(self) -> dict:
         return {"captured_utc": self.captured_utc, "lo_deg": self.lo_deg,
-                "hi_deg": self.hi_deg, "soft_deg": self.soft_deg}
+                "hi_deg": self.hi_deg, "soft_deg": self.soft_deg,
+                "basis": self.basis}
 
 
 @register_constraint
@@ -259,11 +277,15 @@ class SolarAzimuth(Constraint):
     bearing_deg: float
     tolerance_deg: float = 30.0
     soft_deg: float = 20.0
+    basis: str = "utc"
 
     def raw_admits(self, point: LatLon | None) -> float | None:
         if point is None:
             return None
-        sun = sun_position(point, _parse_utc(self.captured_utc))
+        when = _parse_utc(self.captured_utc)
+        if self.basis == "local":
+            when = when - timedelta(hours=round(point.lon / 15.0))
+        sun = sun_position(point, when)
         if not sun.is_daylight:
             # No bearing to compare against in the dark. Leave that judgement
             # to the elevation constraint rather than double counting it.
@@ -273,4 +295,5 @@ class SolarAzimuth(Constraint):
 
     def _params(self) -> dict:
         return {"captured_utc": self.captured_utc, "bearing_deg": self.bearing_deg,
-                "tolerance_deg": self.tolerance_deg, "soft_deg": self.soft_deg}
+                "tolerance_deg": self.tolerance_deg, "soft_deg": self.soft_deg,
+                "basis": self.basis}

@@ -577,3 +577,61 @@ def test_with_no_first_pass_it_falls_back_to_the_ranking():
     board.add_candidate(MEXICO, label="only option", prior=1.0, origin="overpass")
     claim = board.add_claim(Level.COUNTRY, "Mexico", supports=[Support(ev.id, 0.9)])
     assert board.locate(claim) == MEXICO
+
+
+# -- a constraint that rejects everything ----------------------------------
+
+def test_a_constraint_rejecting_every_candidate_is_set_aside():
+    """A constraint exists to prefer some places over others. One that rejects
+    all of them has said nothing about location and a good deal about its own
+    inputs, which are likelier wrong than every candidate is.
+
+    The case that forced it: a photograph timestamped 22:53 local, which is
+    night, with the extractor reporting daylight. Both cannot hold. The solar
+    constraint was right that they conflict and wrong to conclude anything
+    about where, so it scored the correct answer and three alternatives at 0.03
+    alike and the board refused an answer it had got to within a kilometre.
+    """
+    board = Board("t")
+    ev = board.add_evidence("observe", "scene looks sunlit")
+    board.add_constraint(LatitudeBand(id="", description="impossible",
+                                      lo=80.0, hi=85.0, weight=0.97,
+                                      evidence_ids=(ev.id,)))
+    for lat, lon in ((-34.6, -58.4), (-23.5, -46.6), (-34.9, -56.2), (-33.4, -70.6)):
+        board.add_candidate(LatLon(lat, lon), prior=0.25)
+
+    assert board.contradicted()
+    assert board.admissibility(LatLon(-34.6, -58.4)) == 1.0
+    assert board.rank_candidates()[0].admissibility == 1.0
+    # Still visible on the board view, so the conflict can be reported.
+    assert board.explain_point(LatLon(-34.6, -58.4))["k1"] < 0.05
+
+
+def test_one_candidate_is_never_a_contradiction():
+    """With a single candidate, rejecting everything and rejecting the only
+    guess are the same sentence, and the second is the job. The Mexico image
+    is that case: the sun says no, and the answer is to decline rather than to
+    decide the sun must be wrong."""
+    board = Board("t")
+    ev = board.add_evidence("observe", "arid savannah")
+    board.add_constraint(LatitudeBand(id="", description="northern",
+                                      lo=15.0, hi=25.0, weight=0.97,
+                                      evidence_ids=(ev.id,)))
+    board.add_candidate(LatLon(-22.57, 17.08), label="Windhoek", prior=1.0)
+    assert board.contradicted() == {}
+    assert board.best_admissibility() == pytest.approx(0.03)
+    board.add_claim(Level.COUNTRY, "Namibia", supports=[Support(ev.id, 0.9)])
+    assert board.resolve().answer is None
+
+
+def test_a_constraint_that_admits_one_candidate_still_acts():
+    """Which is the whole point of offering alternatives."""
+    board = Board("t")
+    ev = board.add_evidence("observe", "scrub")
+    board.add_constraint(LatitudeBand(id="", description="northern",
+                                      lo=15.0, hi=25.0, weight=0.97,
+                                      evidence_ids=(ev.id,)))
+    board.add_candidate(LatLon(-22.57, 17.08), label="Windhoek", prior=1.0)
+    right = board.add_candidate(MEXICO, label="Queretaro", prior=0.4)
+    assert board.contradicted() == {}
+    assert board.rank_candidates()[0].candidate.id == right.id

@@ -802,14 +802,61 @@ class Board:
 
         return combine(pro) * (1.0 - combine(con))
 
+    # A constraint admitting no candidate this well has not narrowed anything.
+    CONTRADICTION_FLOOR = 0.2
+
+    def contradicted(self) -> dict[str, float]:
+        """Constraints that reject every candidate on the board.
+
+        A constraint exists to prefer some places over others. One that rejects
+        all of them has told you nothing about location and quite a lot about
+        its own inputs, which are more likely wrong than every candidate is.
+
+        The case that forced this: a photograph timestamped 22:53 local, which
+        is night, with the extractor reporting the scene as daylight. Both
+        cannot hold. The solar constraint was right that they conflict and
+        wrong to conclude anything about where the photograph was taken, so it
+        scored the correct answer and three alternatives at 0.03 alike and the
+        board declined an answer it had otherwise got to within a kilometre.
+
+        So a constraint like that is set aside and recorded as contradicted,
+        rather than being allowed to annihilate the board. Recorded rather than
+        silently dropped, because a conflict between the capture time and what
+        the image appears to show is worth surfacing on its own.
+
+        Needs at least two candidates. With one, "rejects everything" and
+        "rejects the only guess on the board" are the same sentence, and the
+        second is exactly the job. That is the Namibia case: one candidate,
+        the sun says no, and the answer is to decline rather than to decide
+        the sun must be wrong. Disagreeing with a whole set is evidence
+        about the constraint. Disagreeing with one guess is evidence about
+        the guess.
+        """
+        if len(self.candidates) < 2:
+            return {}
+        out = {}
+        for cid, c in self.constraints.items():
+            best = max(c.admits(cand.point) for cand in self.candidates.values())
+            if best < self.CONTRADICTION_FLOOR:
+                out[cid] = best
+        return out
+
     def admissibility(self, point: LatLon | None) -> float:
-        """Product of every constraint's score for a point. 1.0 if unconstrained."""
+        """Product of every constraint's score for a point. 1.0 if unconstrained.
+
+        Contradicted constraints are left out. They are not evidence about
+        where, only that something in the inputs disagrees with something else.
+        """
+        skip = self.contradicted()
         p = 1.0
-        for c in self.constraints.values():
-            p *= c.admits(point)
+        for cid, c in self.constraints.items():
+            if cid not in skip:
+                p *= c.admits(point)
         return p
 
     def explain_point(self, point: LatLon | None) -> dict[str, float]:
+        """Per-constraint scores. Contradicted ones are still shown, since the
+        board view should say what was disregarded and why."""
         return {cid: c.admits(point) for cid, c in self.constraints.items()}
 
     def locate(self, claim: Claim) -> LatLon | None:
@@ -858,10 +905,12 @@ class Board:
         weight and stays on top, which is exactly what did not happen on the
         Thailand image in Phase 0.
         """
+        skip = self.contradicted()
         scored = []
         for cand in self.candidates.values():
             per = self.explain_point(cand.point)
-            adm = math.prod(per.values()) if per else 1.0
+            live = [v for cid, v in per.items() if cid not in skip]
+            adm = math.prod(live) if live else 1.0
             scored.append(ScoredCandidate(cand, cand.prior * adm, adm, per))
         total = sum(s.score for s in scored)
         if total > 0:
