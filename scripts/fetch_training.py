@@ -38,7 +38,10 @@ OUT = ROOT / "data/train"
 INDEX = ROOT / "data/train_index.json"
 API = "https://graph.mapillary.com/images"
 FIELDS = "id,computed_geometry,captured_at,compass_angle,is_pano,thumb_1024_url"
-BOX = 0.08                  # about 9 km, since rural coverage is thin
+# Mapillary caps a bounding box at 0.010 square degrees, so the side cannot
+# exceed 0.1. This is 0.09 by 0.09, about 10 km across at the equator, which is
+# the largest window the API will answer for and still thin for rural coverage.
+BOX = 0.045
 EXCLUSION_KM = 25.0         # keep training imagery away from the eval set
 PER_SEED = 6
 
@@ -77,13 +80,27 @@ def excluded(lon: float, lat: float, eval_points) -> bool:
     return False
 
 
-def query(tok, lon, lat, limit):
+def query(tok, lon, lat, limit, errors: dict):
+    """Ask for images in one box.
+
+    An empty box and a rejected request look identical from the caller, and the
+    first version treated both as "nothing here". It fetched zero images and
+    said so without a reason, because every request had been refused for an
+    oversized bounding box. Errors are counted and reported now: a run that
+    finds nothing should say whether the world was empty or the API said no.
+    """
     bbox = f"{lon - BOX},{lat - BOX},{lon + BOX},{lat + BOX}"
     url = f"{API}?{urllib.parse.urlencode({'access_token': tok, 'fields': FIELDS, 'bbox': bbox, 'limit': limit})}"
     try:
         with urllib.request.urlopen(url, timeout=30) as r:
             return json.loads(r.read()).get("data", [])
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError):
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode(errors="replace")[:200]
+        errors[f"HTTP {exc.code}"] = errors.get(f"HTTP {exc.code}", 0) + 1
+        errors.setdefault("_first", detail)
+        return []
+    except (urllib.error.URLError, json.JSONDecodeError) as exc:
+        errors[type(exc).__name__] = errors.get(type(exc).__name__, 0) + 1
         return []
 
 
@@ -106,7 +123,7 @@ def fetch(url, dest) -> bool:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", type=int, default=3000)
-    ap.add_argument("--step", type=float, default=6.0, help="grid spacing in degrees")
+    ap.add_argument("--step", type=float, default=3.0, help="grid spacing in degrees")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -118,6 +135,8 @@ def main():
     eval_points = [(e["truth"]["lat"], e["truth"]["lon"]) for e in manifest]
 
     tok = token()
+    errors: dict = {}
+    tried = 0
     print(f"{len(index)} already fetched, target {args.target}")
 
     for lon, lat in seeds(args.step):
@@ -125,7 +144,8 @@ def main():
             break
         if (lon, lat) in done_seeds or excluded(lon, lat, eval_points):
             continue
-        for row in query(tok, lon, lat, PER_SEED):
+        tried += 1
+        for row in query(tok, lon, lat, PER_SEED, errors):
             if len(index) >= args.target:
                 break
             if row.get("is_pano") or row["id"] in have:
@@ -148,7 +168,12 @@ def main():
 
     INDEX.write_text(json.dumps(index) + "\n")
     lats = [r["lat"] for r in index]
-    print(f"\n{len(index)} images in {OUT}")
+    print(f"\n{len(index)} images in {OUT}, from {tried} boxes queried")
+    if errors:
+        first = errors.pop("_first", "")
+        print(f"  request failures: {errors}")
+        if first:
+            print(f"  first was: {first}")
     if lats:
         north = sum(1 for la in lats if la > 25) / len(lats)
         print(f"  {north:.0%} north of 25 degrees, which is the coverage skew "
