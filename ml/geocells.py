@@ -78,7 +78,8 @@ def _to_latlon(x: float, y: float, z: float) -> tuple[float, float]:
 
 
 def build(points: list[tuple[float, float]], n_cells: int = 200,
-          iterations: int = 25, seed: int = 20260822) -> list[Cell]:
+          iterations: int = 25, seed: int = 20260822,
+          min_count: int = 0) -> list[Cell]:
     """Cluster training coordinates into `n_cells` geocells.
 
     Lloyd's algorithm on the sphere, seeded deterministically so two runs give
@@ -121,15 +122,43 @@ def build(points: list[tuple[float, float]], n_cells: int = 200,
                               sum(m[1] for m in members) / len(members),
                               sum(m[2] for m in members) / len(members))
 
-    cells = []
+    groups = {}
     for c in range(len(centres)):
         members = [i for i in range(len(points)) if assign[i] == c]
-        if not members:
-            continue                    # an empty cell is not a cell
+        if members:                     # an empty cell is not a cell
+            groups[c] = members
+
+    if min_count > 1:
+        groups = _absorb_small(groups, points, centres, min_count)
+
+    cells = []
+    for c in sorted(groups):
+        members = groups[c]
         lat, lon = _to_latlon(*centres[c])
         radius = max(haversine(lat, lon, *points[i]) for i in members)
         cells.append(Cell(len(cells), lat, lon, len(members), radius))
     return cells
+
+
+def _absorb_small(groups, points, centres, min_count: int):
+    """Fold undersized cells into their nearest surviving neighbour.
+
+    A cell holding one image is not a class, it is a place the classifier will
+    memorise and never generalise from. Merging rather than discarding, because
+    dropping the points would quietly shrink the training set and the discarded
+    ones are exactly the sparse regions worth keeping.
+
+    Smallest first, so a chain of thin cells collapses into one viable cell
+    instead of each being pushed onto the next.
+    """
+    while True:
+        small = [c for c, m in groups.items() if len(m) < min_count]
+        if not small or len(groups) < 2:
+            return groups
+        victim = min(small, key=lambda c: len(groups[c]))
+        others = [c for c in groups if c != victim]
+        target = min(others, key=lambda c: _sq(centres[victim], centres[c]))
+        groups[target] = groups[target] + groups.pop(victim)
 
 
 def _sq(a, b) -> float:

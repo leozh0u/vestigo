@@ -35,3 +35,5 @@ data/train/
 
 # Geocells are derived from the training index, which is committed
 ml/geocells.json
+ml/embeddings/
+ml/checkpoints/
