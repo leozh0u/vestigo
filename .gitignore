@@ -32,3 +32,6 @@ venv/
 
 # Training imagery: large, CC-BY-SA, and regenerable from the index
 data/train/
+
+# Geocells are derived from the training index, which is committed
+ml/geocells.json

@@ -24,6 +24,7 @@ Resumable. Re-running picks up where it stopped, so it can be interrupted.
 import argparse
 import concurrent.futures
 import hashlib
+import threading
 import io
 import json
 import math
@@ -233,14 +234,47 @@ def main():
             if (lon, lat) not in done_seeds and not excluded(lon, lat, eval_points)]
     print(f"{len(todo)} boxes to query, around {len(PLACES)} places")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
-        futures = {pool.submit(query, tok, lon, lat, PER_SEED, errors): (lon, lat)
+    # Two pools. Queries were already parallel and the downloads were not,
+    # which put the whole run behind one image at a time: 25 images in seven
+    # minutes, or eleven hours for the target. Downloading in parallel is the
+    # difference between a coffee and an evening.
+    lock = threading.Lock()
+    stop = threading.Event()
+
+    def grab(row, lon, lat) -> bool:
+        if stop.is_set() or row.get("is_pano"):
+            return False
+        geom = (row.get("computed_geometry") or {}).get("coordinates")
+        if not geom:
+            return False
+        with lock:
+            if row["id"] in have or len(index) >= args.target:
+                return False
+            have.add(row["id"])
+        name = f"t_{hashlib.sha1(row['id'].encode()).hexdigest()[:12]}.jpg"
+        if not fetch(row["thumb_1024_url"], OUT / name):
+            return False
+        with lock:
+            index.append({"file": name, "mapillary_id": row["id"],
+                          "lat": geom[1], "lon": geom[0], "seed": [lon, lat],
+                          "captured_at": row.get("captured_at"),
+                          "compass_angle": row.get("compass_angle")})
+            n = len(index)
+            if n % 100 == 0:
+                INDEX.write_text(json.dumps(index) + "\n")
+                print(f"  {n} images, {tried}/{len(todo)} boxes", flush=True)
+            if n >= args.target:
+                stop.set()
+        return True
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as qpool, \
+            concurrent.futures.ThreadPoolExecutor(max_workers=args.workers * 2) as dpool:
+        futures = {qpool.submit(query, tok, lon, lat, PER_SEED, errors): (lon, lat)
                    for lon, lat in todo}
+        pending = []
         for future in concurrent.futures.as_completed(futures):
             tried += 1
-            if len(index) >= args.target:
-                for other in futures:
-                    other.cancel()
+            if stop.is_set():
                 continue
             lon, lat = futures[future]
             try:
@@ -248,24 +282,9 @@ def main():
             except Exception:
                 continue
             for row in rows:
-                if len(index) >= args.target:
-                    break
-                if row.get("is_pano") or row["id"] in have:
-                    continue
-                geom = (row.get("computed_geometry") or {}).get("coordinates")
-                if not geom:
-                    continue
-                name = f"t_{hashlib.sha1(row['id'].encode()).hexdigest()[:12]}.jpg"
-                if not fetch(row["thumb_1024_url"], OUT / name):
-                    continue
-                have.add(row["id"])
-                index.append({"file": name, "mapillary_id": row["id"],
-                              "lat": geom[1], "lon": geom[0], "seed": [lon, lat],
-                              "captured_at": row.get("captured_at"),
-                              "compass_angle": row.get("compass_angle")})
-                if len(index) % 50 == 0:
-                    INDEX.write_text(json.dumps(index) + "\n")
-                    print(f"  {len(index)} images, {tried}/{len(todo)} boxes", flush=True)
+                pending.append(dpool.submit(grab, row, lon, lat))
+            pending = [f for f in pending if not f.done()]
+        concurrent.futures.wait(pending)
 
     INDEX.write_text(json.dumps(index) + "\n")
     lats = [r["lat"] for r in index]
