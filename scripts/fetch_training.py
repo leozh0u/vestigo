@@ -206,6 +206,10 @@ def fetch(url, dest) -> bool:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", type=int, default=3000)
+    ap.add_argument("--spread-km", type=float, default=60.0,
+                    help="how far from each place seeds are thrown. Wider means "
+                         "cells shaped by geography rather than by the seed list, "
+                         "at the cost of a lower hit rate further from towns")
     ap.add_argument("--per-place", type=int, default=24,
                     help="seeds thrown around each populated place")
     ap.add_argument("--workers", type=int, default=8,
@@ -230,7 +234,7 @@ def main():
     # a lot of boxes. Querying them one at a time spends most of an hour waiting
     # on the network for empty answers, so the lookups run in parallel and only
     # the downloads are serialised, which keeps the index consistent.
-    todo = [(lon, lat) for lon, lat in seeds(per_place=args.per_place)
+    todo = [(lon, lat) for lon, lat in seeds(per_place=args.per_place, spread_km=args.spread_km)
             if (lon, lat) not in done_seeds and not excluded(lon, lat, eval_points)]
     print(f"{len(todo)} boxes to query, around {len(PLACES)} places")
 
