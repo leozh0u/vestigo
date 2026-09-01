@@ -37,6 +37,15 @@ Twenty images appear in all four, so this is the like-for-like comparison.
 | **v2** | **evidence carries its own reach** | **84%** | **16%** | **9.2 km** |
 | v3 | constraints able to act | 79% | 21% | 26.4 km |
 | v5 | contradiction rule | 79% | 21% | 26.0 km |
+| v6 | geocell classifier added | 82% | 18% | 24.1 km |
+
+On the 24 images shared by v2, v5 and v6, which is the tighter comparison:
+
+| run | correct at level | overclaimed | declined |
+|---|---|---|---|
+| **v2** | **89%** | **11%** | 2 |
+| v5 | 83% | 17% | 2 |
+| v6 | 86% | 14% | 9 |
 
 Baseline, for comparison: a bare model call with no tools scored 89% correct at
 the level it claimed and overclaimed 11%.
@@ -112,6 +121,30 @@ Worth stating plainly: v3 is not as well controlled as v2. Adding alternatives
 to the schema changed the first-pass replies and therefore every downstream
 prompt, so the model outputs differ as well as the rules. The v1 to v2
 comparison has no such confound and the v2 to v3 one does.
+
+## What the classifier bought
+
+Adding it recovered about half of what making the constraints work had cost:
+correct at level 83% to 86%, overclaiming 17% to 14%. It did not reach v2.
+
+That is roughly what it should do. At 1,024 km median the classifier cannot
+improve where an answer lands. What it can do is put a measured number on a
+piece of evidence, and every other source in the system has a number the model
+wrote on its own citation. Half the ground lost to working constraints came
+back, which is worth having and is not the same as the tools paying for
+themselves.
+
+Two things worth noting rather than burying. Tools fired in 33 of 64 runs, so
+the model declines to call them about half the time and the measured effect is
+diluted accordingly. And declining rose from 2 runs to 9, which is the system
+refusing where it cannot defend an answer. Those runs are removed from the
+scored set rather than counted as failures, so some of the difference between
+v6 and v2 is composition rather than capability.
+
+**v2 matches the bare model call exactly**, 89% and 11% on both. So the honest
+statement after six runs is that the agent has drawn level with its baseline
+and not passed it, and every mechanism added since has cost more than it
+returned.
 
 ## By source
 
