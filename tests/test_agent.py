@@ -484,3 +484,25 @@ def test_no_alternatives_offered_is_recorded(photo):
     agent, _, _ = build([OBSERVATIONS, GUESS, CLAIMS])
     run = agent.run(photo)
     assert any("no alternatives offered" in d for _, d in run.trace.steps)
+
+
+def test_the_tool_loop_is_told_where_the_photograph_is(photo):
+    """Tools that read the image, like the classifier, need the path. Without
+    it the model has to guess a filename and the call fails."""
+    agent, provider, _ = build([OBSERVATIONS, GUESS, stop_reply(), CLAIMS],
+                               tools=Registry([SolarTool()]))
+    agent.run(photo)
+    opening = [c for c in provider.calls if c.tools][0].messages[0].content[0].text
+    assert str(photo) in opening
+
+
+def test_a_tool_that_ignores_the_path_is_unaffected(photo):
+    """Solar needs a timestamp, not an image. Adding the path to the opening
+    must not disturb tools that do not read it."""
+    agent, _, _ = build([OBSERVATIONS, GUESS,
+                         tool_reply(captured_utc=CAPTURE, lighting="daylight"),
+                         stop_reply(), CLAIMS],
+                        tools=Registry([SolarTool()]))
+    run = agent.run(photo)
+    assert len(run.board.constraints) == 1
+    assert run.answer is not None

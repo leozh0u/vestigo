@@ -44,6 +44,7 @@ from vestigo.scoring import (
     worst_overshoot,
 )
 from vestigo.tools.base import Registry
+from vestigo.tools.geocell import GeocellTool
 from vestigo.tools.solar import SolarTool
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -142,6 +143,9 @@ def main() -> int:
                     help="images handled at once. The calls are network bound, "
                          "so this is close to a linear speedup until the "
                          "provider starts rate limiting")
+    ap.add_argument("--no-classifier", action="store_true",
+                    help="leave the geocell classifier out of the registry, to "
+                         "measure what it is worth by its absence")
     ap.add_argument("--out", default="results/agent_runs.json")
     args = ap.parse_args()
 
@@ -165,7 +169,13 @@ def main() -> int:
         from vestigo.config import build
         router, budget = build(args.preset, limit_usd=args.limit, batched=args.batched)
 
-    agent = Agent(router, tools=Registry([SolarTool()]), budget=budget)
+    tools = [SolarTool()]
+    if not args.no_classifier:
+        try:
+            tools.append(GeocellTool())
+        except Exception as exc:               # no ML stack, or nothing trained
+            print(f"  classifier unavailable, running without it: {exc}\n")
+    agent = Agent(router, tools=Registry(tools), budget=budget)
     entries = load_manifest(args.source, args.max_images)
     missing = [e for e in entries if not (ROOT / "data/images" / e["file"]).exists()]
     if missing:

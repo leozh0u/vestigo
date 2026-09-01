@@ -306,7 +306,8 @@ class Agent:
         return "\n".join(f"{board.evidence[e].id}: {board.evidence[e].summary}"
                          for e in ids)
 
-    def _use_tools(self, board: Board, context: str, trace: Trace, sample: int) -> int:
+    def _use_tools(self, board: Board, context: str, trace: Trace, sample: int,
+                   image_path: str = "") -> int:
         """Let the model call tools until it stops asking.
 
         Written as a conversation that grows rather than as one message rebuilt
@@ -326,7 +327,8 @@ class Agent:
         if not len(self.tools):
             return 0
 
-        opening = ("Evidence so far:\n" + self._brief(board, board.evidence)
+        opening = (("The photograph is at " + image_path + ".\n\n" if image_path else "")
+                   + "Evidence so far:\n" + self._brief(board, board.evidence)
                    + (f"\n\nContext supplied with the photograph:\n{context}" if context else "")
                    + "\n\nCall a tool if one would narrow this down. If none would, "
                      "say so and stop.")
@@ -464,7 +466,7 @@ class Agent:
 
         self._observe(board, image, trace, sample)
         self._first_pass(board, image, context, trace, sample)
-        turns = self._use_tools(board, context, trace, sample)
+        turns = self._use_tools(board, context, trace, sample, str(path))
         rejected = self._make_claims(board, trace, sample)
 
         resolution = board.resolve()
