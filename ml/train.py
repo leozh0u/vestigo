@@ -78,19 +78,75 @@ def split_by_location(groups: np.ndarray, frac: float, seed: int):
     return ~mask, mask
 
 
-def fit_head(X, y, n_classes, epochs=60, lr=1e-3, wd=1e-4, dev="cpu"):
-    """One linear layer, Adam, weight decay. Seconds on a laptop."""
+def haversine_targets(cells, tau_km: float = 75.0) -> torch.Tensor:
+    """A soft label per cell, spread over its neighbours by distance.
+
+    Plain cross-entropy scores the neighbouring cell exactly as wrong as the
+    opposite hemisphere. For a geographic task that discards most of the
+    signal: the model is told nothing about the difference between a near miss
+    and a catastrophe, so it never learns that cells near each other look
+    alike.
+
+    Each row here is the true cell's own smoothed target, exp(-d/tau) over
+    every cell's distance from it, normalised. At tau of 75 km a cell 75 km
+    away keeps about a third of the weight and one on another continent keeps
+    nothing, so being close is worth something and being far is still wrong.
+
+    This is the idea PIGEON calls a haversine-smoothed loss. Measured on this
+    data it is a modest gain that has to be paid for, and the sweep is worth
+    keeping because the trade runs against what this project cares about:
+
+        tau     accuracy   median    calibration error
+        off       21.1%   1032 km        1.4%
+        150       22.0%   1003 km        1.6%
+        300       21.7%    924 km        2.9%
+        600       21.4%    850 km        6.6%
+        1200      18.6%    835 km        9.0%
+
+    Wider smoothing pulls the median in and pushes calibration out, because a
+    label spread over half a continent teaches the model that many cells are
+    partly right and its probabilities stop meaning anything sharp. 150 km is
+    the default here: most of the accuracy, nearly all of the calibration.
+
+    Anyone wanting the distance number instead should raise it and say what it
+    cost. One matrix, computed once, so the sweep is cheap to redo.
+    """
+    n = len(cells)
+    dist = torch.zeros(n, n)
+    for i, a in enumerate(cells):
+        for j, b in enumerate(cells):
+            if j > i:
+                d = haversine(a.lat, a.lon, b.lat, b.lon)
+                dist[i, j] = dist[j, i] = d
+    targets = torch.exp(-dist / tau_km)
+    return targets / targets.sum(dim=1, keepdim=True)
+
+
+def fit_head(X, y, n_classes, epochs=60, lr=1e-3, wd=1e-4, dev="cpu",
+             soft_targets: torch.Tensor | None = None):
+    """One linear layer, Adam, weight decay. Seconds on a laptop.
+
+    With `soft_targets` the loss is cross-entropy against a distance-smoothed
+    distribution rather than against a one-hot label, which is the whole
+    difference between learning geography and learning 236 arbitrary bins.
+    """
     model = nn.Linear(X.shape[1], n_classes).to(dev)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
-    loss_fn = nn.CrossEntropyLoss()
+    hard_loss = nn.CrossEntropyLoss()
     Xt = torch.tensor(X, dtype=torch.float32, device=dev)
     yt = torch.tensor(y, dtype=torch.long, device=dev)
-    for epoch in range(epochs):
+    soft = soft_targets.to(dev) if soft_targets is not None else None
+
+    for _ in range(epochs):
         perm = torch.randperm(len(Xt), device=dev)
         for i in range(0, len(Xt), 512):
             idx = perm[i:i + 512]
             opt.zero_grad()
-            loss = loss_fn(model(Xt[idx]), yt[idx])
+            logits = model(Xt[idx])
+            if soft is None:
+                loss = hard_loss(logits, yt[idx])
+            else:
+                loss = -(soft[yt[idx]] * torch.log_softmax(logits, dim=1)).sum(dim=1).mean()
             loss.backward()
             opt.step()
     return model
@@ -138,6 +194,9 @@ def main() -> int:
     ap.add_argument("--min-count", type=int, default=25)
     ap.add_argument("--val-frac", type=float, default=0.2)
     ap.add_argument("--epochs", type=int, default=60)
+    ap.add_argument("--tau-km", type=float, default=150.0,
+                    help="how far the smoothed label reaches. 0 turns smoothing "
+                         "off and falls back to a one-hot target")
     ap.add_argument("--seed", type=int, default=20260822)
     args = ap.parse_args()
 
@@ -148,7 +207,12 @@ def main() -> int:
     print(f"  train {train.sum()}  val {val.sum()}  "
           f"(split by location, so no box appears in both)")
 
-    model = fit_head(X[train], y[train], len(cells), epochs=args.epochs)
+    soft = haversine_targets(cells, args.tau_km) if args.tau_km > 0 else None
+    if soft is not None:
+        print(f"  labels smoothed over {args.tau_km:.0f} km, so a near miss "
+              "scores better than a far one")
+    model = fit_head(X[train], y[train], len(cells), epochs=args.epochs,
+                     soft_targets=soft)
     with torch.no_grad():
         logits = model(torch.tensor(X[val], dtype=torch.float32))
     yv = torch.tensor(y[val], dtype=torch.long)
@@ -193,7 +257,7 @@ def main() -> int:
         "median_km": med,
         "within_750_km": float(np.mean(errors <= 750)),
         "within_200_km": float(np.mean(errors <= 200)),
-        "temperature": temperature,
+        "temperature": temperature, "tau_km": args.tau_km,
         "ece_raw": ece_raw, "ece_calibrated": ece_cal,
     }, indent=2) + "\n")
     print(f"\nwrote {OUT.relative_to(ROOT)}/geocell_head.pt")

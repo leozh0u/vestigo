@@ -131,6 +131,34 @@ accuracy to within two points across the whole range below 0.6:
 The bands above 0.6 hold few enough examples that their gaps swing ten points
 either way on a handful of images, and they are reported rather than smoothed.
 
+## Haversine-smoothed labels, and what they cost
+
+Plain cross-entropy scores the neighbouring cell exactly as wrong as the
+opposite hemisphere, which for a geographic task throws away most of the
+signal. The fix is PIGEON's: spread each label over nearby cells by distance,
+so being close is worth something.
+
+I expected this to be the cheapest large gain available. Measured, it is a
+modest gain that has to be paid for:
+
+| smoothing | accuracy | median | calibration error |
+|---|---|---|---|
+| off | 21.1% | 1,032 km | **1.4%** |
+| 150 km | **22.0%** | 1,003 km | 1.6% |
+| 300 km | 21.7% | 924 km | 2.9% |
+| 600 km | 21.4% | 850 km | 6.6% |
+| 1,200 km | 18.6% | 835 km | 9.0% |
+
+Wider smoothing pulls the median in and pushes calibration out. A label spread
+over half a continent teaches the model that many cells are partly right, and
+its probabilities stop meaning anything sharp. That trade runs directly against
+what this project is for, so the default is 150 km: most of the accuracy gain,
+nearly all of the calibration kept.
+
+The honest reading is that the loss shape is not the binding constraint here.
+76 images per class and a frozen encoder are, and no amount of reshaping the
+target fixes either.
+
 ## An assumption I had written down and got wrong
 
 A comment in `ml/train.py` said a temperature above 1 means the model was
