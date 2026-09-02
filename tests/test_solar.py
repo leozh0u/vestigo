@@ -433,3 +433,74 @@ def test_solar_rules_places_out_without_ruling_one_in():
     claim = board.add_claim(Level.CITY, "Queretaro", supports=[Support(ev.id, 0.9)])
     assert claim.level is Level.COUNTRY
     assert claim.supports[0].strength == pytest.approx(0.4)
+
+
+# -- local clocks -----------------------------------------------------------
+#
+# The tool's input was named for UTC, so on any photograph carrying local time
+# the model correctly declined to call it rather than converting, since
+# converting needs the longitude it is trying to find. That was 93% of the
+# IM2GPS runs getting no solar constraint at all.
+
+def test_a_local_timestamp_is_accepted_and_marked():
+    result = SolarTool()(captured_utc="2004-08-03 22:53:07", lighting="night",
+                         time_basis="local")
+    assert result.ok
+    assert result.value["time_basis"] == "local"
+    assert all(c.basis == "local" for c in result.constraints)
+    assert "local clock" in result.summary
+
+
+def test_a_local_basis_carries_lower_weight_and_softer_edges():
+    """Timezone borders and daylight saving move a local clock by an hour or
+    more, so the constraint has to be looser than one built on UTC."""
+    utc = SolarTool()(captured_utc="2024-04-20 21:35:52", lighting="daylight",
+                      sun_elevation="mid")
+    local = SolarTool()(captured_utc="2024-04-20 21:35:52", lighting="daylight",
+                        sun_elevation="mid", time_basis="local")
+    assert local.constraints[0].weight < utc.constraints[0].weight
+    assert local.constraints[0].soft_deg > utc.constraints[0].soft_deg
+
+
+def test_a_local_clock_constrains_latitude_and_not_longitude():
+    """Daylight at 22:53 on a local clock at midsummer is only possible far
+    enough north. That is real information, and it is about latitude, because a
+    local clock already absorbs the longitude."""
+    result = SolarTool()(captured_utc="2004-06-21 22:53:07", lighting="daylight",
+                         time_basis="local")
+    board = Board("t")
+    attach(board, result)
+    for name, lat, lon in (("Tromso", 69.65, 18.96), ("Reykjavik", 64.15, -21.94),
+                           ("Paris", 48.86, 2.35), ("Nairobi", -1.29, 36.82),
+                           ("Sydney", -33.87, 151.21)):
+        board.add_candidate(LatLon(lat, lon), label=name, prior=0.2)
+    scored = {s.candidate.label: s.admissibility for s in board.rank_candidates()}
+    assert scored["Tromso"] == pytest.approx(1.0)
+    assert scored["Reykjavik"] == pytest.approx(1.0)
+    for elsewhere in ("Paris", "Nairobi", "Sydney"):
+        assert scored[elsewhere] < 0.4
+
+
+def test_the_same_local_hour_anywhere_says_nothing_about_longitude():
+    """Night at 22:53 local is night almost everywhere, so the constraint
+    should not prefer one longitude over another at the same latitude."""
+    result = SolarTool()(captured_utc="2004-08-03 22:53:07", lighting="night",
+                         time_basis="local")
+    board = Board("t")
+    attach(board, result)
+    for name, lat, lon in (("Buenos Aires", -34.60, -58.38), ("Cape Town", -33.92, 18.42)):
+        board.add_candidate(LatLon(lat, lon), label=name, prior=0.5)
+    scored = {s.candidate.label: s.admissibility for s in board.rank_candidates()}
+    assert scored["Buenos Aires"] == pytest.approx(scored["Cape Town"], abs=0.05)
+
+
+def test_an_invented_basis_is_rejected():
+    with pytest.raises(ToolInputError):
+        SolarTool()(captured_utc=MEXICO_CAPTURE, lighting="daylight",
+                    time_basis="approximately")
+
+
+def test_utc_remains_the_default():
+    result = SolarTool()(captured_utc=MEXICO_CAPTURE, lighting="daylight")
+    assert result.value["time_basis"] == "utc"
+    assert all(c.basis == "utc" for c in result.constraints)
