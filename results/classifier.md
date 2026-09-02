@@ -159,6 +159,39 @@ The honest reading is that the loss shape is not the binding constraint here.
 76 images per class and a frozen encoder are, and no amount of reshaping the
 target fixes either.
 
+## Cells drawn from borders, which did not work
+
+The cells above are clustered from the training points, so their boundaries sit
+wherever the data thins out. That is not what the pictures look like: road
+paint, plate shapes, signage script and which side of the road people drive on
+change at a national border and nowhere else. PIGEON builds cells from ranked
+administrative divisions for exactly this reason.
+
+Built the simplified version, one level: assign every point to its country from
+Natural Earth boundaries, split countries holding too many points by density,
+absorb ones holding too few. At a matched cell count:
+
+| cells | accuracy | median | calibration error |
+|---|---|---|---|
+| **clustered** | **36.0%** | **903 km** | 1.0% |
+| admin borders | 32.0% | 1,157 km | 1.9% |
+
+Worse on every measure. The likely reason is mechanical rather than
+conceptual. Clustering minimises spread within a cell by construction, so a
+centroid sits close to its members, and a prediction resolves to a centroid. A
+cell shaped like Argentina has a centroid far from most of Argentina.
+
+Borders match what the pictures show. Centroids match where the answer goes,
+and the metric rewards the second. Kept in the repo with the result recorded,
+since it tests one level of hierarchy rather than the ranked and tessellated
+scheme in the paper, so it is evidence against this simplification and not
+against the idea.
+
+Two smaller things it did surface. 0.3% of Mapillary geotags sit in open ocean
+and are dropped as broken rather than pooled, and at 1:50m the coastline is
+coarse enough that 4% of points fall outside every polygon, so a point within
+120 km of a coast is assigned to it.
+
 ## An assumption I had written down and got wrong
 
 A comment in `ml/train.py` said a temperature above 1 means the model was

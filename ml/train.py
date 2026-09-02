@@ -46,21 +46,42 @@ EMB = ROOT / "ml/embeddings"
 OUT = ROOT / "ml/checkpoints"
 
 
-def load_data(n_cells: int, min_count: int):
+def load_data(n_cells: int, min_count: int, mode: str = "cluster",
+              per_cell: int = 300):
+    """Embeddings, labels and the group each image belongs to.
+
+    Two ways to draw the cells. `cluster` puts boundaries where the training
+    data thins out, which needs nothing but the points. `admin` puts them on
+    national borders and splits inside a country by density, which is closer to
+    what the pictures look like: road paint, plate shapes and signage script all
+    change at a border and nowhere else.
+    """
     index = {r["file"]: r for r in json.loads((ROOT / "data/train_index.json").read_text())}
     keys = json.loads((EMB / "keys.json").read_text())
     vectors = np.load(EMB / "vectors.npy")
 
     rows = [(i, index[k]) for i, k in enumerate(keys) if k in index]
     points = [(r["lat"], r["lon"]) for _, r in rows]
-    cells = build(points, n_cells=n_cells, min_count=min_count)
+
+    if mode == "admin":
+        from ml.admin_cells import build as build_admin, load_countries
+        cells, origins, dropped = build_admin(
+            points, load_countries(), target_per_cell=per_cell, min_count=min_count)
+        if dropped:
+            keep = sorted(set(range(len(rows))) - set(dropped))
+            rows = [rows[i] for i in keep]
+            points = [points[i] for i in keep]
+            print(f"  {len(dropped)} points dropped as geotags in open ocean")
+    else:
+        cells = build(points, n_cells=n_cells, min_count=min_count)
+        origins = [""] * len(cells)
 
     X = vectors[[i for i, _ in rows]]
     y = np.array([assign_cell(cells, la, lo) for la, lo in points])
     # The seed box each image came from. Two images from one box are the same
     # stretch of road, so they must not straddle the split.
     groups = np.array([f"{r['seed'][0]},{r['seed'][1]}" for _, r in rows])
-    return X, y, groups, np.array(points), cells
+    return X, y, groups, np.array(points), cells, origins
 
 
 def split_by_location(groups: np.ndarray, frac: float, seed: int):
@@ -190,6 +211,11 @@ def calibration_table(probs: np.ndarray, correct: np.ndarray, bins=10):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", choices=("cluster", "admin"), default="cluster",
+                    help="how cells are drawn: from data density, or from "
+                         "national borders split by density inside each country")
+    ap.add_argument("--per-cell", type=int, default=300,
+                    help="admin mode only: points before a country is split")
     ap.add_argument("--cells", type=int, default=300)
     ap.add_argument("--min-count", type=int, default=25)
     ap.add_argument("--val-frac", type=float, default=0.2)
@@ -200,9 +226,10 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=20260822)
     args = ap.parse_args()
 
-    X, y, groups, points, cells = load_data(args.cells, args.min_count)
+    X, y, groups, points, cells, origins = load_data(
+        args.cells, args.min_count, args.mode, args.per_cell)
     train, val = split_by_location(groups, args.val_frac, args.seed)
-    print(f"{len(X)} images, {len(cells)} cells, "
+    print(f"{len(X)} images, {len(cells)} {args.mode} cells, "
           f"{len(np.unique(groups))} seed locations")
     print(f"  train {train.sum()}  val {val.sum()}  "
           f"(split by location, so no box appears in both)")
@@ -251,7 +278,7 @@ def main() -> int:
                 "n_cells": len(cells), "dim": X.shape[1]}, OUT / "geocell_head.pt")
     save_cells(cells, OUT / "cells.json")
     (OUT / "metrics.json").write_text(json.dumps({
-        "images": int(len(X)), "cells": len(cells),
+        "images": int(len(X)), "cells": len(cells), "mode": args.mode,
         "train": int(train.sum()), "val": int(val.sum()),
         "cell_accuracy": float(correct.mean()),
         "median_km": med,

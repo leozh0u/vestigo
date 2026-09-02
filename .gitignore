@@ -37,3 +37,6 @@ data/train/
 ml/geocells.json
 ml/embeddings/
 ml/checkpoints/
+
+# Natural Earth boundaries: public domain, and a download step
+data/boundaries/
