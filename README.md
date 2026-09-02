@@ -15,7 +15,8 @@ nothing behind it does not count toward the answer.
 
 ## Status
 
-Early. There is no agent yet.
+The agent runs end to end. It draws level with a bare frontier model call and
+does not beat it, which is the most useful thing this repo has measured.
 
 What exists is the measurement that defines the problem, which is deliberate:
 the point of starting there was to find out whether a plain model call is
@@ -88,6 +89,46 @@ explained it was hedging rather than making a city claim. India was correct.
 Distance scoring calls that a 502 km failure.
 
 Full writeup in [results/baseline.md](results/baseline.md).
+
+## The agent
+
+Five steps: read the photograph, make an unaided guess, call tools, propose
+claims, resolve. The second step is the one that looks wrong and is not. A bare
+model call is already good, so the unaided guess is kept as a candidate and the
+tools filter it rather than replacing it.
+
+Nothing reaches the answer except through the board. A claim must cite evidence
+that is already on it, a claim citing an id that does not exist has that
+citation stripped and the rejection reported, and tools have no route to write a
+claim at all.
+
+Seven measured runs over 28 photographs, three samples each:
+
+| run | what was added | correct at level | overclaimed |
+|---|---|---|---|
+| v1 | first working agent | 71% | 29% |
+| **v2** | **evidence carries its own reach** | **84%** | **16%** |
+| v5 | constraints able to act at all | 83% | 17% |
+| v6 | geocell classifier | 84% | 16% |
+| v7 | solar accepts a local clock | 83% | 17% |
+
+A bare model call scores 89% and 11% on the same images.
+
+**Only one change ever helped, and it was not a tool.** In v1 whoever wrote a
+citation also wrote the number on it, so the model could put 0.9 on "dry scrub"
+and push a point claim through a threshold. Evidence now carries the finest
+level it could justify and the most any citation of it may be worth, and
+overclaiming fell from 29% to 16% with the median error unmoved.
+
+Everything after that is flat inside a point. The reason is worth stating: the
+agent's first pass is itself a frontier model call, so the scaffolding can only
+win by supplying something the model does not already hold. Solar geometry is
+physics it knows. The classifier is a weaker opinion. The observation extractor
+is the same model looking again. None of them reach outside the model's weights,
+and four rounds of tool work moved nothing.
+
+Full writeup, including the three bugs found on the way, in
+[results/agent.md](results/agent.md).
 
 ## The first tool
 
@@ -169,6 +210,20 @@ low confidence never broke its claim at all.
 
 Full writeup in [results/calibration.md](results/calibration.md).
 
+## What I would do next, and have not
+
+The tools do not bring in information the model lacks, so they cannot beat it.
+Three things would, in order:
+
+1. **Tools that query the outside world.** Search on text read from the image,
+   Overpass queries against OpenStreetMap for spatial co-occurrence, reverse
+   image search. These return facts the model does not contain. My own decision
+   log says text extraction was the highest-value tool and I built the solar
+   solver first anyway.
+2. **Aggregating repeated samples.** Run-to-run noise is a 40 km median with a
+   14,951 km tail, and the system currently takes one answer per run.
+3. **Verification.** Hand a guess to a second call that tries to refute it.
+
 ## What this is aimed at
 
 On photographs with readable text or a recognisable landmark, a frontier model
@@ -189,7 +244,16 @@ python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
 ./.venv/bin/python eval/score.py eval/arm_a.json
 ./.venv/bin/python eval/solar_check.py    # needs no images and no network
 ./.venv/bin/python eval/calibrate.py      # same
+./.venv/bin/python eval/harness.py --dry  # the whole agent, no key, no spend
 ./.venv/bin/pytest
+```
+
+The ML half needs torch and about 3 GB of imagery:
+
+```
+./.venv/bin/python scripts/fetch_training.py --target 20000 --per-place 150 --spread-km 180
+./.venv/bin/python ml/embed.py
+./.venv/bin/python ml/train.py
 ```
 
 The package itself has no dependencies. Pillow is for the ingest scripts and
@@ -212,6 +276,35 @@ archive material, your own travel photos.
 
 There is no face recognition anywhere in the pipeline and there will not be. The
 hosted version is rate limited. Please do not use this to locate people.
+
+## The classifier
+
+The only model here that I trained. 20,000 Mapillary images, a frozen CLIP
+encoder, one linear head over 236 geocells clustered from the training points
+rather than laid out on a grid, because what a photograph shows changes at
+borders and not at round numbers.
+
+| | |
+|---|---|
+| cell accuracy | 21.5% against 0.42% chance |
+| median distance | 1,024 km |
+| **calibration error** | **10.7% to 1.4%** |
+
+It loses to a frontier model call by an order of magnitude, which is what I
+wrote down that it would do before building it. The calibration is the part
+worth having: after temperature scaling, stated confidence tracks observed
+accuracy to within two points across the whole range below 0.6.
+
+That makes it the only evidence source in the project whose strength is
+measured rather than written by the model citing it. On one image it is wrong,
+placing a Mexican road in Central Asia, and reports 7%. Wrong answer, honestly
+signalled, and nothing can lean on it further than that.
+
+The split holds out whole seed locations rather than random images, because
+several photographs were drawn from each 10 km box and a random split would
+report recall dressed as accuracy.
+
+Full writeup in [results/classifier.md](results/classifier.md).
 
 ## Cost
 
