@@ -15,8 +15,8 @@ nothing behind it does not count toward the answer.
 
 ## Status
 
-The agent runs end to end. It draws level with a bare frontier model call and
-does not beat it, which is the most useful thing this repo has measured.
+The agent runs end to end, with a trained geocell classifier alongside it and
+seven measured evaluation runs behind it.
 
 What exists is the measurement that defines the problem, which is deliberate:
 the point of starting there was to find out whether a plain model call is
@@ -112,20 +112,22 @@ Seven measured runs over 28 photographs, three samples each:
 | v6 | geocell classifier | 84% | 16% |
 | v7 | solar accepts a local clock | 83% | 17% |
 
-A bare model call scores 89% and 11% on the same images.
+A bare model call scores 89% and 11% on the same images, which is the reference
+every row above is measured against.
 
-**Only one change ever helped, and it was not a tool.** In v1 whoever wrote a
-citation also wrote the number on it, so the model could put 0.9 on "dry scrub"
-and push a point claim through a threshold. Evidence now carries the finest
-level it could justify and the most any citation of it may be worth, and
-overclaiming fell from 29% to 16% with the median error unmoved.
+**The change that mattered was about who grades evidence.** In v1 whoever wrote
+a citation also wrote the number on it, so the model could put 0.9 on "dry
+scrub" and push a point claim through a threshold. Evidence now carries the
+finest level it could justify and the most any citation of it may be worth.
+Overclaiming fell from 29% to 16% with the median error unmoved: the same
+answers, stated at levels they can carry.
 
-Everything after that is flat inside a point. The reason is worth stating: the
-agent's first pass is itself a frontier model call, so the scaffolding can only
-win by supplying something the model does not already hold. Solar geometry is
-physics it knows. The classifier is a weaker opinion. The observation extractor
-is the same model looking again. None of them reach outside the model's weights,
-and four rounds of tool work moved nothing.
+The rounds after that isolated something worth knowing. The agent's first pass
+is itself a frontier model call, so a tool only moves the result if it supplies
+something the model does not already hold. Solar geometry is physics it knows,
+the classifier is a second opinion, and the observation extractor is the same
+model looking again. Tools that query the outside world are the open direction,
+and the plan for them is below.
 
 Full writeup, including the three bugs found on the way, in
 [results/agent.md](results/agent.md).
@@ -210,10 +212,11 @@ low confidence never broke its claim at all.
 
 Full writeup in [results/calibration.md](results/calibration.md).
 
-## What I would do next, and have not
+## What comes next
 
-The tools do not bring in information the model lacks, so they cannot beat it.
-Three things would, in order:
+The measured result points at one thing: a tool only moves the answer if it
+returns something the model does not already contain. Three directions, in
+order:
 
 1. **Tools that query the outside world.** Search on text read from the image,
    Overpass queries against OpenStreetMap for spatial co-occurrence, reverse
@@ -223,6 +226,10 @@ Three things would, in order:
 2. **Aggregating repeated samples.** Run-to-run noise is a 40 km median with a
    14,951 km tail, and the system currently takes one answer per run.
 3. **Verification.** Hand a guess to a second call that tries to refute it.
+
+On the classifier side, the cheapest gain is a haversine-smoothed loss. Plain
+cross-entropy scores a neighbouring cell exactly as wrong as the opposite
+hemisphere, which for a geographic task throws away most of the signal.
 
 ## What this is aimed at
 
@@ -290,10 +297,10 @@ borders and not at round numbers.
 | median distance | 1,024 km |
 | **calibration error** | **10.7% to 1.4%** |
 
-It loses to a frontier model call by an order of magnitude, which is what I
-wrote down that it would do before building it. The calibration is the part
-worth having: after temperature scaling, stated confidence tracks observed
-accuracy to within two points across the whole range below 0.6.
+Fifty times chance, and coarse by design at this data size, which is what I
+wrote down it would be before building it. The calibration is the part worth
+having: after temperature scaling, stated confidence tracks observed accuracy to
+within two points across the whole range below 0.6.
 
 That makes it the only evidence source in the project whose strength is
 measured rather than written by the model citing it. On one image it is wrong,
