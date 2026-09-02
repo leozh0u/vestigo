@@ -122,6 +122,32 @@ to the schema changed the first-pass replies and therefore every downstream
 prompt, so the model outputs differ as well as the rules. The v1 to v2
 comparison has no such confound and the v2 to v3 one does.
 
+## What the tools bought, across four attempts
+
+| run | what was added | correct at level | overclaimed |
+|---|---|---|---|
+| **v2** | **evidence carries its own reach** | **84%** | **16%** |
+| v5 | constraints able to act at all | 83% | 17% |
+| v6 | geocell classifier | 84% | 16% |
+| v7 | solar accepts a local clock | 83% | 17% |
+
+Same 24 images, same three samples each. Everything after v2 is flat inside a
+point.
+
+That is the finding, and it took four runs and about eight dollars to establish
+rather than assume. **The discipline about grading evidence helped. The tools
+did not.**
+
+v7 is the cleanest test of it. Solar was firing on 7% of runs over photographs
+carrying local time, because the tool's only input was named for UTC and the
+model correctly declined rather than converting a timestamp whose timezone it
+did not know. Teaching the tool to accept a local clock raised that to 30% and
+moved the score by nothing.
+
+So the tools are being called more, doing what they were built to do, and
+leaving the answer where it was. Adding a fifth tool would be the same
+experiment again.
+
 ## What the classifier bought
 
 Adding it recovered about half of what making the constraints work had cost:
