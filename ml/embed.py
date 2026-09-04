@@ -133,27 +133,74 @@ def main() -> int:
     started = time.perf_counter()
     skipped = 0
 
-    for i, record in enumerate(todo):
-        path = pathlib.Path(args.images) / record["file"]
-        try:
-            batch.append(preprocess(Image.open(path).convert("RGB")))
-            batch_keys.append(record["file"])
-        except Exception:
-            skipped += 1                # a truncated download is not a crash
-            continue
-        if len(batch) >= args.batch or i == len(todo) - 1:
-            rows.append(embed_batch(model, batch, dev))
-            keys.extend(batch_keys)
-            batch, batch_keys = [], []
-            seen = len(keys) - len(done)
-            if seen and seen % (args.batch * 8) < args.batch:
-                rate = seen / (time.perf_counter() - started)
-                print(f"  {seen}/{len(todo)}  {rate:.0f}/s", flush=True)
+    def save() -> None:
+        """Write what has been embedded so far.
 
-    fresh = np.concatenate(rows) if rows else np.zeros((0, 512), dtype=np.float32)
-    vectors = fresh if vectors is None else np.concatenate([vectors, fresh])
-    np.save(vec_path, vectors)
-    key_path.write_text(json.dumps(keys) + "\n")
+        Called periodically, not only at the end. The first version wrote once
+        after the last batch, so a run interrupted at fifty thousand images
+        left an empty directory and forty minutes of GPU time bought nothing.
+        `todo` is computed from what is already on disk, so a checkpoint is
+        also a resume point: restart and it picks up from the last save.
+
+        Vectors go to a temporary file first and are moved into place, because
+        the alternative is a half-written .npy that loads as garbage and is
+        worse than no file at all.
+        """
+        nonlocal rows, keys
+        if not rows:
+            return
+        fresh = np.concatenate(rows)
+        current = np.load(vec_path) if vec_path.exists() else None
+        stacked = fresh if current is None else np.concatenate([current, fresh])
+        # Through a handle, not a path: np.save appends ".npy" to any path
+        # that does not already end in it, so saving to "vectors.npy.tmp"
+        # silently writes "vectors.npy.tmp.npy" and the move then fails on a
+        # file that was never created. Caught by a test rather than by the
+        # first checkpoint of a forty-minute run.
+        tmp = vec_path.with_suffix(".npy.tmp")
+        with open(tmp, "wb") as fh:
+            np.save(fh, stacked)
+        tmp.replace(vec_path)
+        key_path.write_text(json.dumps(keys) + "\n")
+        rows = []                       # already on disk, do not write twice
+
+    # Roughly every few thousand images. Often enough that an interrupt costs
+    # minutes rather than the run, rare enough that rewriting the array is a
+    # rounding error against the GPU time.
+    checkpoint_every = max(args.batch * 8, 2000)
+    since_save = 0
+
+    try:
+        for i, record in enumerate(todo):
+            path = pathlib.Path(args.images) / record["file"]
+            try:
+                batch.append(preprocess(Image.open(path).convert("RGB")))
+                batch_keys.append(record["file"])
+            except Exception:
+                skipped += 1            # a truncated download is not a crash
+                continue
+            if len(batch) >= args.batch or i == len(todo) - 1:
+                rows.append(embed_batch(model, batch, dev))
+                keys.extend(batch_keys)
+                since_save += len(batch_keys)
+                batch, batch_keys = [], []
+                seen = len(keys) - len(done)
+                if seen and seen % (args.batch * 8) < args.batch:
+                    rate = seen / (time.perf_counter() - started)
+                    print(f"  {seen}/{len(todo)}  {rate:.0f}/s", flush=True)
+                if since_save >= checkpoint_every:
+                    save()
+                    since_save = 0
+    except KeyboardInterrupt:
+        # Ctrl-C is a normal way to stop a long job, so it saves and reports
+        # rather than discarding the work and printing a stack trace.
+        save()
+        print(f"\ninterrupted at {len(keys) - len(done)} images, saved. "
+              f"Rerun the same command to continue.")
+        return 130
+
+    save()
+    vectors = np.load(vec_path)
 
     print(f"\n{vectors.shape[0]} vectors of {vectors.shape[1]} dimensions -> {vec_path}")
     if skipped:
