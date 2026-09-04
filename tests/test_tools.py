@@ -332,3 +332,24 @@ def test_a_cached_region_set_abstains_rather_than_vetoing(tmp_path):
     attach(board, cached)
     board.add_candidate(MEXICO, prior=1.0)
     assert board.rank_candidates()[0].admissibility == 1.0
+
+
+def test_a_tool_may_have_an_input_called_name():
+    """`Registry.call` takes the tool's name positionally, so a tool whose own
+    schema has a `name` field can still be called. The gazetteer has one, and
+    without the positional-only marker every lookup died on a signature clash
+    that named the wrong argument."""
+
+    class Echo(Tool):
+        name = "echo"
+        input_schema = {"type": "object", "properties": {"name": {"type": "string"}},
+                        "required": ["name"]}
+
+        def _run(self, name: str) -> ToolResult:
+            return self.result(value={"echoed": name}, summary=name)
+
+    board = Board("t")
+    registry = Registry([Echo()])
+    result = registry.call(board, "echo", name="Hauptstraße")
+    assert result.ok
+    assert result.value == {"echoed": "Hauptstraße"}

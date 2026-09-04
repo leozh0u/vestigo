@@ -1,0 +1,265 @@
+{
+  "ran_utc": "2026-09-04 01:30:20",
+  "preset": "cheap",
+  "samples": 1,
+  "dry": false,
+  "spent_usd": 0.1657992,
+  "runs": [
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "error_km": 280.2818856612711,
+      "cost_usd": 0,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 44.8,7.4 at 8% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (Adriatic/Dalmatia or similar)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0,
+      "computed_confidence": 0.8689279999999999,
+      "all_levels": {
+        "continent": 0.76,
+        "country": 0.65,
+        "region": 0.8689279999999999
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 42.1,13.0 at 76% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 30.17366837502707,
+      "cost_usd": 0,
+      "computed_confidence": 0.65,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.65
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.8,-0.5 at 32% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 31.5885,
+      "lon": 74.3106,
+      "error_km": 0.08907432405194714,
+      "cost_usd": 0,
+      "computed_confidence": 0.97648,
+      "all_levels": {
+        "country": 0.8739687681198121,
+        "region": 0.97648
+      },
+      "evidence": 19,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.6,74.2 at 37% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-11-23 06:41:31 UTC, local clock, daylight, sun low"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0,
+      "computed_confidence": 0.9874,
+      "all_levels": {
+        "country": 0.97,
+        "region": 0.9874
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Central Mountain Range, Taiwan",
+      "level": "country",
+      "confidence": "low",
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "error_km": 25.662868112596062,
+      "cost_usd": 0,
+      "computed_confidence": 0.7703460000000001,
+      "all_levels": {
+        "continent": 0.4,
+        "country": 0.7703460000000001
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -42.6,147.2 at 24% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2007-02-20 11:58:02 UTC, local clock, daylight"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Chestertown, Maryland",
+      "level": "city",
+      "confidence": "medium",
+      "lat": 39.2126,
+      "lon": -76.0658,
+      "error_km": 252.1076621868076,
+      "cost_usd": 0.1657992,
+      "computed_confidence": 0.955,
+      "all_levels": {
+        "country": 0.9199999999999999,
+        "region": 0.85,
+        "city": 0.955
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Chicago-Kent College of Law' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 45.5,-73.6 at 10% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Public Library' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Chestertown' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "Los Angeles",
+      "level": "country",
+      "confidence": "high",
+      "lat": 34.213,
+      "lon": -118.383,
+      "error_km": 26.403008530147734,
+      "cost_usd": 0.06636299999999999,
+      "computed_confidence": 0.985,
+      "all_levels": {
+        "country": 0.985
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Sheldon St' matches 5 places across 2 countries, best is a road spread over 8787 km, which is continent-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "Woodstock, Cape Town",
+      "level": "region",
+      "confidence": null,
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0.1309836,
+      "computed_confidence": 0.65,
+      "all_levels": {
+        "country": 0.85,
+        "region": 0.65
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Nude Foods Market Woodstock'"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-07-14 09:31:29 UTC, daylight"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Nude Foods' matches 2 places across 2 countries, best is a shop spread over 15054 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -0.8,-79.2 at 13% (calibrated)"
+        }
+      ],
+      "rejected": []
+    }
+  ]
+}

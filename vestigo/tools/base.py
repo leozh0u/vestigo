@@ -380,8 +380,14 @@ class Registry:
     def specs(self) -> list[dict]:
         return [t.spec() for t in self._tools.values()]
 
-    def call(self, board: Board, name: str, **inputs: Any) -> ToolResult:
-        """Run a tool and put what it produced on the board."""
+    def call(self, board: Board, name: str, /, **inputs: Any) -> ToolResult:
+        """Run a tool and put what it produced on the board.
+
+        `board` and `name` are positional-only. A tool is free to have an input
+        called `name`, and the gazetteer does; without the slash, forwarding it
+        as a keyword collides with this signature and the call dies with an
+        error about the wrong thing.
+        """
         result = self.get(name)(**inputs)
         if result.ok:
             attach(board, result)

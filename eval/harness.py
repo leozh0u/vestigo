@@ -43,6 +43,7 @@ from vestigo.scoring import (
     summarise_repeats,
     worst_overshoot,
 )
+from vestigo.board import EvidenceKind
 from vestigo.tools.base import Registry
 from vestigo.tools.gazetteer import PlaceLookup
 from vestigo.tools.geocell import GeocellTool
@@ -259,6 +260,16 @@ def main() -> int:
                                        for c in run.resolution.chain},
                         "evidence": len(run.board.evidence),
                         "constraints": len(run.board.constraints),
+                        # Which tools actually fired, and what they said. The
+                        # earlier runs recorded only a count, which is why
+                        # "tools change nothing" took four runs to diagnose:
+                        # a count cannot tell a tool that ran and found nothing
+                        # from a tool the model never reached for.
+                        "tools": [
+                            {"tool": ev.source, "summary": ev.summary}
+                            for ev in run.board.evidence.values()
+                            if ev.kind == EvidenceKind.TOOL
+                        ],
                         "rejected": run.rejected,
                     })
 
