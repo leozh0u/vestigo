@@ -30,6 +30,7 @@ import json
 import math
 import pathlib
 import random
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -47,6 +48,120 @@ FIELDS = "id,computed_geometry,captured_at,compass_angle,is_pano,thumb_1024_url"
 BOX = 0.045
 EXCLUSION_KM = 25.0         # keep training imagery away from the eval set
 PER_SEED = 6
+
+# --------------------------------------------------------------------------
+# Talking to a free API without being thrown off it
+# --------------------------------------------------------------------------
+#
+# The run that produced 64,881 images made 191,450 queries and 166,258 of them
+# failed, an 87% failure rate. Almost all were bare URLErrors: connections
+# refused or reset, not the API saying no. The cause was in this file. There
+# were no retries anywhere, so a box that hit a network blip was counted as an
+# error and silently treated as empty, and twenty-four threads with no throttle
+# between them made blips constant rather than rare.
+#
+# What the run measured, then, was not how much imagery exists. It was how much
+# survived being asked for badly. Two fixes below.
+#
+# **Backoff.** A failed request is retried after a wait that doubles each time,
+# so a struggling endpoint gets room instead of being hit harder. The wait is
+# drawn uniformly from zero to that ceiling rather than taken at it: twenty-four
+# threads that fail together and back off by the same amount retry together and
+# collide again. Randomising spreads them out, and full jitter is the version
+# that spreads them best.
+#
+# **A shared ceiling on request rate.** Retries treat the symptom. Not making
+# the requests that fail is better, and a token bucket across every thread costs
+# nothing when the run is under the limit.
+
+RETRY_STATUS = {408, 429, 500, 502, 503, 504}
+MAX_ATTEMPTS = 5
+BASE_DELAY_S = 0.5
+MAX_DELAY_S = 30.0
+# Requests a second across all threads. Mapillary publishes no figure for this
+# endpoint, so it is set from what the failure rate showed rather than from a
+# document, and it is a flag because the right value is empirical.
+DEFAULT_RATE = 12.0
+
+
+class RateLimiter:
+    """A token bucket every thread draws from.
+
+    Tokens accrue at a fixed rate up to a small burst. A thread that wants one
+    and finds the bucket empty sleeps until it refills. One lock, no queue: the
+    threads are already blocked on the network and a few milliseconds of
+    contention here is invisible next to a round trip.
+    """
+
+    def __init__(self, per_second: float, burst: float = 8.0):
+        self.per_second = per_second
+        self.burst = burst
+        self.tokens = burst
+        self.updated = time.monotonic()
+        self._lock = threading.Lock()
+
+    def take(self) -> None:
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                self.tokens = min(self.burst,
+                                  self.tokens + (now - self.updated) * self.per_second)
+                self.updated = now
+                if self.tokens >= 1.0:
+                    self.tokens -= 1.0
+                    return
+                wait = (1.0 - self.tokens) / self.per_second
+            time.sleep(wait)
+
+
+# Set in main(), because the rate is a flag and the limiter is shared by every
+# thread in both pools.
+LIMITER = RateLimiter(DEFAULT_RATE)
+
+
+def _sleep_for(attempt: int, retry_after: str | None = None) -> float:
+    """How long to wait before attempt number `attempt`, counting from zero.
+
+    An explicit Retry-After wins outright. The server knows when it will be
+    ready and guessing over the top of that is how a client earns a longer ban.
+    """
+    if retry_after:
+        try:
+            return min(MAX_DELAY_S, max(0.0, float(retry_after)))
+        except ValueError:
+            pass                       # the HTTP-date form; fall through
+    ceiling = min(MAX_DELAY_S, BASE_DELAY_S * (2 ** attempt))
+    return random.uniform(0.0, ceiling)
+
+
+def get(url: str, timeout: float, errors: dict, *, label: str) -> bytes | None:
+    """Fetch a URL, retrying what is worth retrying.
+
+    Returns the body, or None once the attempts are spent. The distinction the
+    old code lost is kept here: None means the request failed, which is not the
+    same as the request succeeding and finding nothing, and only the caller
+    knows which of those it is looking at.
+    """
+    for attempt in range(MAX_ATTEMPTS):
+        LIMITER.take()
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as r:
+                return r.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code not in RETRY_STATUS or attempt == MAX_ATTEMPTS - 1:
+                raise
+            errors[f"retried HTTP {exc.code}"] = errors.get(f"retried HTTP {exc.code}", 0) + 1
+            time.sleep(_sleep_for(attempt, exc.headers.get("Retry-After")))
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            # A read that times out arrives as a bare TimeoutError rather than
+            # through urllib's hierarchy, and one slow box should not end a run.
+            if attempt == MAX_ATTEMPTS - 1:
+                errors[f"{label}: {type(exc).__name__}"] = (
+                    errors.get(f"{label}: {type(exc).__name__}", 0) + 1)
+                return None
+            errors["retried network"] = errors.get("retried network", 0) + 1
+            time.sleep(_sleep_for(attempt))
+    return None
 
 
 def token() -> str:
@@ -153,11 +268,12 @@ def excluded(lon: float, lat: float, eval_points) -> bool:
 def query(tok, lon, lat, limit, errors: dict, box: float = BOX, depth: int = 0):
     """Ask for images in one box.
 
-    An empty box and a rejected request look identical from the caller, and the
-    first version treated both as "nothing here". It fetched zero images and
-    said so without a reason, because every request had been refused for an
-    oversized bounding box. Errors are counted and reported now: a run that
-    finds nothing should say whether the world was empty or the API said no.
+    Returns a list of rows, which may be empty because the box really is, or
+    None because the request never succeeded. Those two were the same value in
+    the first version and the difference is the whole point: a run that finds
+    nothing should say whether the world was empty or the API said no. The
+    first version fetched zero images and gave no reason, because every request
+    had been refused for an oversized bounding box.
     """
     # Clamp to the valid range. A seed at -180 produces a west edge of
     # -180.045, which the API rejects outright.
@@ -166,8 +282,7 @@ def query(tok, lon, lat, limit, errors: dict, box: float = BOX, depth: int = 0):
     bbox = f"{west},{south},{east},{north}"
     url = f"{API}?{urllib.parse.urlencode({'access_token': tok, 'fields': FIELDS, 'bbox': bbox, 'limit': limit})}"
     try:
-        with urllib.request.urlopen(url, timeout=30) as r:
-            return json.loads(r.read()).get("data", [])
+        body = get(url, 30, errors, label="query")
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode(errors="replace")[:200]
         # "Please reduce the amount of data you're asking for" means the box
@@ -178,16 +293,17 @@ def query(tok, lon, lat, limit, errors: dict, box: float = BOX, depth: int = 0):
             return query(tok, lon, lat, limit, errors, box / 2, depth + 1)
         errors[f"HTTP {exc.code}"] = errors.get(f"HTTP {exc.code}", 0) + 1
         errors.setdefault("_first", detail)
-        return []
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError) as exc:
-        # A read timing out arrives as a bare TimeoutError rather than through
-        # urllib's own hierarchy, and one slow box should not end a run of
-        # several thousand.
-        errors[type(exc).__name__] = errors.get(type(exc).__name__, 0) + 1
-        return []
+        return None
+    if body is None:
+        return None                    # spent its retries, so nothing is known
+    try:
+        return json.loads(body).get("data", [])
+    except json.JSONDecodeError:
+        errors["JSONDecodeError"] = errors.get("JSONDecodeError", 0) + 1
+        return None
 
 
-def fetch(url, dest) -> bool:
+def fetch(url, dest, errors: dict) -> bool:
     """Download, strip every scrap of metadata, save.
 
     Re-encoding through Pillow without an exif argument is what removes it. A
@@ -195,11 +311,17 @@ def fetch(url, dest) -> bool:
     the answer off the file instead of the picture.
     """
     try:
-        with urllib.request.urlopen(url, timeout=45) as r:
-            img = Image.open(io.BytesIO(r.read())).convert("RGB")
-        img.save(dest, "JPEG", quality=88)
+        body = get(url, 45, errors, label="download")
+    except urllib.error.HTTPError as exc:
+        errors[f"download HTTP {exc.code}"] = errors.get(f"download HTTP {exc.code}", 0) + 1
+        return False
+    if body is None:
+        return False
+    try:
+        Image.open(io.BytesIO(body)).convert("RGB").save(dest, "JPEG", quality=88)
         return True
-    except Exception:
+    except Exception as exc:           # a truncated or unreadable JPEG
+        errors[f"decode {type(exc).__name__}"] = errors.get(f"decode {type(exc).__name__}", 0) + 1
         return False
 
 
@@ -212,10 +334,17 @@ def main():
                          "at the cost of a lower hit rate further from towns")
     ap.add_argument("--per-place", type=int, default=24,
                     help="seeds thrown around each populated place")
+    ap.add_argument("--rate", type=float, default=DEFAULT_RATE,
+                    help="requests a second across every thread. The previous "
+                         "run had no ceiling at all and lost 87%% of its "
+                         "queries to connection errors it caused itself")
     ap.add_argument("--workers", type=int, default=8,
                     help="boxes queried at once. Network bound, so this is close "
                          "to a linear speedup over an almost entirely empty grid")
     args = ap.parse_args()
+
+    global LIMITER
+    LIMITER = RateLimiter(args.rate)
 
     OUT.mkdir(parents=True, exist_ok=True)
     index = json.loads(INDEX.read_text()) if INDEX.exists() else []
@@ -228,6 +357,8 @@ def main():
     tok = token()
     errors: dict = {}
     tried = 0
+    empty = 0                          # boxes answered, and genuinely had nothing
+    unreachable = 0                    # boxes never answered, so still unknown
     print(f"{len(index)} already fetched, target {args.target}")
 
     # Most of a global grid is ocean, and a box that covers ten kilometres needs
@@ -256,7 +387,7 @@ def main():
                 return False
             have.add(row["id"])
         name = f"t_{hashlib.sha1(row['id'].encode()).hexdigest()[:12]}.jpg"
-        if not fetch(row["thumb_1024_url"], OUT / name):
+        if not fetch(row["thumb_1024_url"], OUT / name, errors):
             return False
         with lock:
             index.append({"file": name, "mapillary_id": row["id"],
@@ -284,7 +415,16 @@ def main():
             try:
                 rows = future.result()
             except Exception:
+                unreachable += 1
                 continue
+            if rows is None:
+                # Spent its retries. Counted separately from an empty box,
+                # because the previous run reported 166,258 of these as if the
+                # world had been searched and found wanting.
+                unreachable += 1
+                continue
+            if not rows:
+                empty += 1
             for row in rows:
                 pending.append(dpool.submit(grab, row, lon, lat))
             pending = [f for f in pending if not f.done()]
@@ -292,7 +432,13 @@ def main():
 
     INDEX.write_text(json.dumps(index) + "\n")
     lats = [r["lat"] for r in index]
+    answered = tried - unreachable
     print(f"\n{len(index)} images in {OUT}, from {tried} boxes queried")
+    print(f"  {answered} boxes answered ({empty} of them empty), "
+          f"{unreachable} never answered")
+    if tried:
+        print(f"  query failure rate {unreachable / tried:.1%} "
+              f"(the run before retries existed: 86.8%)")
     if errors:
         first = errors.pop("_first", "")
         print(f"  request failures: {errors}")
