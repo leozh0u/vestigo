@@ -45,6 +45,7 @@ from vestigo.scoring import (
 )
 from vestigo.board import EvidenceKind
 from vestigo.tools.base import Registry
+from vestigo.consensus import consense
 from vestigo.trace import write_trace
 from vestigo.tools.gazetteer import PlaceLookup
 from vestigo.tools.geocell import GeocellTool
@@ -209,6 +210,7 @@ def main() -> int:
     scored: list[Scored] = []
     summaries = []
     declined = 0
+    consensus_rows: list[dict] = []
     records = []
     stopped = None
 
@@ -290,6 +292,18 @@ def main() -> int:
                         "rejected": run.rejected,
                     })
 
+                # What the samples agree on, scored alongside the per-sample
+                # answers rather than instead of them. The samples are already
+                # paid for; using only one of them and reporting the spread of
+                # the rest is the waste this measures against.
+                agreed = consense(runs)
+                consensus_rows.append({
+                    "id": entry["id"], "source": entry["source"],
+                    **agreed.to_dict(),
+                    "error_km": (truth.distance_km(agreed.point)
+                                 if agreed.point else None),
+                })
+
                 if rows:
                     summary = summarise_repeats(entry["id"], rows, points)
                     summaries.append(summary)
@@ -332,6 +346,61 @@ def main() -> int:
     if declined:
         print(f"\n  {declined} runs made no claim at all. Not counted above, and not a "
               "failure:\n  declining to answer is the design working. Watch it for drift.")
+
+    # ------------------------------------------------------------------
+    # Consensus across samples
+    # ------------------------------------------------------------------
+    if consensus_rows:
+        print("\n" + "=" * 78)
+        print("CONSENSUS ACROSS SAMPLES")
+        print("=" * 78)
+        answered = [c for c in consensus_rows if c["error_km"] is not None]
+        refused = [c for c in consensus_rows if c["error_km"] is None]
+
+        print(f"{'source':<18}{'n':>4}{'median km':>11}{'worst km':>11}"
+              f"{'unanimous':>11}{'demoted':>9}")
+        print("-" * 78)
+        for src in SOURCES:
+            sub = [c for c in answered if c["source"] == src]
+            if not sub:
+                continue
+            errs = sorted(c["error_km"] for c in sub)
+            print(f"{src:<18}{len(sub):>4}{statistics.median(errs):>11.1f}"
+                  f"{errs[-1]:>11.0f}"
+                  f"{sum(1 for c in sub if c['agreement'] == 1.0) / len(sub):>11.0%}"
+                  f"{sum(1 for c in sub if c['demoted_from']):>9}")
+        if answered:
+            errs = sorted(c["error_km"] for c in answered)
+            print("-" * 78)
+            print(f"{'all':<18}{len(answered):>4}{statistics.median(errs):>11.1f}"
+                  f"{errs[-1]:>11.0f}"
+                  f"{sum(1 for c in answered if c['agreement'] == 1.0) / len(answered):>11.0%}"
+                  f"{sum(1 for c in answered if c['demoted_from']):>9}")
+
+        # The comparison this exists for. A single sample is what one API call
+        # buys; consensus is what three of them buy, and the tail is where the
+        # difference should show up if it shows up anywhere.
+        singles = sorted(r["error_km"] for r in records)
+        if singles and answered:
+            def tail(v, q):
+                return v[min(len(v) - 1, int(len(v) * q))]
+            print(f"\n  {'':<14}{'median':>10}{'75th':>10}{'90th':>10}{'worst':>10}")
+            print(f"  {'one sample':<14}{statistics.median(singles):>10.0f}"
+                  f"{tail(singles, 0.75):>10.0f}{tail(singles, 0.90):>10.0f}"
+                  f"{singles[-1]:>10.0f}")
+            print(f"  {'consensus':<14}{statistics.median(errs):>10.0f}"
+                  f"{tail(errs, 0.75):>10.0f}{tail(errs, 0.90):>10.0f}"
+                  f"{errs[-1]:>10.0f}")
+            print("\n  The median is not the point. A frontier model already has a good\n"
+                  "  median and a dangerous tail, and the tail is the only column where\n"
+                  "  three samples can buy something one call cannot.")
+
+        if refused:
+            print(f"\n  {len(refused)} images where the samples agreed on nothing and no\n"
+                  f"  answer was stated. Each of those had samples that would each have\n"
+                  f"  been stated alone, with a confidence.")
+            for c in refused[:5]:
+                print(f"    {c['id']:<24} spread {c['spread_km']:>8.0f} km")
 
     print("\n" + "=" * 78)
     print("CALIBRATION")
@@ -379,7 +448,7 @@ def main() -> int:
     out.write_text(json.dumps({
         "ran_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         "preset": args.preset, "samples": args.samples, "dry": args.dry,
-        "spent_usd": budget.spent_usd, "runs": records,
+        "spent_usd": budget.spent_usd, "runs": records, "consensus": consensus_rows,
     }, indent=2) + "\n")
     print(f"\nwrote {out.relative_to(ROOT)}")
     return 0
