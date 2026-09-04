@@ -1,0 +1,1560 @@
+{
+  "ran_utc": "2026-09-04 16:18:19",
+  "preset": "cheap",
+  "samples": 3,
+  "dry": false,
+  "spent_usd": 2.7206244,
+  "runs": [
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "error_km": 280.2818856612711,
+      "cost_usd": 0.0,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 44.8,7.4 at 8% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "error_km": 280.2818856612711,
+      "cost_usd": 0.11114160000000001,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 44.8,7.4 at 8% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 50.0,
+      "lon": 10.0,
+      "error_km": 363.7265054460583,
+      "cost_usd": 0.11959919999999996,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 44.8,7.4 at 8% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (Adriatic/Dalmatia or similar)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0,
+      "computed_confidence": 0.8689279999999999,
+      "all_levels": {
+        "continent": 0.76,
+        "country": 0.65,
+        "region": 0.8689279999999999
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 42.1,13.0 at 76% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (Dalmatia, Croatia, or similar Adriatic/Italian coastal area)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0.1868184,
+      "computed_confidence": 0.943552,
+      "all_levels": {
+        "continent": 0.8,
+        "country": 0.5,
+        "region": 0.943552
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 42.1,13.0 at 76% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Croatia",
+      "level": "country",
+      "confidence": null,
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0.13192320000000002,
+      "computed_confidence": 0.55,
+      "all_levels": {
+        "continent": 0.72,
+        "country": 0.55
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 42.1,13.0 at 76% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.30000000000001137,
+      "error_km": 28.86197837056747,
+      "cost_usd": 0.12684,
+      "computed_confidence": 0.5800000000000001,
+      "all_levels": {
+        "continent": 0.808,
+        "country": 0.5800000000000001
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.8,-0.5 at 32% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 30.17366837502707,
+      "cost_usd": 0,
+      "computed_confidence": 0.65,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.65
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.8,-0.5 at 32% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.8,
+      "lon": -0.5,
+      "error_km": 62.67510645214121,
+      "cost_usd": 0.1351272,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "continent": 0.65,
+        "country": 0.776
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.8,-0.5 at 32% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 31.5885,
+      "lon": 74.3106,
+      "error_km": 0.08907432405194714,
+      "cost_usd": 0,
+      "computed_confidence": 0.97648,
+      "all_levels": {
+        "country": 0.8739687681198121,
+        "region": 0.97648
+      },
+      "evidence": 19,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.6,74.2 at 37% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-11-23 06:41:31 UTC, local clock, daylight, sun low"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 31.5881,
+      "lon": 74.31029999999998,
+      "error_km": 0.13913737377279517,
+      "cost_usd": 0.1669728,
+      "computed_confidence": 0.99412,
+      "all_levels": {
+        "country": 0.936984384059906,
+        "city": 0.9212304800748825,
+        "point": 0.99412
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.6,74.2 at 37% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Badshahi Mosque' matches 1 place in \u067e\u0627\u06a9\u0633\u062a\u0627\u0646, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque / Alamgiri Gate complex, Lahore",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 31.5804,
+      "lon": 74.31029999999998,
+      "error_km": 0.9561858732763828,
+      "cost_usd": 0.0866874,
+      "computed_confidence": 0.964,
+      "all_levels": {
+        "country": 0.8739687681198121,
+        "region": 0.964
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.6,74.2 at 37% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Avenida 9 de Julio, Buenos Aires",
+      "level": "district",
+      "confidence": "medium",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0.1642278,
+      "computed_confidence": 0.887692,
+      "all_levels": {
+        "country": 0.809,
+        "city": 0.809,
+        "district": 0.887692
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Avenida 9 de Julio' matches at least 20 places in Argentina, best is a road spread over 2 km, which is district-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 22.7,113.7 at 56% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Avenida 9 de Julio, Buenos Aires",
+      "level": "district",
+      "confidence": null,
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0.204717,
+      "computed_confidence": 0.859615,
+      "all_levels": {
+        "country": 0.8128200000000001,
+        "city": 0.81282,
+        "district": 0.859615
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 22.7,113.7 at 56% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Avenida 9 de Julio' matches at least 20 places in Argentina, best is a road spread over 2 km, which is district-level evidence"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2004-08-03 22:53:07 UTC, local clock, night"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.0,
+      "computed_confidence": 0.9874,
+      "all_levels": {
+        "country": 0.97,
+        "region": 0.9874
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.048752399999999974,
+      "computed_confidence": 0.972,
+      "all_levels": {
+        "country": 0.96,
+        "region": 0.972
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Eiffel Tower, Paris, along the Seine",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.078231,
+      "computed_confidence": 0.995296,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.995296
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Central Mountain Range, Taiwan",
+      "level": "country",
+      "confidence": "low",
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "error_km": 25.662868112596062,
+      "cost_usd": 0.0,
+      "computed_confidence": 0.7703460000000001,
+      "all_levels": {
+        "continent": 0.4,
+        "country": 0.7703460000000001
+      },
+      "evidence": 11,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -42.6,147.2 at 24% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2007-02-20 11:58:02 UTC, local clock, daylight"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Mountain lake with coniferous forest and exposed shoreline",
+      "level": "country",
+      "confidence": null,
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "error_km": 25.662868112596062,
+      "cost_usd": 0.211806,
+      "computed_confidence": 0.83996992,
+      "all_levels": {
+        "country": 0.83996992
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -42.6,147.2 at 24% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Taiwan",
+      "level": "country",
+      "confidence": "low",
+      "lat": 24.35,
+      "lon": 121.42000000000002,
+      "error_km": 26.427363957632334,
+      "cost_usd": 0.27346499999999996,
+      "computed_confidence": 0.7696,
+      "all_levels": {
+        "country": 0.7696
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -42.6,147.2 at 24% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent County",
+      "level": "country",
+      "confidence": "low",
+      "lat": 39.7459,
+      "lon": -75.5466,
+      "error_km": 178.91940962845285,
+      "cost_usd": 0.8939915999999999,
+      "computed_confidence": 0.4664909465455329,
+      "all_levels": {
+        "country": 0.4664909465455329
+      },
+      "evidence": 17,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 45.5,-73.6 at 10% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2007-08-04 15:50:18 UTC, local clock, daylight, sun high, sun to the front, bearing 180"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Chestertown, Maryland",
+      "level": "city",
+      "confidence": "medium",
+      "lat": 39.2126,
+      "lon": -76.0658,
+      "error_km": 252.1076621868076,
+      "cost_usd": 0.0163758,
+      "computed_confidence": 0.955,
+      "all_levels": {
+        "country": 0.9199999999999999,
+        "region": 0.85,
+        "city": 0.955
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Chicago-Kent College of Law' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 45.5,-73.6 at 10% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Public Library' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Chestertown' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent, Ohio",
+      "level": "city",
+      "confidence": "low",
+      "lat": 41.1537,
+      "lon": -81.3579,
+      "error_km": 621.9036616864925,
+      "cost_usd": 0.24662819999999996,
+      "computed_confidence": 0.8559,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.9,
+        "city": 0.8559
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent, Ohio' matches 1 place in United States, best is a city, which is city-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 45.5,-73.6 at 10% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Oceania/Australia region (tropical coral reef setting)",
+      "level": "continent",
+      "confidence": "low",
+      "lat": -21.0,
+      "lon": 149.05,
+      "error_km": 15290.831310961168,
+      "cost_usd": 0.1583118,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 38.4,23.9 at 17% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Ambiguous between Southern Hemisphere coastal region (e.g., Australia) and Mediterranean (e.g., Greece)",
+      "level": "continent",
+      "confidence": "low",
+      "lat": -33.5,
+      "lon": 115.14999999999998,
+      "error_km": 18505.08131115469,
+      "cost_usd": 0.1537098,
+      "computed_confidence": 0.501114657521248,
+      "all_levels": {
+        "continent": 0.501114657521248
+      },
+      "evidence": 3,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 38.4,23.9 at 17% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-12-30 18:58:03 UTC, local clock, daylight, sun low"
+        }
+      ],
+      "rejected": [
+        "Unknown - insufficient specific evidence for exact location cited nothing that exists"
+      ]
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "Los Angeles County, California",
+      "level": "region",
+      "confidence": "high",
+      "lat": 34.185,
+      "lon": -118.4,
+      "error_km": 22.956651781820153,
+      "cost_usd": 0.17249159999999997,
+      "computed_confidence": 0.818,
+      "all_levels": {
+        "country": 0.7269999999999999,
+        "region": 0.818
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Sheldon Street' matches 5 places across 2 countries, best is a road spread over 8787 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'State Route 170, Los Angeles' matches 10 places in United States, best is a road spread over 34 km, which is region-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "Los Angeles",
+      "level": "country",
+      "confidence": "high",
+      "lat": 34.213,
+      "lon": -118.383,
+      "error_km": 26.403008530147734,
+      "cost_usd": 0.01456679999999999,
+      "computed_confidence": 0.985,
+      "all_levels": {
+        "country": 0.985
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Sheldon St' matches 5 places across 2 countries, best is a road spread over 8787 km, which is continent-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "State Route 170 (Hollywood Freeway), Los Angeles, CA",
+      "level": "district",
+      "confidence": "medium",
+      "lat": 34.1684,
+      "lon": 118.3614,
+      "error_km": 10398.44720102122,
+      "cost_usd": 0.12743339999999997,
+      "computed_confidence": 0.99496,
+      "all_levels": {
+        "country": 0.98,
+        "region": 0.955,
+        "city": 0.988,
+        "district": 0.99496
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'State Route 170' matches 1 place in United States, best is a road, which is district-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Italy",
+      "level": "country",
+      "confidence": "high",
+      "lat": 41.9007,
+      "lon": 12.501499999999993,
+      "error_km": 0.1649718695561415,
+      "cost_usd": 0.2485679999999999,
+      "computed_confidence": 0.8660335434436798,
+      "all_levels": {
+        "country": 0.8660335434436798
+      },
+      "evidence": 18,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Rome Tourist Tickets'"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 33.4,-112.4 at 10% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Area near Termini Station or a major piazza/transit hub in Rome",
+      "level": "region",
+      "confidence": "low",
+      "lat": 41.9028,
+      "lon": 12.496399999999994,
+      "error_km": 0.337085540413059,
+      "cost_usd": 0.13711740000000017,
+      "computed_confidence": 0.7060000000000001,
+      "all_levels": {
+        "country": 0.904,
+        "region": 0.7060000000000001
+      },
+      "evidence": 18,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2017-01-14 13:55:10 UTC, daylight, sun mid"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 33.4,-112.4 at 10% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Italy",
+      "level": "country",
+      "confidence": "high",
+      "lat": 41.8916,
+      "lon": 12.489000000000004,
+      "error_km": 1.4750600271725554,
+      "cost_usd": 0.26360879999999987,
+      "computed_confidence": 0.972,
+      "all_levels": {
+        "country": 0.972
+      },
+      "evidence": 20,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2017-01-14 13:55:10 UTC, daylight, sun low"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 33.4,-112.4 at 10% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Rome Tourist Tickets'"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "Asia",
+      "level": "continent",
+      "confidence": "high",
+      "lat": 28.6,
+      "lon": 77.19999999999999,
+      "error_km": 1738.6742999461937,
+      "cost_usd": 0.2391084000000001,
+      "computed_confidence": 0.8694939768314361,
+      "all_levels": {
+        "continent": 0.8694939768314361
+      },
+      "evidence": 12,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2022-08-29 13:26:17 UTC, night"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 3.3,101.5 at 27% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "India",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 28.6,
+      "lon": 77.19999999999999,
+      "error_km": 1738.6742999461937,
+      "cost_usd": 0.23955959999999998,
+      "computed_confidence": 0.69192,
+      "all_levels": {
+        "continent": 0.7969906306266785,
+        "country": 0.69192
+      },
+      "evidence": 14,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 3.3,101.5 at 27% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2022-08-29 13:26:17 UTC, night"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "China",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 28.6139,
+      "lon": 77.209,
+      "error_km": 1740.1979225824264,
+      "cost_usd": 0.25098719999999997,
+      "computed_confidence": 0.6320000000000001,
+      "all_levels": {
+        "continent": 0.7679892921447753,
+        "country": 0.6320000000000001
+      },
+      "evidence": 12,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2022-08-29 13:26:17 UTC, night"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 3.3,101.5 at 27% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "Woodstock/Salt River, Cape Town",
+      "level": "region",
+      "confidence": null,
+      "lat": -33.928,
+      "lon": 18.460000000000008,
+      "error_km": 3.295534625821456,
+      "cost_usd": 0.2963424,
+      "computed_confidence": 0.6040000000000001,
+      "all_levels": {
+        "country": 0.91,
+        "region": 0.6040000000000001
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Nude Foods Market' matches 1 place in United States, best is a shop, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'GetWine'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Classic Cuts Woodstock Cape Town'"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-07-14 09:31:29 UTC, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -0.8,-79.2 at 13% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "Woodstock, Cape Town",
+      "level": "region",
+      "confidence": null,
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0.011698799999999954,
+      "computed_confidence": 0.65,
+      "all_levels": {
+        "country": 0.85,
+        "region": 0.65
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Nude Foods Market Woodstock'"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-07-14 09:31:29 UTC, daylight"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Nude Foods' matches 2 places across 2 countries, best is a shop spread over 15054 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near -0.8,-79.2 at 13% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "city",
+      "confidence": "medium",
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0.28896960000000005,
+      "computed_confidence": 0.78608,
+      "all_levels": {
+        "country": 0.84843,
+        "city": 0.78608
+      },
+      "evidence": 20,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2019-12-14 09:05:47 UTC, daylight, sun low"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.3,120.9 at 23% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Alior Bank' matches at least 20 places in Polska, best is a amenity spread over 22 km, which is city-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0.16836659999999992,
+      "computed_confidence": 0.8320000000000001,
+      "all_levels": {
+        "country": 0.958,
+        "region": 0.8320000000000001
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2019-12-14 09:05:47 UTC, daylight, sun low"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "city",
+      "confidence": null,
+      "lat": 52.232,
+      "lon": 21.00999999999999,
+      "error_km": 0.48551903449080996,
+      "cost_usd": 0.28086900000000004,
+      "computed_confidence": 0.868974,
+      "all_levels": {
+        "country": 0.9427,
+        "region": 0.706,
+        "city": 0.868974
+      },
+      "evidence": 19,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2019-12-14 09:05:47 UTC, daylight, sun low"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 31.3,120.9 at 23% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Alior Bank' matches at least 20 places in Polska, best is a amenity spread over 22 km, which is city-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'NORR' matches 12 places across 3 countries, best is a city_district spread over 5846 km, which is continent-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 40.42,
+      "lon": -3.7024999999999864,
+      "error_km": 0.27454027973677786,
+      "cost_usd": 0.2823395999999999,
+      "computed_confidence": 0.76,
+      "all_levels": {
+        "continent": 0.6020920000000001,
+        "country": 0.76
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'PIKOLINOS' matches at least 20 places across 7 countries, best is a shop spread over 2487 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'DRANGUINOS'"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-09-16 06:07:13 UTC, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 41.9,1.8 at 26% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "high",
+      "lat": 39.4699,
+      "lon": -0.3762999999999863,
+      "error_km": 302.78641767654045,
+      "cost_usd": 0.30325020000000014,
+      "computed_confidence": 0.96416,
+      "all_levels": {
+        "country": 0.96416
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 41.9,1.8 at 26% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-09-16 06:07:13 UTC, daylight, sun low"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 36.7213,
+      "lon": -4.4214000000000055,
+      "error_km": 415.8648086045263,
+      "cost_usd": 0.330168,
+      "computed_confidence": 0.7887260627394914,
+      "all_levels": {
+        "continent": 0.65,
+        "country": 0.7887260627394914
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2025-09-16 06:07:13 UTC, daylight, sun low"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 41.9,1.8 at 26% (calibrated)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Pikolinos' matches at least 20 places across 7 countries, best is a shop spread over 2487 km, which is continent-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "HiKR Ground, Yeoksam Station area, Gangnam-gu, Seoul",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 37.5006,
+      "lon": 127.03640000000001,
+      "error_km": 9.001040373099508,
+      "cost_usd": 0.13478820000000002,
+      "computed_confidence": 0.99424,
+      "all_levels": {
+        "country": 0.98,
+        "city": 0.955,
+        "point": 0.99424
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'HiKR Ground' matches 1 place in \ub300\ud55c\ubbfc\uad6d, best is a tourism, which is point-level evidence"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "HiKR Ground, near KINTEX, Ilsan, Goyang, South Korea",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 37.5125,
+      "lon": 127.10250000000002,
+      "error_km": 12.360000235177084,
+      "cost_usd": 0.20082060000000013,
+      "computed_confidence": 0.9904,
+      "all_levels": {
+        "country": 0.94,
+        "city": 0.88,
+        "point": 0.9904
+      },
+      "evidence": 15,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'HiKR Ground' matches 1 place in \ub300\ud55c\ubbfc\uad6d, best is a tourism, which is point-level evidence"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-03-28 00:49:06 UTC, daylight"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.3,
+      "lon": -3.8000000000000114,
+      "error_km": 60.174381139187844,
+      "cost_usd": 0.03429660000000001,
+      "computed_confidence": 0.6933538652022401,
+      "all_levels": {
+        "continent": 0.6311041095898549,
+        "country": 0.6933538652022401
+      },
+      "evidence": 11,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 47.4,8.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high, sun to the front, bearing 250"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.3,
+      "lon": -3.6999999999999886,
+      "error_km": 68.23001844532543,
+      "cost_usd": 0.17646300000000004,
+      "computed_confidence": 0.744,
+      "all_levels": {
+        "continent": 0.6697459581494332,
+        "country": 0.744
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 47.4,8.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.2,
+      "lon": -3.5,
+      "error_km": 87.44884849990726,
+      "cost_usd": 0.16541039999999985,
+      "computed_confidence": 0.721336937538888,
+      "all_levels": {
+        "continent": 0.5623325588340794,
+        "country": 0.721336937538888
+      },
+      "evidence": 13,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 47.4,8.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high, sun to the front, bearing 250"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.2044290000000002,
+      "computed_confidence": 0.7528286711871625,
+      "all_levels": {
+        "continent": 0.7253651902079583,
+        "country": 0.7528286711871625
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.7,14.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2020-06-06 12:19:33 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": null,
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.1298184,
+      "computed_confidence": 0.7802921521663666,
+      "all_levels": {
+        "continent": 0.5422753170132637,
+        "country": 0.7802921521663666
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.7,14.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2020-06-06 12:19:33 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": null,
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.2532677999999997,
+      "computed_confidence": 0.6795927219092845,
+      "all_levels": {
+        "continent": 0.633820253610611,
+        "country": 0.6795927219092845
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 51.7,14.5 at 8% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2020-06-06 12:19:33 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.8000000000000114,
+      "error_km": 148.86125545205633,
+      "cost_usd": 0.27075119999999986,
+      "computed_confidence": 0.7083999999999999,
+      "all_levels": {
+        "continent": 0.6714571301790196,
+        "country": 0.7083999999999999
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 50.2,3.8 at 19% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-21 16:13:09 UTC, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 50.2,3.8 at 19% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "East Africa",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 37.0,
+      "error_km": 7188.020685264833,
+      "cost_usd": 0.22545780000000004,
+      "computed_confidence": 0.7183999999999999,
+      "all_levels": {
+        "continent": 0.5920000000000001,
+        "region": 0.7183999999999999
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight, sun high"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 38.4,23.9 at 19% (calibrated)"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "Africa",
+      "level": "continent",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 35.0,
+      "error_km": 7400.566052223895,
+      "cost_usd": 0.13179180000000024,
+      "computed_confidence": 0.6597999999999999,
+      "all_levels": {
+        "continent": 0.6597999999999999
+      },
+      "evidence": 10,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 38.4,23.9 at 19% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "East Africa",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 35.0,
+      "error_km": 7400.566052223895,
+      "cost_usd": 0.14682839999999997,
+      "computed_confidence": 0.744,
+      "all_levels": {
+        "continent": 0.755,
+        "region": 0.744
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "classifier: region near 38.4,23.9 at 19% (calibrated)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": []
+    }
+  ]
+}
