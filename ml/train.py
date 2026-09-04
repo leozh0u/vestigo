@@ -43,11 +43,29 @@ from ml.geocells import assign_cell, build, haversine, save as save_cells  # noq
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 EMB = ROOT / "ml/embeddings"
+
+# Which encoder's vectors to train on. Embeddings from different backbones have
+# different widths and are not interchangeable, so they live in their own
+# directories and this picks one. A bare ml/embeddings is honoured for the runs
+# written before the split.
+def embeddings_dir(name: str | None) -> pathlib.Path:
+    if name:
+        return EMB / name
+    if (EMB / "vectors.npy").exists():
+        return EMB
+    subdirs = sorted(d for d in EMB.iterdir() if (d / "vectors.npy").exists())
+    if not subdirs:
+        raise SystemExit(f"no embeddings under {EMB}. Run ml/embed.py first.")
+    if len(subdirs) > 1:
+        raise SystemExit(
+            "several encoders are embedded here. Choose one with --embeddings:\n  "
+            + "\n  ".join(d.name for d in subdirs))
+    return subdirs[0]
 OUT = ROOT / "ml/checkpoints"
 
 
 def load_data(n_cells: int, min_count: int, mode: str = "cluster",
-              per_cell: int = 300):
+              per_cell: int = 300, emb: pathlib.Path | None = None):
     """Embeddings, labels and the group each image belongs to.
 
     Two ways to draw the cells. `cluster` puts boundaries where the training
@@ -56,9 +74,10 @@ def load_data(n_cells: int, min_count: int, mode: str = "cluster",
     what the pictures look like: road paint, plate shapes and signage script all
     change at a border and nowhere else.
     """
+    emb = emb or embeddings_dir(None)
     index = {r["file"]: r for r in json.loads((ROOT / "data/train_index.json").read_text())}
-    keys = json.loads((EMB / "keys.json").read_text())
-    vectors = np.load(EMB / "vectors.npy")
+    keys = json.loads((emb / "keys.json").read_text())
+    vectors = np.load(emb / "vectors.npy")
 
     rows = [(i, index[k]) for i, k in enumerate(keys) if k in index]
     points = [(r["lat"], r["lon"]) for _, r in rows]
@@ -223,14 +242,21 @@ def main() -> int:
     ap.add_argument("--tau-km", type=float, default=150.0,
                     help="how far the smoothed label reaches. 0 turns smoothing "
                          "off and falls back to a one-hot target")
+    ap.add_argument("--embeddings",
+                    help="which encoder's vectors to train on, by directory "
+                         "name under ml/embeddings. The encoder is the ceiling "
+                         "on what one linear layer can do, so this is the "
+                         "comparison worth running")
     ap.add_argument("--seed", type=int, default=20260822)
     args = ap.parse_args()
 
+    emb = embeddings_dir(args.embeddings)
     X, y, groups, points, cells, origins = load_data(
-        args.cells, args.min_count, args.mode, args.per_cell)
+        args.cells, args.min_count, args.mode, args.per_cell, emb)
     train, val = split_by_location(groups, args.val_frac, args.seed)
     print(f"{len(X)} images, {len(cells)} {args.mode} cells, "
           f"{len(np.unique(groups))} seed locations")
+    print(f"  encoder {emb.name}, {X.shape[1]} dimensions")
     print(f"  train {train.sum()}  val {val.sum()}  "
           f"(split by location, so no box appears in both)")
 

@@ -36,11 +36,31 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 INDEX = ROOT / "data/train_index.json"
 OUT = ROOT / "ml/embeddings"
 
-# ViT-B/32 on LAION-2B. Small enough to run on a laptop in minutes and the same
-# backbone the geolocation literature uses, so the comparison is not confounded
-# by a different encoder.
+# ViT-B/32 on LAION-2B is the default because it runs on a laptop in minutes
+# and it is the backbone the geolocation literature uses, so a comparison
+# against published numbers is not confounded by a different encoder.
+#
+# It is also the smallest CLIP there is. Thirty-two-pixel patches mean it sees
+# a photograph coarsely, and since the classifier on top is one linear layer,
+# whatever these vectors fail to separate is not recoverable downstream. The
+# encoder is the ceiling, which makes swapping it the cheapest large experiment
+# available: no new data, no GPU rental, just laptop time.
+#
+# Worth trying, roughly in order of how much they cost to run:
+#   ViT-L-14              laion2b_s32b_b82k     larger, 14-pixel patches, 768-d
+#   ViT-SO400M-14-SigLIP  webli                 stronger again, slower
 MODEL = "ViT-B-32"
 PRETRAINED = "laion2b_s34b_b79k"
+
+
+def slug(model: str, pretrained: str) -> str:
+    """A directory name per encoder, so two of them cannot overwrite each other.
+
+    Embeddings from different backbones are not interchangeable and have
+    different widths. Writing them to one path would either crash on the
+    dimension or, worse, load a mixture and train on it.
+    """
+    return f"{model}__{pretrained}".lower().replace("/", "-")
 
 
 def device() -> torch.device:
@@ -51,10 +71,11 @@ def device() -> torch.device:
     return torch.device("cpu")
 
 
-def load_model(dev: torch.device):
+def load_model(dev: torch.device, model_name: str = MODEL,
+               pretrained: str = PRETRAINED):
     import open_clip
     model, _, preprocess = open_clip.create_model_and_transforms(
-        MODEL, pretrained=PRETRAINED)
+        model_name, pretrained=pretrained)
     model = model.to(dev).eval()
     for p in model.parameters():
         p.requires_grad_(False)         # frozen, and said so in the code
@@ -74,10 +95,16 @@ def embed_batch(model, tensors: list[torch.Tensor], dev) -> np.ndarray:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument("--model", default=MODEL,
+                    help="open_clip backbone. The ceiling on everything the "
+                         "linear head can do, so this is the knob worth turning")
+    ap.add_argument("--pretrained", default=PRETRAINED)
     ap.add_argument("--images", default="data/train")
     ap.add_argument("--index", default=str(INDEX))
-    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--out", help="defaults to ml/embeddings/<model slug>")
     args = ap.parse_args()
+    if not args.out:
+        args.out = str(OUT / slug(args.model, args.pretrained))
 
     index = json.loads(pathlib.Path(args.index).read_text())
     out = pathlib.Path(args.out)
@@ -98,7 +125,7 @@ def main() -> int:
 
     dev = device()
     print(f"embedding {len(todo)} images on {dev.type}")
-    model, preprocess = load_model(dev)
+    model, preprocess = load_model(dev, args.model, args.pretrained)
 
     keys, rows = list(done), []
     batch: list[torch.Tensor] = []
