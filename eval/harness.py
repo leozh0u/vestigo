@@ -44,6 +44,7 @@ from vestigo.scoring import (
     worst_overshoot,
 )
 from vestigo.tools.base import Registry
+from vestigo.tools.gazetteer import PlaceLookup
 from vestigo.tools.geocell import GeocellTool
 from vestigo.tools.solar import SolarTool
 
@@ -143,6 +144,9 @@ def main() -> int:
                     help="images handled at once. The calls are network bound, "
                          "so this is close to a linear speedup until the "
                          "provider starts rate limiting")
+    ap.add_argument("--no-gazetteer", action="store_true",
+                    help="drop the OpenStreetMap name lookup, to measure what "
+                         "external retrieval is worth on its own")
     ap.add_argument("--no-classifier", action="store_true",
                     help="leave the geocell classifier out of the registry, to "
                          "measure what it is worth by its absence")
@@ -170,6 +174,8 @@ def main() -> int:
         router, budget = build(args.preset, limit_usd=args.limit, batched=args.batched)
 
     tools = [SolarTool()]
+    if not args.no_gazetteer:
+        tools.append(PlaceLookup())
     if not args.no_classifier:
         try:
             tools.append(GeocellTool())
