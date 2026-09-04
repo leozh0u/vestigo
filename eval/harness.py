@@ -45,6 +45,7 @@ from vestigo.scoring import (
 )
 from vestigo.board import EvidenceKind
 from vestigo.tools.base import Registry
+from vestigo.trace import write_trace
 from vestigo.tools.gazetteer import PlaceLookup
 from vestigo.tools.geocell import GeocellTool
 from vestigo.tools.solar import SolarTool
@@ -145,6 +146,11 @@ def main() -> int:
                     help="images handled at once. The calls are network bound, "
                          "so this is close to a linear speedup until the "
                          "provider starts rate limiting")
+    ap.add_argument("--traces", metavar="DIR",
+                    help="also write a step-by-step replay of each board here, "
+                         "one JSON per run. Free, and it is what the site plays "
+                         "back. Also the fastest way to see why a tool changed "
+                         "nothing")
     ap.add_argument("--no-gazetteer", action="store_true",
                     help="drop the OpenStreetMap name lookup, to measure what "
                          "external retrieval is worth on its own")
@@ -231,7 +237,18 @@ def main() -> int:
 
                 truth = LatLon(entry["truth"]["lat"], entry["truth"]["lon"])
                 rows, points = [], []
-                for run in runs:
+                for sample, run in enumerate(runs):
+                    if args.traces:
+                        # One file per sample, not per image: two samples of
+                        # the same photograph reach the answer differently and
+                        # the difference is the interesting part. Written
+                        # before the decline check, because a run that refused
+                        # to answer is the case the site most wants to show.
+                        stem = f"{entry['id']}_s{sample}"
+                        try:
+                            write_trace(run.board, ROOT / args.traces / f"{stem}.json")
+                        except ValueError as exc:
+                            print(f"  no trace for {stem}: {exc}")
                     if run.answer is None or run.best_point is None:
                         declined += 1
                         continue

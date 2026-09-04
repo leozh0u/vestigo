@@ -607,6 +607,15 @@ class Board:
         self.constraints: dict[str, Constraint] = {}
         self.candidates: dict[str, Candidate] = {}
         self._counters: dict[str, int] = {"e": 0, "c": 0, "k": 0, "n": 0}
+        # Everything added, in the order it was added, as (kind, id). The four
+        # dicts above each preserve their own insertion order, but nothing
+        # records how they interleave, and the interleaving is the run. A
+        # constraint that arrived before the classifier answered tells a
+        # different story from one that arrived after.
+        #
+        # Cheap to keep and impossible to reconstruct afterwards, which is the
+        # case for storing something rather than deriving it.
+        self.journal: list[tuple[str, str]] = []
 
     def _next(self, prefix: str) -> str:
         self._counters[prefix] += 1
@@ -641,6 +650,7 @@ class Board:
             max_strength=max_strength,
         )
         self.evidence[ev.id] = ev
+        self.journal.append(("evidence", ev.id))
         return ev
 
     def add_claim(
@@ -693,6 +703,7 @@ class Board:
             f"{level.label}",
         )
         self.claims[claim.id] = claim
+        self.journal.append(("claim", claim.id))
         return claim
 
     def add_constraint(self, constraint: Constraint) -> Constraint:
@@ -702,6 +713,7 @@ class Board:
         if not constraint.id or constraint.id in self.constraints:
             constraint = replace(constraint, id=self._next("k"))
         self.constraints[constraint.id] = constraint
+        self.journal.append(("constraint", constraint.id))
         return constraint
 
     def add_candidate(
@@ -722,6 +734,7 @@ class Board:
             evidence_ids=tuple(evidence_ids),
         )
         self.candidates[cand.id] = cand
+        self.journal.append(("candidate", cand.id))
         return cand
 
     # -- independence ------------------------------------------------------
@@ -979,6 +992,7 @@ class Board:
             "claims": [c.to_dict() for c in self.claims.values()],
             "constraints": [c.to_dict() for c in self.constraints.values()],
             "candidates": [c.to_dict() for c in self.candidates.values()],
+            "journal": [list(entry) for entry in self.journal],
             "counters": dict(self._counters),
         }
 
@@ -1001,6 +1015,10 @@ class Board:
             cand = Candidate.from_dict(c)
             board.candidates[cand.id] = cand
         board._counters = dict(d.get("counters", board._counters))
+        # Boards written before the journal existed reload with an empty one
+        # rather than a wrong one. A replay of such a board is unavailable,
+        # which is honest; a replay in a guessed order would not be.
+        board.journal = [(kind, ident) for kind, ident in d.get("journal", ())]
         return board
 
     def __repr__(self) -> str:
