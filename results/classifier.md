@@ -247,6 +247,32 @@ and are dropped as broken rather than pooled, and at 1:50m the coastline is
 coarse enough that 4% of points fall outside every polygon, so a point within
 120 km of a coast is assigned to it.
 
+### The number above was measured with a bug in it
+
+Found later, while building country constraints on the same boundary file.
+
+Natural Earth stores **"-99" in both `ISO_A2` and `ISO_A3`** for eight
+features, France, Norway and Kosovo among them. `load_countries` read `ISO_A2`
+directly, so all eight arrived as one country called "-99" and were split by
+density as though France and Norway were one place.
+
+So the 32.0% is a measurement of admin cells **with France and Norway merged**,
+not of admin cells. The comparison is not fair to the idea it was testing.
+
+It is left standing rather than quietly rerun, because the conclusion it fed
+into does not depend on it. The argument against admin cells is the centroid
+one above, which is geometric and holds regardless: a cell shaped like
+Argentina has a centroid far from most of Argentina, and the metric scores the
+centroid. Merging two European countries does not create that effect.
+
+What the bug does mean is that the size of the gap is unreliable. If the
+question ever matters enough to decide something, it needs rerunning on the
+fixed loader. It has not, so it has not been.
+
+The reason to write this down at all: a project whose headline claim is that
+stated confidence should match measured accuracy cannot leave a known-broken
+measurement standing without saying so.
+
 ## An assumption I had written down and got wrong
 
 A comment in `ml/train.py` said a temperature above 1 means the model was
