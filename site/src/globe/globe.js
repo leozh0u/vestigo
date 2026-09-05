@@ -104,7 +104,25 @@ export class Globe {
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    this.camera.position.set(0, 0, 3.55);
+    /*
+      Every distance in this project is this number times a multiplier.
+
+      A perspective camera's field of view is vertical, so a window that is
+      taller than it is wide shows *less* of the world across, not more. At
+      3.55 on a 16:9 laptop the planet sits comfortably inside the frame; the
+      same 3.55 on a phone held upright put its limb off both edges, and since
+      the night side is black against a black page the result did not read as a
+      close orbit. It read as a page that had failed to load a globe.
+
+      So the fit is computed from the aspect ratio in resize() and every
+      altitude the flight uses is scaled by it. One multiplier rather than a
+      second set of numbers for phones, which is what keeps the choreography
+      identical on both: the camera still pulls back to the same fraction of
+      its distance and still stops at the same fraction for a city.
+    */
+    this.baseDistance = 3.55;
+    this.fit = 1;
+    this.camera.position.set(0, 0, this.baseDistance);
     // Lifted, so the sphere sits above the controls instead of behind them.
     this.camera.position.y = 0.18;
 
@@ -718,10 +736,33 @@ export class Globe {
     }
   }
 
+  /* Where the camera sits when it is not going anywhere. */
+  get idleDistance() { return this.baseDistance * this.fit; }
+
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
     this.camera.aspect = w / h;
+
+    /*
+      How far back the camera has to be for the planet to fit across the frame.
+
+      halfWidth = tan(fov / 2) * aspect * distance, and what is wanted is a
+      sphere of radius 1 sitting inside about 92% of it. Anything wider and the
+      limb leaves the frame; much narrower and the planet becomes a marble with
+      a screen of empty space around it.
+
+      Never closer than the desktop distance, so a wide window is untouched.
+    */
+    const halfFov = Math.tan((this.camera.fov * Math.PI) / 360);
+    const needed = (1 / 0.92) / (halfFov * this.camera.aspect);
+    this.fit = Math.max(1, needed / this.baseDistance);
+
+    // Only when nothing is flying. A resize mid-flight — which on a phone
+    // means the address bar sliding away — must not teleport the camera out
+    // from under a move that is already running.
+    if (this.spinning) this.camera.position.z = this.idleDistance;
+
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
   }

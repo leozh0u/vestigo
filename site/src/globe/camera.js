@@ -57,7 +57,6 @@ const ALTITUDE = {
   country: 2.8,
   continent: 3.2,
 };
-const IDLE_ALTITUDE = 3.55;
 const APEX = 4.6;             // how far back it pulls before coming in
 const APEX_AT = 0.33;         // most of the move is the descent
 
@@ -110,11 +109,25 @@ export class Flight {
     const end = {
       x: target.x,
       y: Flight.shortest(globe.metal.rotation.y, target.y),
-      z: ALTITUDE[level] ?? IDLE_ALTITUDE,
+      // Scaled by the globe's fit, which is 1 on a wide window and larger on
+      // a narrow one. See Globe.resize: a vertical field of view shows less of
+      // the world across a tall window, so every distance has to grow together
+      // or the planet leaves the frame on a phone.
+      z: (ALTITUDE[level] ?? globe.baseDistance) * globe.fit,
     };
 
     globe.spinning = false;      // an idle rotation would fight this one
     const began = performance.now();
+    /*
+      The apex scales too, and it has to.
+
+      On a phone the fit pushes the idle distance out past 7, while APEX is
+      4.6. Left unscaled the "pull back before coming in" would start by
+      rushing the camera two units *forward*, which is the opposite of the move
+      and reads as a lurch. Scaling both by the same number keeps the shape of
+      the flight identical at every aspect ratio.
+    */
+    const apex = APEX * globe.fit;
 
     this.active = (now) => {
       const t = Math.min(1, (now - began) / DURATION);
@@ -127,8 +140,8 @@ export class Flight {
       globe.metal.rotation.x = start.x + (end.x - start.x) * turn;
 
       globe.camera.position.z = t < APEX_AT
-        ? start.z + (APEX - start.z) * easeInOut(t / APEX_AT)
-        : APEX + (end.z - APEX) * easeInOut((t - APEX_AT) / (1 - APEX_AT));
+        ? start.z + (apex - start.z) * easeInOut(t / APEX_AT)
+        : apex + (end.z - apex) * easeInOut((t - APEX_AT) / (1 - APEX_AT));
 
       if (t >= 1) {
         this.active = null;
@@ -148,7 +161,7 @@ export class Flight {
       const t = Math.min(1, (now - began) / RETURN);
       const e = easeInOut(t);
       globe.metal.rotation.x = start.x * (1 - e);
-      globe.camera.position.z = start.z + (IDLE_ALTITUDE - start.z) * e;
+      globe.camera.position.z = start.z + (globe.idleDistance - start.z) * e;
       if (t >= 1) {
         this.active = null;
         globe.spinning = true;

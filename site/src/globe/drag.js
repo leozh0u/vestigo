@@ -52,7 +52,7 @@ export class Drag {
       `closest` walks up from whatever was pressed, so a press anywhere inside
       a control is a press on that control.
     */
-    if (event.target.closest?.("button, input, a, .receipt")) return;
+    if (event.target.closest?.("button, input, a, .receipt, .examples")) return;
     this.dragging = true;
     this.pointer = event.pointerId;
     this.last = { x: event.clientX, y: event.clientY };

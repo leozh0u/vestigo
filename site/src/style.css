@@ -22,6 +22,9 @@
   --warm:    #b8874a;   /* used sparingly, for a refusal */
 
   --gap: 1rem;
+  /* The page's own margin. The examples strip reaches past it to the screen
+     edge and back, so it stops being a number written out twice. */
+  --pad: clamp(1.1rem, 3vw, 2.6rem);
   --radius: 4px;              /* nearly square. Rounded corners read as app */
 
   /* One typeface. The first version paired a display serif with a sans, which
@@ -159,8 +162,18 @@ html, body {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  /*
+    One column, and it is allowed to be narrower than what is in it.
+
+    A grid track is min-content by default, so the row of photographs sized the
+    column to the full width of nine of them — 1143px on a 390px phone — and
+    the strip grew instead of scrolling. Nothing errored and nothing warned:
+    overflow:auto cannot scroll a box that has already been given room for all
+    of its contents.
+  */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap);
-  padding: clamp(1.1rem, 3vw, 2.6rem);
+  padding: var(--pad);
 }
 
 /* --------------------------------------------------------------------------
@@ -193,8 +206,6 @@ html, body {
   letter-spacing: 0.34em;
   text-indent: 0.34em;   /* the tracking adds space after the last letter too */
 }
-@media (max-width: 620px) {
-    }
 
 /* --------------------------------------------------------------------------
    The middle row
@@ -369,13 +380,16 @@ html, body {
 /* --------------------------------------------------------------------------
    The bar
    -------------------------------------------------------------------------- */
-.bar { display: flex; flex-direction: column; gap: 0.7rem; }
+.bar { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 
 .examples {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: flex-end;
+  /* Same reason as the grid column above: a flex item defaults to the width of
+     its contents, and a box that already fits everything never scrolls. */
+  min-width: 0;
   /* The row must not clip a photograph that has grown past its bounds. */
   overflow: visible;
 }
@@ -493,10 +507,63 @@ html, body {
 #ui[data-state="resolving"] .prompt,
 #ui[data-state="arrived"] .prompt { opacity: 0.4; pointer-events: none; }
 
+/* --------------------------------------------------------------------------
+   Narrow screens
+
+   There was a breakpoint here that was empty. On a phone the nine photographs
+   wrapped into a three-column block about a screen and a half tall: the auto
+   grid row grew past its container, the 1fr row above it collapsed to nothing,
+   and the whole thing overflowed the bottom of a page that cannot scroll. The
+   globe was cropped to a sliver behind a wall of thumbnails.
+
+   The row becomes a strip you push sideways instead. That is the native
+   gesture on a touch screen, and it keeps the choices on one line so the globe
+   keeps the height it needs to read as a planet.
+   -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
   .stack { grid-template-columns: minmax(0, 1fr); }
   .evidence { display: none; }          /* the globe is the story on a phone */
   .receipt { min-width: 0; width: 100%; }
+
+  .examples {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Out past the page padding and back again, so the strip runs to both
+       edges of the screen while its first photograph still lines up with the
+       wordmark. A strip that stops short of the edge looks like it has ended. */
+    margin: 0 calc(-1 * var(--pad));
+    padding: 0 var(--pad) 0.4rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    /* The globe's drag listens on the page, so the browser has to be told this
+       strip owns horizontal movement or the two fight over the same gesture. */
+    touch-action: pan-x;
+  }
+  .examples::-webkit-scrollbar { display: none; }
+  .photo { flex: 0 0 auto; scroll-snap-align: start; }
+}
+
+/* Two and a bit across on the narrowest phones, where 116px leaves nothing of
+   the third to show that the strip continues. */
+@media (max-width: 420px) {
+  .photo, .photo:hover { width: 92px; height: 92px; }
+}
+
+/*
+  The field, quieter on a phone.
+
+  Its depth comes from four layers at four scales, and on a wide window the
+  large ones run right across and read as distance. On a 390px screen the same
+  type is cut off mid-word at both edges — "observe Umbrellas or parasols on
+  the right side o" — which stops being texture and becomes a paragraph that
+  failed to fit. Faint enough to be a surface rather than something to read.
+*/
+@media (max-width: 720px) {
+  .field-layer { opacity: 0.4; }
+  .field-typed { opacity: 0.45; }
+  /* The nearest layer is the largest type and the one that clips worst. */
+  .field-layer[data-depth="1"] { display: none; }
 }
 
 @media (hover: none) {
