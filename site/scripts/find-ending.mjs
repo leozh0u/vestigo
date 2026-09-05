@@ -52,7 +52,9 @@ const SPOTS = [
   is flown, so facades are reconstructed from oblique passes and there is a
   height below which brick becomes wax. This is what measures it.
 */
-const HEIGHTS = [11, 17, 25];
+// Metres above the street now, which is what they always claimed to be. The
+// module measures where the street is; see Manhattan.groundLevel.
+const HEIGHTS = [9, 14, 20];
 
 const harness = (w, h) => `
 <!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
@@ -127,15 +129,27 @@ for (const spot of SPOTS) {
         level enough that a fifth-floor window sits in the upper half of the
         frame rather than at the bottom of a bird's-eye view.
       */
+      // The origin is about sixteen metres above the street in Manhattan, so
+      // everything is offset by the measured ground or the camera ends up nine
+      // floors higher than the number says.
+      const floor = m.groundLevel() ?? 0;
       const r = (deg * Math.PI) / 180;
-      // Across a street, which in the East Village is about twenty metres from
-      // one building face to the other.
-      cam.position.set(Math.sin(r) * 22, height, Math.cos(r) * 22);
+      // Across a street, which in the East Village is about twenty-two metres
+      // from one building face to the other.
+      cam.position.set(Math.sin(r) * 22, floor + height, Math.cos(r) * 22);
       // Level, near enough. Two metres of drop over twenty-two is five degrees,
       // which reads as a camera held by a person rather than as a drone.
-      cam.lookAt(0, height - 2, 0);
+      cam.lookAt(0, floor + height - 2, 0);
       cam.updateMatrixWorld();
       for (let k = 0; k < 320; k++) {
+        // Re-ask each pass: the ground cannot be measured until geometry has
+        // arrived, and the first few frames of a fresh tileset have none.
+        const g = m.groundLevel();
+        if (g !== null) {
+          cam.position.setY(g + height);
+          cam.lookAt(0, g + height - 2, 0);
+          cam.updateMatrixWorld();
+        }
         m.update();
         m.render();
         const s = m.tiles.stats ?? {};

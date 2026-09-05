@@ -110,7 +110,74 @@ export class Manhattan {
 
     this.tiles = tiles;
     this.ready = true;
+    // Not known until geometry has arrived, and not trusted until it has all
+    // arrived. See groundLevel().
+    this.ground = null;
+    this.groundSettled = false;
     return this;
+  }
+
+  /*
+    How far below the origin the street is, measured.
+
+    getObjectFrame puts the *ellipsoid* surface at the origin, and the ellipsoid
+    is a smooth mathematical figure that the actual ground is nowhere exactly
+    on. In Manhattan the geoid sits about 33 m below the ellipsoid and the
+    street about 10 m above sea level, so y = 0 is roughly 16 m up in the air.
+
+    That is a small number and it invalidated everything. A camera placed at
+    y = 11 believing it was at a third-floor window was at 27 m, which is above
+    the roofline of the tenements it was supposed to be looking at, and the
+    whole first sweep of candidate endings came back as bird's-eye views over
+    rooftops. Nothing was wrong with the framing code; the floor was in the
+    wrong place.
+
+    Measured rather than written down, because it is different everywhere and a
+    constant here would be a trap for the next location.
+
+    Returns null until enough geometry has loaded to hit. Callers should fall
+    back to 0 and re-ask, rather than treating the first answer as final.
+  */
+  groundLevel() {
+    if (!this.tiles) return null;
+    /*
+      Do not keep an answer measured against half a tileset.
+
+      The renderer serves coarse tiles first and refines them, and the coarse
+      terrain for Manhattan sits well below the street. Caching the first
+      non-null reading therefore locked in a ground level from geometry that was
+      about to be replaced, and every frame after it put the camera under the
+      road — the same black frames as before, from a different cause.
+
+      So the reading is only kept once nothing is in flight. Until then it is
+      re-measured on each call, which costs one raycast and is what the caller
+      is asking for anyway.
+    */
+    const stats = this.tiles.stats ?? {};
+    const settled = !stats.downloading && !stats.parsing;
+    if (this.ground !== null && this.groundSettled) return this.ground;
+    /*
+      From well above anything in the tileset, straight down through the origin,
+      and the topmost hit is the one that counts.
+
+      The first attempt took the *last* hit, on the theory that a building at
+      the chosen point would put a roof in front of the ground. It does not
+      work: the tileset keeps several levels of detail loaded at once and their
+      geometry overlaps, so a cast through Manhattan returns the street at
+      -16.5 and a coarser copy of the same terrain at -27.2. Taking the deepest
+      put the camera ten metres under the road and every frame came back black
+      with a strip of streetlights along the top edge.
+
+      The chosen points sit in the middle of streets, so the topmost surface is
+      the road.
+    */
+    const ray = new THREE.Raycaster(
+      new THREE.Vector3(0, 6000, 0), new THREE.Vector3(0, -1, 0), 0, 30000);
+    const hits = ray.intersectObject(this.tiles.group, true);
+    if (!hits.length) return null;
+    this.ground = hits[0].point.y;
+    this.groundSettled = settled;
+    return this.ground;
   }
 
   /*
@@ -121,7 +188,19 @@ export class Manhattan {
     the framing the next clip has to pick up from: a window, seen from the
     street.
   */
-  place(t, endHeight = 58) {
+  place(t, endHeight = 14) {
+    /*
+      Heights here are metres above the street, not above the origin. See
+      groundLevel(): the origin is about sixteen metres in the air over
+      Manhattan, and taking it for the ground put every framing nine floors too
+      high.
+
+      Falls back to zero while the first tiles are still arriving, which is only
+      ever the opening frames of a render and those are three kilometres up
+      where sixteen metres is nothing.
+    */
+    const floor = this.groundLevel() ?? 0;
+
     /*
       Three overlapping moves, and none of them start or stop together.
 
@@ -131,16 +210,16 @@ export class Manhattan {
 
       **Closing.** The camera does not drop straight down. It comes in on a
       slant, which is what turns a descent into an approach: falling vertically
-      onto a city gives you a map that gets bigger, and coming in at an angle
-      gives you buildings that pass.
+      onto a city gives a map that gets bigger, and coming in at an angle gives
+      buildings that pass.
 
       **Tilting.** The aim rises as the camera falls, from looking down at a
-      grid of blocks to looking level along a street and then slightly up at
-      the front of a building. That is one continuous move rather than a
-      separate pan, so there is no moment where the shot changes its mind.
+      grid of blocks to looking level at the front of a building. One
+      continuous move rather than a separate pan, so there is no moment where
+      the shot changes its mind.
 
-      They are offset from each other on purpose. Beats that begin and end
-      together read as a slideshow.
+      Offset from each other on purpose. Beats that begin and end together read
+      as a slideshow.
     */
     const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2);
     const easeOut = (x) => 1 - Math.pow(1 - x, 3);
@@ -149,44 +228,41 @@ export class Manhattan {
     // Starts a fifth of the way in and finishes early, so the last stretch is
     // the camera settling rather than still travelling.
     const close = easeOut(Math.min(1, Math.max(0, (t - 0.18) / 0.74)));
-    const tilt = easeInOut(Math.min(1, Math.max(0, (t - 0.34) / 0.66)));
+    const tilt = easeInOut(Math.min(1, Math.max(0, (t - 0.30) / 0.70)));
 
     /*
-      3400 m down to about 58.
+      3400 m down to about fourteen, which is a fourth-floor window.
 
-      Not to street level, and this is a limit of the data rather than a
-      choice. Google's photogrammetry is captured from the air, so facades are
-      reconstructed from oblique passes and windows are inferred: it holds up
-      beautifully from above and smears into wax somewhere under about forty
-      metres. Ending at roughly a fifth floor is the lowest altitude where a
-      pre-war walk-up still has a fire escape you can see rather than a brown
-      stain where one should be.
+      Not to the pavement. Google's photogrammetry is flown, so facades are
+      reconstructed from oblique passes: it holds up from above and softens as
+      the camera drops, and somewhere below ten metres brick becomes wax. A
+      fourth floor is about the lowest altitude where a pre-war walk-up still
+      has a fire escape you can see rather than a brown stain where one should
+      be.
 
-      That is also why the next beat is generated rather than flown. There is
-      no photogrammetry of the inside of an apartment, and there is not much of
-      the outside of one either.
+      It is also why the next beat is generated rather than flown. There is no
+      photogrammetry of the inside of an apartment.
     */
-    const height = 3400 + (endHeight - 3400) * fall;
-    // How far back along the street. It ends about a road's width away, which
-    // is what puts a whole building front in frame rather than one brick.
-    const back = 2600 + (34 - 2600) * close;
-    // And a little to one side, so the building is met at an angle. Straight
-    // on is an elevation drawing.
-    const side = 900 + (11 - 900) * close;
+    const height = floor + 3400 + (endHeight - 3400) * fall;
+    // Across the street: about twenty-two metres in the East Village, face to
+    // face, which is what puts a whole building front in frame.
+    const back = 2600 + (22 - 2600) * close;
+    // And a little to one side, so the building is met at an angle rather than
+    // square on. Square on is an elevation drawing.
+    const side = 900 + (7 - 900) * close;
 
     this.camera.position.set(side, height, back);
 
     /*
       What it looks at, which rises faster than the camera falls.
 
-      At the start it is the ground: the aim is the origin and the camera is
-      three kilometres above it, so the shot looks steeply down. By the end the
-      aim is 26 m up the face of a building while the camera is at 58, so the
-      lens is barely tilted down at all and a fifth-floor window sits in the
-      upper half of the frame. The tilt is the difference between those two,
-      and it happens without a separate move.
+      At the start the aim is the street and the camera is three kilometres
+      above it, so the shot looks steeply down. By the end the aim is twelve
+      metres up a building front and the camera is at fourteen, so the lens is
+      tilted five degrees down: level enough to read as a camera held by a
+      person rather than as a drone.
     */
-    this.camera.lookAt(0, 26 * tilt, 0);
+    this.camera.lookAt(0, floor + 12 * tilt, 0);
     this.camera.updateMatrixWorld();
   }
 
