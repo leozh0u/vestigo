@@ -147,6 +147,27 @@ async function main() {
     await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
     page.on("pageerror", (e) => console.log("  page:", String(e).slice(0, 160)));
 
+    /*
+      Loaded through the dev server first, and this matters.
+
+      Not for the modules — those are bundled and inlined below. For the
+      *origin*. A page built with setContent alone is about:blank, whose origin
+      is null, and Google's tile API checks the Origin header against the key's
+      allowed referrers. The key is restricted to localhost:5173 and
+      vestigo.earth, so from a null origin every tile request is rejected.
+
+      Silently. TilesRenderer reports nothing downloading and nothing parsing,
+      which is indistinguishable from "finished", so the settle loop exits
+      immediately and the frame is photographed with no geometry in it. Two
+      eleven-second renders came out black this way and both were read as a
+      shading problem.
+
+      Navigating first and then replacing the document keeps the origin and
+      drops the module graph, which is the combination that was wanted: no
+      imports for hot reload to tear down, and a referrer Google accepts.
+    */
+    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" })
+      .catch(() => {});
     await page.setContent(
       harness({ width: WIDTH, height: HEIGHT, place: PLACE, scene }),
       { waitUntil: "domcontentloaded" });
