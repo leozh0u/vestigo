@@ -1,0 +1,16 @@
+{
+  "name": "vestigo-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.4"
+  },
+  "dependencies": {
+    "three": "^0.181.0"
+  }
+}

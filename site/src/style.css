@@ -1,0 +1,378 @@
+/*
+  What it looks like. No logic, no content, only appearance.
+
+  The palette is one block of custom properties at the top and everything below
+  refers to it, so the whole look changes by editing this block rather than by
+  hunting hex codes. Swap these for whatever you settle on in Realtime Colors.
+
+  The register being aimed at is an instrument rather than a product: cold,
+  precise, mostly monochrome, with a single warm accent that only appears when
+  the system commits to something.
+*/
+:root {
+  --void:    #06070a;   /* deepest, behind everything */
+  --steel:   #12151a;   /* panels */
+  --edge:    #232830;   /* hairlines */
+  --ink:     #e6e9ee;   /* text */
+  --ink-dim: #7d8792;   /* secondary */
+  --ink-faint:#4d545d;  /* tertiary */
+
+  --cold:    #2b6f9e;   /* the aurora the page sits in */
+  --live:    #6ee7a8;   /* the colour of a committed answer */
+  --warm:    #b8874a;   /* used sparingly, for a refusal */
+
+  --gap: 1rem;
+  --radius: 12px;
+  --serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  /* The globe is dragged by listening on the page, so a drag must not start
+     selecting the text sitting on top of it. */
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;                    /* the globe fills the window */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   Atmosphere
+
+   Depth painted behind the globe. Two slow aurorae and a layer of film grain.
+
+   The grain is the part that matters and it is the least obvious: a flat dark
+   background reads as cheap because real darkness is never uniform. A few
+   percent of noise over the top is what separates "dark theme" from something
+   that looks lit.
+   -------------------------------------------------------------------------- */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+.aurora-cold {
+  width: 78vmax; height: 78vmax;
+  left: -18vmax; top: -26vmax;
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, var(--cold) 55%, transparent) 0%,
+    transparent 62%);
+  animation: drift-a 42s ease-in-out infinite alternate;
+}
+.aurora-warm {
+  width: 62vmax; height: 62vmax;
+  right: -20vmax; bottom: -24vmax;
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, #3f5d7a 45%, transparent) 0%,
+    transparent 64%);
+  animation: drift-b 55s ease-in-out infinite alternate;
+}
+@keyframes drift-a {
+  to { transform: translate3d(9vmax, 7vmax, 0) scale(1.12); }
+}
+@keyframes drift-b {
+  to { transform: translate3d(-8vmax, -6vmax, 0) scale(1.08); }
+}
+
+/* Film grain, generated rather than downloaded. feTurbulence is SVG's noise
+   function, and inlining it as a data URI means no extra request. */
+.grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/>\
+</filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
+  animation: shift 700ms steps(2) infinite;
+}
+@keyframes shift {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(-1.5%, 1%); }
+  100% { transform: translate(1%, -1.5%); }
+}
+
+/* Darkens the corners, which pulls the eye to the middle where the globe is. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 48%,
+    transparent 34%,
+    color-mix(in srgb, var(--void) 72%, transparent) 78%,
+    var(--void) 100%);
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+#ui {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--gap);
+  padding: clamp(1.1rem, 3vw, 2.6rem);
+}
+
+/* --------------------------------------------------------------------------
+   Masthead
+   -------------------------------------------------------------------------- */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.wordmark svg { color: #8fb3c9; flex: none; }
+.wordmark span {
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: 0.005em;
+}
+.tagline {
+  margin: 0.5rem 0 0;
+  max-width: 42ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.tagline .soft { color: var(--ink-faint); }
+
+/* --------------------------------------------------------------------------
+   The middle row
+
+   It has to be allowed to be smaller than its contents. A grid row defaults to
+   min-content, so without min-height:0 a long evidence list pushes the row
+   taller than the screen and slides underneath the bar below it.
+   -------------------------------------------------------------------------- */
+.stack {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--gap);
+}
+
+.evidence {
+  align-self: end;
+  /* Both are needed and neither is enough alone. A grid item defaults to a
+     minimum size of its content, so min-height:0 lets it be smaller than the
+     text inside it, and max-height stops a long run from growing the row past
+     the screen and spilling over the masthead. Without the pair, an eight-line
+     observation walks up over the wordmark. */
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  max-width: 46ch;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  /* The camera ends up over a lit continent, and grey monospace on pale green
+     is unreadable. A soft dark ground behind the column costs nothing and
+     works at every altitude, where tuning the text colour would not. */
+  padding: 0.9rem 1rem 0.9rem 0;
+  background: linear-gradient(to right,
+    color-mix(in srgb, var(--void) 82%, transparent) 0%,
+    color-mix(in srgb, var(--void) 74%, transparent) 62%,
+    transparent 100%);
+  text-shadow: 0 1px 4px var(--void);
+}
+.evidence .line {
+  /* Model output runs long. Three lines is enough to read and enough to stop
+     one verbose observation owning the screen. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.evidence .line {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: rise 480ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.evidence .line .who {
+  color: var(--ink-faint);
+  padding-right: 0.5ch;
+}
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* --------------------------------------------------------------------------
+   The receipt
+   -------------------------------------------------------------------------- */
+.receipt {
+  align-self: end;
+  justify-self: end;
+  min-width: 20rem;
+  max-width: 26rem;
+  padding: 1.1rem 1.25rem;
+  background: color-mix(in srgb, var(--steel) 82%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  animation: rise 520ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.receipt[hidden] { display: none; }
+.receipt .level {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--live);
+}
+.receipt.refused .level { color: var(--warm); }
+.receipt .value {
+  margin-top: 0.35rem;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+.receipt dl {
+  margin: 1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--edge);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1.25rem;
+  font-size: 0.76rem;
+}
+.receipt dt {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.receipt dd {
+  margin: 0;
+  font-family: var(--mono);
+  color: var(--ink);
+}
+/* A confidence bar behind each row, so the number is also a length. */
+.receipt dd .bar-fill {
+  display: block;
+  height: 2px;
+  margin-top: 0.3rem;
+  background: var(--live);
+  opacity: 0.55;
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   The bar
+   -------------------------------------------------------------------------- */
+.bar { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.examples { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.examples button {
+  padding: 0.42rem 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  background: color-mix(in srgb, var(--steel) 70%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.examples button:hover { color: var(--ink); border-color: var(--ink-faint); }
+.examples button[aria-pressed="true"] {
+  color: var(--void);
+  background: var(--live);
+  border-color: var(--live);
+}
+
+.prompt {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.45rem 0.45rem 0.45rem 0.9rem;
+  background: color-mix(in srgb, var(--steel) 82%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  transition: border-color 200ms ease;
+}
+.prompt:focus-within { border-color: var(--ink-faint); }
+.prompt input {
+  flex: 1;
+  padding: 0.55rem 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+.prompt input::placeholder { color: var(--ink-faint); }
+.prompt button {
+  padding: 0.55rem 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--void);
+  background: var(--ink);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.prompt button:hover { background: var(--live); }
+
+.note {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+}
+
+/* The state machine is readable from CSS too: #ui carries data-state, so the
+   stylesheet reacts to it without any JavaScript setting a style directly. */
+#ui[data-state="resolving"] .prompt,
+#ui[data-state="arrived"] .prompt { opacity: 0.4; pointer-events: none; }
+
+@media (max-width: 720px) {
+  .stack { grid-template-columns: minmax(0, 1fr); }
+  .evidence { display: none; }          /* the globe is the story on a phone */
+  .receipt { min-width: 0; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora, .grain { animation: none; }
+  .evidence .line, .receipt { animation: none; opacity: 1; transform: none; }
+}
+
+
+/* The page carries the grab cursor for the globe, so the controls put their
+   own back. Without this every button looks draggable. */
+.examples button, .prompt button, .wordmark { cursor: pointer; }
+.prompt input { cursor: text; user-select: text; }
+.receipt, .evidence { user-select: text; }
