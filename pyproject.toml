@@ -7,7 +7,15 @@ dependencies = []
 
 [project.optional-dependencies]
 data = ["pillow"]
-dev = ["pytest"]
+# numpy and pillow are here because two test modules import them: the embedding
+# checkpoint test compares arrays, and the fetcher test imports a script that
+# opens images. The package itself still has no runtime dependencies.
+#
+# CI was red on every push for a day without either. The failure was a
+# collection error rather than a test failure, so it never told anyone which
+# behaviour had broken — it just said the suite would not start, which is easy
+# to read as noise and ignore.
+dev = ["pytest", "numpy", "pillow"]
 
 [build-system]
 requires = ["setuptools>=68"]
