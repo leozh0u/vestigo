@@ -586,12 +586,13 @@ html, body {
   to click, and the stop was the more noticeable of the two: the whole row
   freezing the moment the pointer crossed it read as the page having hung.
 
-  It does stop once a run starts, because at that point the strip is no longer
-  the thing being chosen from and motion along the bottom of the frame competes
-  with the answer arriving above it.
+  It does not stop during a run either, and that was the worse version of the
+  same mistake. It paused while resolving and while arrived, on the theory that
+  motion along the bottom competes with the answer above it — but `arrived` is
+  where the page stays. Clicking one photograph stopped the strip permanently,
+  so the first thing a visitor does killed the thing that made the row look
+  alive. Whatever the pause was worth, it was not worth that.
 */
-#ui[data-state="resolving"] .examples-track,
-#ui[data-state="arrived"] .examples-track { animation-play-state: paused; }
 
 /* A photograph, not a label.
    Square and dimmed until hovered, so the row reads as a set of choices rather

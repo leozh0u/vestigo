@@ -18,7 +18,12 @@ const HARNESS = `
   <canvas id="c" width="1280" height="720"></canvas>
   <script type="module">
     import * as THREE from "/node_modules/three/build/three.module.js";
-    import { Manhattan } from "/src/globe/manhattan.js";
+    import { Manhattan, MANHATTAN } from "/src/globe/manhattan.js";
+    // The East Village, not the Financial District. The shot has to end on a
+    // pre-war walk-up with a fire escape, and those are tenement blocks
+    // uptown of the towers.
+    MANHATTAN.lat = 40.7264;
+    MANHATTAN.lon = -73.9818;
 
     window.result = { stage: "starting" };
     (async () => {
@@ -39,6 +44,16 @@ const HARNESS = `
           await new Promise(r => setTimeout(r, 25));
         }
         window.__m = m;      // so a screenshot can be taken at a chosen height
+        // What are the tile materials, and do they respond to light at all?
+        const kinds = {};
+        m.tiles.group.traverse(o => {
+          if (o.isMesh && o.material) {
+            const k = o.material.type;
+            kinds[k] = (kinds[k] || 0) + 1;
+            window.__mat = window.__mat || o.material;
+          }
+        });
+        window.__matKinds = kinds;
         const s = m.tiles.stats ?? {};
         window.result = {
           stage: "done", ok: true, ready: m.ready,
@@ -80,7 +95,7 @@ try {
 console.log(JSON.stringify(await page.evaluate("window.result"), null, 2));
 
 // Frames along the descent, so the thing can actually be looked at.
-for (const [name, t] of [["high", 0.15], ["mid", 0.55], ["low", 0.95]]) {
+for (const [name, t] of [["high", 0.45], ["mid", 0.82], ["low", 1.0]]) {
   await page.evaluate(async (t) => {
     const m = window.__m;
     for (let i = 0; i < 160; i++) {

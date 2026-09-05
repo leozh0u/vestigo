@@ -45,6 +45,33 @@
     "photo": "/photos/im2gps_0fc6f7a8d1.jpg"
   },
   {
+    "file": "im2gps_8b6f42811a_s0.json",
+    "subject": "im2gps_8b6f42811a",
+    "steps": 13,
+    "level": "region",
+    "value": "Paris",
+    "confidence": 0.9874,
+    "photo": "/photos/im2gps_8b6f42811a.jpg"
+  },
+  {
+    "file": "mapillary_51b406aaea_s0.json",
+    "subject": "mapillary_51b406aaea",
+    "steps": 29,
+    "level": "region",
+    "value": "Woodstock, Cape Town",
+    "confidence": 0.874,
+    "photo": "/photos/mapillary_51b406aaea.jpg"
+  },
+  {
+    "file": "mapillary_7301b58289_s0.json",
+    "subject": "mapillary_7301b58289",
+    "steps": 29,
+    "level": "region",
+    "value": "Warsaw",
+    "confidence": 0.8976,
+    "photo": "/photos/mapillary_7301b58289.jpg"
+  },
+  {
     "file": "im2gps_2d187a1317_s0.json",
     "subject": "im2gps_2d187a1317",
     "steps": 13,
@@ -52,6 +79,42 @@
     "value": "Lowland Britain / Northwest Europe (temperate deciduous woodland edge and grassland)",
     "confidence": 0.7984,
     "photo": "/photos/im2gps_2d187a1317.jpg"
+  },
+  {
+    "file": "im2gps_d6223a52f3_s0.json",
+    "subject": "im2gps_d6223a52f3",
+    "steps": 8,
+    "level": "country",
+    "value": "Australia",
+    "confidence": 0.6,
+    "photo": "/photos/im2gps_d6223a52f3.jpg"
+  },
+  {
+    "file": "mapillary_36bca76fb5_s0.json",
+    "subject": "mapillary_36bca76fb5",
+    "steps": 27,
+    "level": "country",
+    "value": "Italy",
+    "confidence": 0.5487,
+    "photo": "/photos/mapillary_36bca76fb5.jpg"
+  },
+  {
+    "file": "mapillary_3afe051f4f_s0.json",
+    "subject": "mapillary_3afe051f4f",
+    "steps": 21,
+    "level": "country",
+    "value": "China",
+    "confidence": 0.72,
+    "photo": "/photos/mapillary_3afe051f4f.jpg"
+  },
+  {
+    "file": "mapillary_867c10a9aa_s0.json",
+    "subject": "mapillary_867c10a9aa",
+    "steps": 28,
+    "level": "country",
+    "value": "Spain",
+    "confidence": 0.8902,
+    "photo": "/photos/mapillary_867c10a9aa.jpg"
   },
   {
     "file": "im2gps_04881af57a_s0.json",
@@ -79,5 +142,23 @@
     "value": null,
     "confidence": null,
     "photo": "/photos/mapillary_385508af73.jpg"
+  },
+  {
+    "file": "mapillary_4524de2ded_s0.json",
+    "subject": "mapillary_4524de2ded",
+    "steps": 27,
+    "level": null,
+    "value": null,
+    "confidence": null,
+    "photo": "/photos/mapillary_4524de2ded.jpg"
+  },
+  {
+    "file": "mapillary_71a9117d55_s0.json",
+    "subject": "mapillary_71a9117d55",
+    "steps": 34,
+    "level": null,
+    "value": null,
+    "confidence": null,
+    "photo": "/photos/mapillary_71a9117d55.jpg"
   }
 ]

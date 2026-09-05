@@ -20,6 +20,25 @@ const DAMPING = 0.94;
 const SENSITIVITY = 0.005;
 const MAX_TILT = 1.05;          // stop short of looking straight down a pole
 
+/*
+  How close and how far the wheel is allowed to take the camera.
+
+  As multiples of the idle distance rather than as absolute units, because the
+  idle distance is itself a multiple of the aspect fit — a phone held upright
+  sits the camera much further back and a fixed pair of numbers would let it
+  zoom to somewhere the planet does not fill the frame at all.
+
+  The near end stops where camera.js stops: past about half the idle distance
+  the horizon leaves the frame and the surface becomes a flat wash, and there is
+  no more detail in a 5400-pixel texture to reward going closer.
+*/
+const NEAREST = 0.52;
+const FURTHEST = 1.9;
+// Per notch. A trackpad sends many small deltas and a mouse wheel sends few
+// large ones, so the delta is what varies and this is only the scale.
+const ZOOM_RATE = 0.0016;
+const ZOOM_DAMPING = 0.86;
+
 export class Drag {
   constructor(globe, element) {
     this.globe = globe;
@@ -27,6 +46,9 @@ export class Drag {
     this.dragging = false;
     this.last = { x: 0, y: 0 };
     this.velocity = { x: 0, y: 0 };
+    // Carried and damped like the spin, so a flick of the wheel coasts to a
+    // stop rather than stepping.
+    this.zoomVelocity = 0;
     this.pointer = null;
 
     // Pointer events rather than mouse events: one set of handlers covers a
@@ -36,7 +58,33 @@ export class Drag {
     element.addEventListener("pointermove", this.move);
     element.addEventListener("pointerup", this.up);
     element.addEventListener("pointercancel", this.up);
+
+    /*
+      Wheel, trackpad and pinch, all through one handler.
+
+      A two-finger swipe on a trackpad arrives as a wheel event, and so does a
+      pinch on a trackpad or a touchscreen: the browser reports it as a wheel
+      with ctrlKey set. So one listener covers the mouse, the two-finger swipe
+      and the pinch, and the only difference is that a pinch needs a larger
+      multiplier because its deltas are small.
+
+      Not passive, because this has to preventDefault. Without that, a
+      two-finger swipe over the page scrolls it — and this page cannot scroll,
+      so on a Mac it rubber-bands the whole window instead, which looks like the
+      site coming loose.
+    */
+    element.addEventListener("wheel", this.wheel, { passive: false });
   }
+
+  wheel = (event) => {
+    // Same rule as the drag: a gesture that starts on a control belongs to it.
+    if (event.target.closest?.("button, input, a, .receipt, .examples, .machinery")) return;
+    event.preventDefault();
+    // A pinch reports as a wheel with ctrlKey. Its deltas are much smaller than
+    // a scroll's, so it needs more gain to travel the same distance.
+    const gain = event.ctrlKey ? 3.4 : 1;
+    this.zoomVelocity += event.deltaY * ZOOM_RATE * gain;
+  };
 
   down = (event) => {
     if (event.button !== 0) return;
@@ -91,12 +139,40 @@ export class Drag {
   /* Called from the one frame loop in main.js. Skipped while a flight is
      running, so a directed move and a coasting drag cannot fight. */
   update(flying) {
-    if (this.dragging || flying) return;
+    if (flying) {
+      // A flight owns the camera. Anything the wheel had built up would fight
+      // it, and the fight looks like a stutter.
+      this.zoomVelocity = 0;
+      return;
+    }
+    this.zoom();
+    if (this.dragging) return;
     const { x, y } = this.velocity;
     if (Math.abs(x) < 1e-4 && Math.abs(y) < 1e-4) return;
     this.apply(x, y);
     this.velocity.x *= DAMPING;
     this.velocity.y *= DAMPING;
+  }
+
+  /*
+    One frame of zoom.
+
+    Multiplicative rather than additive: a fixed number of units per notch moves
+    a long way when the camera is close and barely at all when it is far, so the
+    control changes meaning depending on where you already are. Scaling the
+    distance instead makes one notch cover the same *proportion* everywhere,
+    which is what the hand expects.
+  */
+  zoom() {
+    if (Math.abs(this.zoomVelocity) < 1e-4) {
+      this.zoomVelocity = 0;
+      return;
+    }
+    const globe = this.globe;
+    const idle = globe.idleDistance;
+    const next = globe.camera.position.z * (1 + this.zoomVelocity);
+    globe.camera.position.z = Math.max(idle * NEAREST, Math.min(idle * FURTHEST, next));
+    this.zoomVelocity *= ZOOM_DAMPING;
   }
 
   dispose() {
@@ -105,5 +181,6 @@ export class Drag {
     e.removeEventListener("pointermove", this.move);
     e.removeEventListener("pointerup", this.up);
     e.removeEventListener("pointercancel", this.up);
+    e.removeEventListener("wheel", this.wheel);
   }
 }

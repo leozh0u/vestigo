@@ -188,7 +188,7 @@ export class Manhattan {
     the framing the next clip has to pick up from: a window, seen from the
     street.
   */
-  place(t, endHeight = 14) {
+  place(t, endHeight = 82) {
     /*
       Heights here are metres above the street, not above the origin. See
       groundLevel(): the origin is about sixteen metres in the air over
@@ -231,25 +231,32 @@ export class Manhattan {
     const tilt = easeInOut(Math.min(1, Math.max(0, (t - 0.30) / 0.70)));
 
     /*
-      3400 m down to about fourteen, which is a fourth-floor window.
+      3400 m down to about eighty, and eighty is a measurement rather than a
+      preference.
 
-      Not to the pavement. Google's photogrammetry is flown, so facades are
-      reconstructed from oblique passes: it holds up from above and softens as
-      the camera drops, and somewhere below ten metres brick becomes wax. A
-      fourth floor is about the lowest altitude where a pre-war walk-up still
-      has a fire escape you can see rather than a brown stain where one should
-      be.
+      Google's photogrammetry is flown, so facades are reconstructed from
+      oblique aerial passes. Eighteen candidate endings were rendered across six
+      East Village blocks at nine, fourteen and twenty metres to find where it
+      gives out, and it gives out well above street level: at fourteen the brick
+      drips, the windows are smears and there is no readable fire escape on any
+      block. At twenty it holds only where the buildings are tall enough to have
+      been caught side-on.
 
-      It is also why the next beat is generated rather than flown. There is no
-      photogrammetry of the inside of an apartment.
+      So the descent stops above the roofline, where the city still looks like a
+      photograph of a city, and the beat after it — the last drop, the window,
+      the room — is generated. That division is not a compromise: it is each
+      tool doing the part it can actually do. There is no photogrammetry of the
+      inside of an apartment and, at this scale, not much of the outside of one
+      either.
     */
     const height = floor + 3400 + (endHeight - 3400) * fall;
-    // Across the street: about twenty-two metres in the East Village, face to
-    // face, which is what puts a whole building front in frame.
-    const back = 2600 + (22 - 2600) * close;
-    // And a little to one side, so the building is met at an angle rather than
-    // square on. Square on is an elevation drawing.
-    const side = 900 + (7 - 900) * close;
+    // Down the length of a block rather than across a street, which is the
+    // framing that works at this height: a corridor of facades running away
+    // from the camera, with the skyline behind it.
+    const back = 2600 + (95 - 2600) * close;
+    // And a little to one side, so the buildings are met at an angle rather
+    // than square on. Square on is an elevation drawing.
+    const side = 900 + (34 - 900) * close;
 
     this.camera.position.set(side, height, back);
 
@@ -257,12 +264,12 @@ export class Manhattan {
       What it looks at, which rises faster than the camera falls.
 
       At the start the aim is the street and the camera is three kilometres
-      above it, so the shot looks steeply down. By the end the aim is twelve
-      metres up a building front and the camera is at fourteen, so the lens is
-      tilted five degrees down: level enough to read as a camera held by a
-      person rather than as a drone.
+      above it, so the shot looks steeply down. By the end the aim is fifty
+      metres up and the camera is at eighty, so the lens is tilted about twenty
+      degrees down the length of a street: high enough that the facades still
+      hold, low enough that the frame is a street rather than a map.
     */
-    this.camera.lookAt(0, floor + 12 * tilt, 0);
+    this.camera.lookAt(0, floor + 50 * tilt, 0);
     this.camera.updateMatrixWorld();
   }
 
@@ -393,6 +400,23 @@ export class Manhattan {
         // doing near the horizon, or the skyline fades towards one colour in
         // front of a different one and the join shows as a line.
         uHaze:  { value: new THREE.Color(0x2f3d52) },
+        /*
+          How far light travels before the air has swallowed it, in metres, and
+          it cannot be a constant.
+
+          900 was measured against a shot standing in a street, where the far
+          end of Manhattan is a couple of kilometres off and should wash out.
+          The same number over the top of the descent put the camera 3,400 m up
+          looking at ground 4,300 m away: every pixel in frame was past the
+          horizon of the haze, the whole city dissolved into one flat blue, and
+          the first half of the render came back an empty rectangle. It looked
+          exactly like the tiles had failed to load. They had not.
+
+          Set from the camera's height in render(), because that is what decides
+          it: the higher you are, the less air sits between you and what you are
+          looking at per metre of distance.
+        */
+        uFog:   { value: 900 },
         uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
         uWarm:  { value: new THREE.Color(0xffc07a) },
       },
@@ -402,7 +426,7 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount;
+        uniform float uNear, uFar, uAmount, uFog;
         uniform vec3 uHaze, uShade, uWarm;
         varying vec2 vUv;
 
@@ -437,7 +461,10 @@ export class Manhattan {
           // Highlights fall further than shadows: the sun has gone and the sky
           // is doing all the work, so the difference between a lit face and a
           // shaded one collapses.
-          c *= mix(0.66, 0.34, smoothstep(0.15, 0.85, l));
+          // 0.86 to 0.46, up from 0.66 to 0.34. The first pair was judged from
+          // a still on a bright screen; over seven seconds of footage it read as
+          // underexposed rather than as evening, and the brick lost its colour.
+          c *= mix(0.86, 0.46, smoothstep(0.15, 0.85, l));
 
           /*
             Shadows blue, highlights warm.
@@ -469,7 +496,7 @@ export class Manhattan {
             having any. Thickening the haze until distance dissolves completely
             hides that seam and is what the air actually does at dusk anyway.
           */
-          float fog = 1.0 - exp(-distanceAt(d) / 900.0);
+          float fog = 1.0 - exp(-distanceAt(d) / uFog);
           c = mix(c, uHaze, clamp(fog, 0.0, 1.0) * 0.97);
 
           // A little lift, because air scatters and a true black at dusk is a
@@ -477,7 +504,7 @@ export class Manhattan {
           c += vec3(0.010, 0.015, 0.026);
 
           float r = distance(vUv, vec2(0.5)) * 1.42;
-          c *= 1.0 - 0.30 * pow(clamp(r, 0.0, 1.0), 2.4);
+          c *= 1.0 - 0.24 * pow(clamp(r, 0.0, 1.0), 2.4);
 
           gl_FragColor = vec4(mix(day, c, uAmount), 1.0);
         }`,
@@ -507,6 +534,18 @@ export class Manhattan {
     }
     this.grade.uniforms.uNear.value = this.camera.near;
     this.grade.uniforms.uFar.value = this.camera.far;
+    /*
+      Haze distance from altitude.
+
+      Roughly: standing in a street the far skyline should be gone, and from
+      three kilometres up the city below should not be. Height above the ground
+      is the one number separating those two cases, and it is already known.
+
+      Floored at 600 so a camera on the pavement still gets aerial perspective,
+      capped so the opening frames do not lose it altogether.
+    */
+    const above = Math.max(0, this.camera.position.y - (this.groundLevel() ?? 0));
+    this.grade.uniforms.uFog.value = Math.min(24000, Math.max(600, 180 + above * 1.6));
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
