@@ -27,6 +27,24 @@ const machine = new Machine("idle");
 const ui = document.getElementById("ui");
 
 let player = null;
+let final = null;
+
+/*
+  One debugging handle, set once.
+
+  It used to be assigned twice inside run(), with two different shapes — the
+  second dropped the player getter — so what `window.__vestigo.player` did
+  depended on how far the run had got. Getters instead, so it is always current
+  and there is nothing to keep in step.
+*/
+window.__vestigo = {
+  globe, flight, machine,
+  get player() { return player; },
+  get final() { return final; },
+};
+// The globe alone, because the offscreen render scripts and every console
+// poke reach for it and nothing else.
+window.__globe = globe;
 
 // CSS reads the state off the DOM, so the stylesheet can react without any
 // JavaScript setting a style directly. One source of truth, two readers.
@@ -49,10 +67,6 @@ async function run(entry) {
   const trace = await (await fetch(`/traces/${entry.file}`)).json();
   machine.go("resolving", { trace });
 
-  // Exposed for debugging. Module scope hides everything by default, which is
-  // right for shipping and unhelpful when a sequence stops halfway.
-  window.__vestigo = { globe, flight, machine, get player() { return player; } };
-
   player = new Player(trace, {
     onStep: (step) => {
       renderEvidence(step);
@@ -65,14 +79,11 @@ async function run(entry) {
       }
     },
     onProgress: (t) => globe.setProgress(t),
-    onDone: (final) => {
+    onDone: (done) => {
+      final = done;
       const answer = final?.answer;
       const point = final?.candidates?.[0];
       renderReceipt(final);
-      // Exposed for debugging from the console. Module scope hides everything
-      // by default, which is right for shipping and unhelpful when a sequence
-      // silently stops halfway.
-      window.__vestigo = { globe, flight, machine, final };
       // The flight only happens when there is something to fly to. A run that
       // declined leaves the camera where it is, which is the honest picture of
       // what happened.

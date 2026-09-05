@@ -31,6 +31,27 @@
 import * as THREE from "three";
 
 /*
+  Where the sun is, and it is behind the planet.
+
+  This was the single thing keeping the globe from reading as Earth. The sun
+  sat at (2.4, 1.0, 2.6) — the same side as the camera, which is at z = 3.55.
+  So the face you were looking at was the day face, fully lit, and NASA's city
+  lights were all on the hemisphere pointing away from you. The night texture
+  was loaded, sampled and working; it was simply aimed at nobody.
+
+  Behind and to the left instead. The visible disc is mostly night, with the
+  terminator running down the left limb and a thin crescent of daylight beyond
+  it, which is what the planet looks like from orbit on the dark side and what
+  makes the lights mean anything.
+
+  One vector, used three times: the key light's position, the shader's idea of
+  which half is dark, and the atmosphere's idea of which limb is bright. They
+  were three separate numbers before and there is no version of this where they
+  should disagree.
+*/
+const SUN = new THREE.Vector3(-2.35, 0.62, -1.85).normalize();
+
+/*
   The living Earth is NASA's, not mine.
 
   The procedural map was drawn from coastline polygons: latitude bands for
@@ -52,6 +73,8 @@ const TEXTURES = {
   growth: "/textures/globe-growth.png",
   relief: "/textures/globe-relief.png",
   lights: "/textures/earth-night.jpg",
+  // The same lights, blurred. See the glow note in the shader below.
+  glow: "/textures/earth-glow.jpg",
   clouds: "/textures/globe-clouds.png",
   rough: "/textures/globe-rough.png",
   normal: "/textures/globe-normal.png",
@@ -90,9 +113,9 @@ export class Globe {
     // Key light from behind and left. Metal reads as metal because of the
     // bright edge on its silhouette, which an environment map alone will not
     // give you.
-    const rim = new THREE.DirectionalLight(0xdCE9FF, 3.1);
-    rim.position.set(-3.2, 1.4, -1.8);
-    this.scene.add(rim);
+    this.rim = new THREE.DirectionalLight(0xdCE9FF, 3.1);
+    this.rim.position.set(-3.2, 1.4, -1.8);
+    this.scene.add(this.rim);
     /*
       The key light, and it doubles as the sun glint on the ocean.
 
@@ -101,12 +124,24 @@ export class Globe {
       seen from Earth, so what it makes on water is a tight spot, not a wash.
       Lower intensity with a rougher sea is what tightens it.
     */
-    const key = new THREE.DirectionalLight(0xffffff, 0.85);
-    key.position.set(2.4, 1.0, 2.6);
-    this.scene.add(key);
-    // Raised to carry what the key light gave up, so the planet does not
-    // go dark just because its highlight got smaller.
-    this.scene.add(new THREE.AmbientLight(0x5c6b80, 0.95));
+    this.key = new THREE.DirectionalLight(0xfff4e2, 0.85);
+    this.key.position.copy(SUN).multiplyScalar(4);
+    this.scene.add(this.key);
+    /*
+      Ambient, and it has to leave.
+
+      Metal barely notices it: at metalness 0.95 there is almost no diffuse
+      term for an ambient light to land on, and the environment map does that
+      surface's work. Once the world comes alive metalness drops to near zero,
+      diffuse takes over, and 0.95 of uniform blue-grey floods the night side
+      into a flat wash — a planet lit from nowhere, which is the look of a
+      model rather than of a photograph.
+
+      So it fades out with growth. Not to zero: there is moonlight and airglow
+      on a real night side, and pure black reads as a hole cut in the frame.
+    */
+    this.ambient = new THREE.AmbientLight(0x5c6b80, 0.95);
+    this.scene.add(this.ambient);
 
     const loader = new THREE.TextureLoader();
     const load = (url, srgb = true) => {
@@ -145,10 +180,15 @@ export class Globe {
       uGrowthMap: { value: load(TEXTURES.growth, false) },
       uLand: { value: load(TEXTURES.land, false) },
       uLights: { value: load(TEXTURES.lights, false) },
+      uGlow: { value: load(TEXTURES.glow, false) },
+      // How much of the night look is in force. Ties the darkening of the
+      // night side to the same clock as everything else, so metal is never
+      // half-nocturnal.
+      uNight: { value: 0 },
       // Which way the sun is, in world space. The shader needs it to know
       // which half of the planet is dark, and lights only belong on the dark
       // half. Kept in step with the key light in render().
-      uSun: { value: new THREE.Vector3(2.4, 1.0, 2.6).normalize() },
+      uSun: { value: SUN.clone() },
     };
 
     this.material = new THREE.MeshStandardMaterial({
@@ -211,6 +251,8 @@ export class Globe {
           uniform sampler2D uGrowthMap;
           uniform sampler2D uLand;
           uniform sampler2D uLights;
+          uniform sampler2D uGlow;
+          uniform float uNight;
           uniform vec3 uSun;
           varying vec2 vGlobeUv;
           varying vec3 vGlobeNormal;
@@ -228,7 +270,22 @@ export class Globe {
           float vAlive = smoothstep(vMoment - 0.09, vMoment + 0.09, vClock);
           float vWet = (1.0 - vLand) * vAlive;
           vec4 vLiving = texture2D(uNatural, vGlobeUv);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vLiving.rgb, vAlive);
+          /*
+            Blue Marble is a daylight photograph of every part of the planet at
+            once, which is convenient and is not a thing you can ever see. The
+            lighting handles most of the correction — the sun is behind, so the
+            face you are looking at gets almost no direct light — but the
+            daytime albedo is still there underneath, and a fully dark ocean
+            that is nonetheless the colour of a lit ocean reads as grey plastic.
+
+            So the night side loses most of its colour and keeps a little, cold.
+            The little that is kept is not decoration: cloud and ice do pick up
+            moonlight, and a night side at zero is a hole rather than a planet.
+          */
+          float vDark = smoothstep(0.26, -0.34, dot(normalize(vGlobeNormal), uSun)) * uNight;
+          vec3 vNightAlbedo = mix(vLiving.rgb, vec3(0.026, 0.034, 0.052),
+                                  0.94 * vDark);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vNightAlbedo, vAlive);
         `)
         /*
           The surface properties are decided in their own chunks, further down,
@@ -252,7 +309,11 @@ export class Globe {
           // through it as bright streaks running around the globe: the planet
           // came alive still wearing its machining. Ocean seen from orbit is
           // not a mirror at this scale.
-          roughnessFactor = mix(roughnessFactor, mix(0.92, 0.46, vWet), vAlive);
+          // 0.58 for water, up from 0.46. Rougher water spreads the sun's
+          // reflection over more of the surface and so makes it dimmer
+          // everywhere, which is what stops the grazing light along the
+          // terminator collecting into a single hard sheet.
+          roughnessFactor = mix(roughnessFactor, mix(0.92, 0.58, vWet), vAlive);
         `)
         .replace("#include <metalnessmap_fragment>", `
           #include <metalnessmap_fragment>
@@ -270,19 +331,57 @@ export class Globe {
           not get darker when the sun goes down, which is what folding them
           into the albedo would do.
 
-          `night` is one where the surface faces away from the sun, and the
+          The night term is one where the surface faces away from the sun, and the
           smoothstep makes a soft terminator instead of a hard line across the
           globe. They fade in with the world, so metal has no cities on it.
         */
         .replace("#include <tonemapping_fragment>", `
-          float night = smoothstep(0.18, -0.28, dot(normalize(vGlobeNormal), uSun));
+          /*
+            The night side.
+
+            The night term is one where the surface faces away from the sun. The
+            smoothstep either side of zero makes a terminator with width to it
+            rather than a hard line drawn across the planet: the real one is a
+            band a few hundred kilometres across where the sun is setting, and
+            a hard edge is the first thing that gives away a sphere with a
+            texture on it.
+          */
+          float night = smoothstep(0.26, -0.34, dot(normalize(vGlobeNormal), uSun));
+
+          /*
+            Two samples of the same mosaic, and the second one is the whole
+            trick.
+
+            The first, lamps, is Black Marble as it ships: pin-sharp points, one per
+            settlement. On its own that reads as pixels rather than as light,
+            because light seen through fifty kilometres of air does not stop at
+            the edge of the city. It scatters into a halo, and the halo is what
+            your eye reads as brightness.
+
+            The usual way to get that is a bloom pass over the finished frame.
+            This canvas has to stay transparent — the drifting field of
+            readings sits behind it — and every screen-space bloom writes an
+            opaque alpha over the whole rectangle, so the planet would arrive
+            with a black box around it.
+
+            uGlow is the same mosaic blurred once, offline, by
+            scripts/fetch_earth_imagery.py. Sharp core plus soft halo, no post
+            pass, nothing to fight with the alpha, and it costs one texture
+            read.
+          */
           float lamps = texture2D(uLights, vGlobeUv).r;
-          // The mosaic is dimmer than the synthetic map it replaced and
-          // already carries its own colour, so it is tinted less and lifted
-          // more. Multiplied by itself to hold back the faint airglow that
-          // covers most of the ocean in that image and would otherwise put a
-          // haze over the whole night side.
-          gl_FragColor.rgb += vec3(1.0, 0.88, 0.66) * lamps * lamps * night * vAlive * 2.4;
+          float halo  = texture2D(uGlow, vGlobeUv).r;
+          // No squaring any more. It was there to suppress the mosaic's
+          // land-and-ocean base layer, which put a tan wash over the Sahara and
+          // the Amazon, and that layer is now cut away in
+          // scripts/fetch_earth_imagery.py where it can be cut cleanly. Holding
+          // the curve down as well took out every town below a capital city.
+          float cores = lamps;
+          // Sodium, not white. Street lighting is warm and satellite mosaics
+          // record it that way; a white city is the tell of a synthetic map.
+          vec3 warm = vec3(1.00, 0.86, 0.60);
+          vec3 lit  = warm * cores * 3.1 + warm * halo * halo * 1.15;
+          gl_FragColor.rgb += lit * night * vAlive;
           #include <tonemapping_fragment>
         `);
 
@@ -343,13 +442,33 @@ export class Globe {
       Closer, too. 1.5% rather than 5%, because the real atmosphere is a
       hundred kilometres on a six thousand kilometre planet and the shell only
       needs to be thick enough to hold the gradient.
+
+      ## The version that was wrong anyway
+
+      Even as a Fresnel term this drew an even blue ring all the way round the
+      disc, and an even ring is the thing that made the planet look drawn. Air
+      is not lit from inside. It is lit by the sun, so the band is bright where
+      the sun is coming round the limb and it is very nearly nothing on the far
+      side of the night. A photograph from the station at night has a hard
+      orange-into-blue line along one edge and darkness everywhere else.
+
+      So the same sun that decides where the cities are also decides where this
+      is, the exponent went from four to seven to pull it off the disc and onto
+      the edge, and the strength went to about a fifth. What is left is a line
+      rather than a halo.
     */
     this.halo = new THREE.Mesh(
       new THREE.SphereGeometry(1.015, 96, 96),
       new THREE.ShaderMaterial({
         uniforms: {
           uOpacity: { value: 0 },
-          uColor: { value: new THREE.Color(0x5aa9e6) },
+          // Cool for the band itself, warm for the few degrees right at the
+          // terminator where the light is coming through the most air. That
+          // gradient, sunrise orange into upper-atmosphere blue, is the part
+          // of a limb shot people recognise without being able to name.
+          uColor: { value: new THREE.Color(0x6fb4e8) },
+          uDawn: { value: new THREE.Color(0xff9a55) },
+          uSun: { value: SUN.clone() },
         },
         vertexShader: `
           varying vec3 vNormalW;
@@ -363,14 +482,27 @@ export class Globe {
         fragmentShader: `
           uniform float uOpacity;
           uniform vec3 uColor;
+          uniform vec3 uDawn;
+          uniform vec3 uSun;
           varying vec3 vNormalW;
           varying vec3 vViewW;
           void main() {
-            // Zero looking straight down, one at the limb. The fourth power
-            // keeps it off the disc: a lower exponent hazes the whole planet.
-            float rim = 1.0 - abs(dot(normalize(vNormalW), normalize(vViewW)));
-            float glow = pow(clamp(rim, 0.0, 1.0), 4.0);
-            gl_FragColor = vec4(uColor, glow * uOpacity);
+            vec3 n = normalize(vNormalW);
+            // Zero looking straight down, one at the limb. The seventh power
+            // keeps it off the disc: a lower exponent hazes the whole planet,
+            // which is what the ring around the globe was.
+            float rim = 1.0 - abs(dot(n, normalize(vViewW)));
+            float glow = pow(clamp(rim, 0.0, 1.0), 7.0);
+            // Air is lit by the sun, so the band exists where the sun does.
+            // A floor of 0.06 rather than zero, because scattering carries a
+            // little light around the limb and a band that stops dead looks
+            // like a shape rather than like atmosphere.
+            float sun = dot(n, normalize(uSun));
+            float facing = max(smoothstep(-0.45, 0.35, sun), 0.06);
+            // Sunrise orange only in the few degrees either side of the
+            // terminator, blue everywhere the sun is properly up.
+            vec3 tint = mix(uDawn, uColor, smoothstep(-0.05, 0.45, sun));
+            gl_FragColor = vec4(tint, glow * facing * uOpacity);
           }`,
         transparent: true,
         side: THREE.BackSide,
@@ -469,7 +601,35 @@ export class Globe {
     const eased = k * k * (3 - 2 * k);          // smoothstep
 
     this.uniforms.uGrowth.value = eased;
-    this.halo.material.uniforms.uOpacity.value = 1.5 * eased;
+    this.uniforms.uNight.value = eased;
+    // 0.34, down from 1.5. See the atmosphere note above: what is wanted is a
+    // line along one limb, not a ring around the planet.
+    this.halo.material.uniforms.uOpacity.value = 0.34 * eased;
+    /*
+      The lighting changes character as the world arrives.
+
+      Metal wants a studio: a hard rim behind it to draw its silhouette and
+      enough ambient to keep it off black. A night Earth wants none of that. It
+      wants one sun, behind, and nothing else, so that the only bright things on
+      the visible face are the cities.
+
+      Fading between the two is why the ambient and rim lights are held on the
+      instance rather than dropped into the scene and forgotten.
+    */
+    this.ambient.intensity = 0.95 * (1 - eased) + 0.05 * eased;
+    this.rim.intensity = 3.1 * (1 - eased) + 0.12 * eased;
+    // Sunlight proper, once there is a planet for it to fall on. It lights the
+    // crescent past the terminator and nothing else.
+    /*
+      1.55, and it was 2.75 for one render.
+
+      The sun is half a degree wide seen from Earth, so what it makes on water
+      is a small hard spot. At grazing incidence along the terminator a bright
+      key spreads that spot into a band down the whole limb, and a white band
+      down the limb of a mostly dark planet does not read as sunrise. It reads
+      as the polished metal this surface used to be.
+    */
+    this.key.intensity = 0.85 + 0.70 * eased;
     // The reflections fade as the surface stops being metal. Without this the
     // sea keeps a chrome sheen and the planet reads as painted metal rather
     // than as water.
@@ -486,7 +646,11 @@ export class Globe {
       directional lights supply the glint, and one moving highlight is what a
       sea looks like from space.
     */
-    this.material.envMapIntensity = 2.6 * (1 - eased) + 0.06 * eased;
+    // 0.02, not 0.06. On a day side 0.06 of a studio is a hint of sky in the
+    // water. On a night side it is the studio's softbox, dragged out along the
+    // terminator into a chrome smear a thousand kilometres wide, and it was
+    // the last thing on the sphere that still looked machined.
+    this.material.envMapIntensity = 2.6 * (1 - eased) + 0.02 * eased;
 
     /*
       The machining marks go with it, and this was the actual cause of the
@@ -504,7 +668,17 @@ export class Globe {
       by the time the world is alive there is no metal left for it to serve.
     */
     this.material.normalScale.setScalar(0.28 * (1 - eased));
-    this.renderer.toneMappingExposure = 1.45 - 0.12 * eased;
+    /*
+      Exposure comes down hard, and this is the difference between a night
+      side and a dim day side.
+
+      1.45 is a studio exposure: it exists to keep tungsten off black. Held
+      there over a night Earth, ACES lifts the near-black ocean into visible
+      grey and rolls the brightest cities off into flat white, so you get a
+      grey planet with white smears. Down at 0.86 the ocean stays where it
+      belongs and the cities have somewhere to go.
+    */
+    this.renderer.toneMappingExposure = 1.45 - 0.59 * eased;
     // It wakes up as it works out where it is.
     this.spin = 0.045 + 0.03 * eased;
   }
