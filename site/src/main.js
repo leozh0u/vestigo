@@ -156,24 +156,70 @@ function mountExamples(entries) {
     return button;
   };
 
-  track.replaceChildren(
-    ...entries.map((e) => make(e, false)),
-    ...entries.map((e) => make(e, true)),
-  );
+  /*
+    How many copies of the set, and two is not enough.
+
+    The track slides left by exactly one set's width and then jumps back, which
+    is seamless only if there is still a full screen of photographs to the right
+    at the moment it jumps. With two copies and a set 1008px wide, a 1938px
+    window is showing everything up to 2946px by the end of the slide while the
+    track stops at 2016 — so the last third of the strip was empty, the
+    photographs ran out, and the row sat half bare until the animation looped.
+    On a narrow window it never showed at all, which is why it looked
+    intermittent rather than broken.
+
+    The requirement is width >= viewport + travel, and travel is one set. So the
+    number of copies is however many sets cover the screen, plus one.
+  */
+  const fill = () => {
+    track.replaceChildren();
+    buttons.length = 0;
+    track.append(...entries.map((e) => make(e, false)));
+    const set = track.scrollWidth;
+    if (!set) return 0;
+
+    const window_ = document.getElementById("examples").clientWidth || set;
+    // One more than strictly needed. The requirement is exactly
+    // width >= viewport + travel, and at 1938px that left 78px of slack, which
+    // is close enough to zero that a sub-pixel rounding anywhere shows as a
+    // gap at the far end of the slide. A spare set costs nine img tags.
+    const copies = Math.ceil(window_ / set) + 2;
+    for (let c = 1; c < copies; c++) {
+      track.append(...entries.map((e) => make(e, true)));
+    }
+
+    /*
+      The repeat period, measured rather than computed.
+
+      It is not one set's width. scrollWidth of a single set is the sum of the
+      photographs plus the gaps *between* them — the last one has no trailing
+      gap — but once a second copy is appended there is a gap between the two
+      copies as well. Sliding by the set width therefore leaves the strip half
+      a rem short of where it started on every loop, and that error accumulates
+      into a visible jump.
+
+      The distance from the first photograph of one copy to the first
+      photograph of the next is the period by definition, and it does not care
+      how the gaps are arranged.
+    */
+    const first = track.children[0];
+    const second = track.children[entries.length];
+    return second ? second.offsetLeft - first.offsetLeft : set;
+  };
 
   /*
-    The duration is set from the width rather than fixed.
+    Speed comes from the width rather than being a fixed duration.
 
     A constant duration means the strip moves at whatever speed nine
-    photographs happen to imply, and adding a tenth silently speeds it all up.
-    Sixteen seconds per screen width is slow enough to read a photograph as it
-    passes.
+    photographs happen to imply, and adding a tenth silently speeds it up.
+    Sixty pixels a second is slow enough to read a photograph as it passes and
+    fast enough that the row is visibly alive.
   */
   const measure = () => {
-    const half = track.scrollWidth / 2;
-    if (!half) return;
-    track.style.setProperty("--travel", `${half}px`);
-    track.style.setProperty("--duration", `${(half / 60).toFixed(1)}s`);
+    const period = fill();
+    if (!period) return;
+    track.style.setProperty("--travel", `${period}px`);
+    track.style.setProperty("--duration", `${(period / 60).toFixed(1)}s`);
   };
   measure();
   // Widths are wrong until the photographs have decoded, so measure again once
@@ -181,7 +227,14 @@ function mountExamples(entries) {
   Promise.all(
     [...track.querySelectorAll("img")].map((i) => i.decode().catch(() => {})),
   ).then(measure);
-  window.addEventListener("resize", measure);
+
+  // Resizing changes how many copies are needed. Debounced, because a drag of
+  // the window edge fires this continuously and each call rebuilds the row.
+  let pending = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(pending);
+    pending = setTimeout(measure, 180);
+  });
 }
 
 /*
