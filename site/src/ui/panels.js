@@ -30,7 +30,12 @@ const WHO = {
   country_metas: "road",
   geocell_classifier: "classifier",
   verify: "checked",
-  claim: "claims",
+  // Not "claims". A claim step means the board *proposed* one, and whether it
+  // was ever asserted is `stated`, which is null on every claim in a run that
+  // refused. Labelling those "claims Chile (country)" and then printing "the
+  // evidence did not support one" underneath is a page contradicting itself:
+  // it reads as a bug, and the thing it is describing is the whole design.
+  claim: "proposed",
   constraints: "constraints",
 };
 
@@ -79,13 +84,40 @@ export function renderReceipt(final) {
   const answer = final?.answer;
 
   if (!answer) {
-    // Not a failure. A run that declined is the design working, and saying so
-    // plainly is more interesting than hiding it.
+    /*
+      A run that declined, and it has to say what it got instead.
+
+      "Nothing on the board cleared its threshold" is true and useless. Printed
+      under a left column listing South America, Chile and the Central Valley,
+      it reads as the page contradicting itself, and the honest content — that
+      there *was* a best guess and it was not good enough — is exactly the thing
+      being withheld.
+
+      So: name the strongest candidate and print what it scored. On the Chile
+      run that is 0.45, and the reason is visible in its parts: the model liked
+      it at 1.00 and the solar constraint left 7.5% of the world admissible.
+      A number a reader can check beats a sentence they have to take on trust.
+    */
+    const best = (final?.candidates ?? [])
+      .slice()
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+
     box.classList.add("refused");
+    const closest = best
+      ? `<dt>closest</dt>
+         <dd>${escape(best.label)} · ${(best.score ?? 0).toFixed(2)}
+           <span class="bar"><span class="bar-fill"
+                 style="width:${Math.round((best.score ?? 0) * 100)}%"></span></span>
+         </dd>
+         <dt>why</dt>
+         <dd>${(best.prior ?? 0).toFixed(2)} prior ×
+             ${(best.admissibility ?? 0).toFixed(3)} admissible</dd>`
+      : `<dt>why</dt><dd>Nothing reached the board.</dd>`;
+
     box.innerHTML = `
       <div class="level">no answer stated</div>
-      <div class="value">The evidence did not support one.</div>
-      <dl><dt>why</dt><dd>Nothing on the board cleared its threshold.</dd></dl>`;
+      <div class="value">Considered, and not enough.</div>
+      <dl>${closest}</dl>`;
     box.hidden = false;
     return;
   }

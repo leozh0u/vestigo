@@ -27,6 +27,16 @@
   because the opposite assumption — that a long flythrough costs per tile —
   would make this whole approach look reckless, and it would be.
 
+  ## Do not edit anything while this runs
+
+  The harness loads its modules through the dev server, so saving any file the
+  page imports destroys the execution context mid-render and the run dies with
+  "Execution context was destroyed". It has happened twice: once producing a
+  file of entirely black frames, which is worse, because that one looked like a
+  finished render.
+
+  Commit, then render, then go and do something else.
+
   ## A self-contained page, deliberately
 
   Not the site. The dev server's hot reload destroys the execution context
@@ -47,10 +57,10 @@ const args = Object.fromEntries(
 const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round((WIDTH * 9) / 16);
 const FPS = Number(args.fps ?? 30);
-const SECONDS = Number(args.seconds ?? 7);
+const SECONDS = Number(args.seconds ?? 11);
 // Metres above the street at the end of the move. Higher than it sounds it
 // should be, and the reason is in the harness below.
-const END = Number(args.end ?? 58);
+const END = Number(args.end ?? 80);
 const OUT = args.out ?? "media/descent.mp4";
 
 /*
@@ -83,7 +93,11 @@ const harness = ({ width, height, place }) => `
       // Far enough for the sky dome at 60 km and the skyline behind it; near
       // enough that the depth buffer still has precision where the buildings
       // are, which the haze in the grade depends on.
-      const camera = new THREE.PerspectiveCamera(38, ${width} / ${height}, 8, 80000);
+      // The far plane has to clear the planet at the top of the move, where
+      // the camera is six hundred kilometres up and the horizon is thousands of
+      // kilometres away. At 80,000 the Earth was behind it and the opening
+      // frames were empty.
+      const camera = new THREE.PerspectiveCamera(38, ${width} / ${height}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
       await m.load();
       window.__m = m;
@@ -134,12 +148,17 @@ async function main() {
       */
       await page.evaluate(async (t, end) => {
         const m = window.__m;
-        for (let k = 0; k < 400; k++) {
+        for (let k = 0; k < 600; k++) {
           m.place(t, end);
           m.update();
           m.render();
           const s = m.tiles.stats ?? {};
-          if (k > 6 && !s.downloading && !s.parsing) break;
+          // Twenty settled passes rather than six. At altitude the renderer
+          // reports nothing in flight for a moment while it is still deciding
+          // which tiles it wants, and a frame photographed in that gap came
+          // back as an empty rectangle — one frame at 60 km did exactly that
+          // in the altitude probe.
+          if (k > 20 && !s.downloading && !s.parsing) break;
           await new Promise((r) => setTimeout(r, 25));
         }
       }, t, END);

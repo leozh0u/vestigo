@@ -188,87 +188,91 @@ export class Manhattan {
     the framing the next clip has to pick up from: a window, seen from the
     street.
   */
-  place(t, endHeight = 82) {
-    /*
-      Heights here are metres above the street, not above the origin. See
-      groundLevel(): the origin is about sixteen metres in the air over
-      Manhattan, and taking it for the ground put every framing nine floors too
-      high.
+  /*
+    One move, from orbit to a window, with nothing joined to anything.
 
-      Falls back to zero while the first tiles are still arriving, which is only
-      ever the opening frames of a render and those are three kilometres up
-      where sixteen metres is nothing.
+    This used to be the bottom half of a two-shot intro: a rendered globe, a
+    cross-dissolve, then a descent that began at 3,400 m. The dissolve was the
+    problem. Two shots of the same city from different distances and different
+    angles do not become one shot by fading between them; they read as two
+    shots with a fade, which is what a cut is.
+
+    The fix is that there was never any need for two. Google's Photorealistic 3D
+    Tiles are a global dataset: the same tileset that has the fire escapes has
+    the eastern seaboard from six hundred kilometres up, and it refines
+    continuously between them. Measured, not assumed —
+    scripts/probe-altitude.mjs renders one frame per altitude from 600 km to
+    2 km and they all come back.
+
+    So the whole descent is one camera falling through one dataset. There is no
+    seam because there is nothing to seam.
+
+    ## Two moves, and only two
+
+    **The fall**, which is exponential.
+
+    This is the part that has to be right or nothing else matters. A camera
+    descending linearly from 600 km spends the first half of the shot appearing
+    not to move — dropping 300 km when you are 600 km up changes the picture
+    barely at all — and then covers the last kilometre in three frames. What
+    reads as a steady zoom is a constant *ratio* per second, so the altitude is
+    interpolated in log space. Every second of the shot roughly halves the
+    height, all the way down, which is why a Google Earth zoom feels even.
+
+    **The tilt**, which happens once, at the end, and only then.
+
+    Straight down for the whole descent, then a single pan up onto a building
+    front. The version before this had three eases with different start and end
+    points, and the camera went up, then down, then up again: three overlapping
+    moves read as a wobble, not as choreography. One move that starts at 0.80
+    and finishes at 1.0 cannot do that.
+  */
+  place(t, endHeight = 80) {
+    /*
+      Heights are metres above the street, not above the origin.
+
+      getObjectFrame puts the ellipsoid surface at zero and over Manhattan the
+      street is sixteen metres below it, so taking the origin for the ground put
+      every framing nine floors too high. See groundLevel().
+
+      Falls back to zero while the first tiles are still arriving, which only
+      affects the opening frames — six hundred kilometres up, sixteen metres is
+      not a rounding error, it is nothing at all.
     */
     const floor = this.groundLevel() ?? 0;
 
-    /*
-      Three overlapping moves, and none of them start or stop together.
-
-      **Falling.** Eased at both ends: it leaves the top of the shot slowly,
-      because a cut that begins already at speed reads as a jump, and it arrives
-      slowly, because the last thing before a cut has to be still.
-
-      **Closing.** The camera does not drop straight down. It comes in on a
-      slant, which is what turns a descent into an approach: falling vertically
-      onto a city gives a map that gets bigger, and coming in at an angle gives
-      buildings that pass.
-
-      **Tilting.** The aim rises as the camera falls, from looking down at a
-      grid of blocks to looking level at the front of a building. One
-      continuous move rather than a separate pan, so there is no moment where
-      the shot changes its mind.
-
-      Offset from each other on purpose. Beats that begin and end together read
-      as a slideshow.
-    */
     const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2);
-    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+    const clamp01 = (x) => Math.max(0, Math.min(1, x));
+    // Hermite, the same curve smoothstep uses: zero slope at both ends, so the
+    // tilt begins and finishes without a corner.
+    const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
 
+    // Log space. See the note above: this is the difference between a zoom and
+    // a fall that appears to stall and then snap.
+    const TOP = 600000;
     const fall = easeInOut(t);
-    // Starts a fifth of the way in and finishes early, so the last stretch is
-    // the camera settling rather than still travelling.
-    const close = easeOut(Math.min(1, Math.max(0, (t - 0.18) / 0.74)));
-    const tilt = easeInOut(Math.min(1, Math.max(0, (t - 0.30) / 0.70)));
+    const height = Math.exp(
+      Math.log(TOP) + (Math.log(endHeight) - Math.log(TOP)) * fall);
 
     /*
-      3400 m down to about eighty, and eighty is a measurement rather than a
-      preference.
+      The last fifth of the shot, and nothing before it.
 
-      Google's photogrammetry is flown, so facades are reconstructed from
-      oblique aerial passes. Eighteen candidate endings were rendered across six
-      East Village blocks at nine, fourteen and twenty metres to find where it
-      gives out, and it gives out well above street level: at fourteen the brick
-      drips, the windows are smears and there is no readable fire escape on any
-      block. At twenty it holds only where the buildings are tall enough to have
-      been caught side-on.
-
-      So the descent stops above the roofline, where the city still looks like a
-      photograph of a city, and the beat after it — the last drop, the window,
-      the room — is generated. That division is not a compromise: it is each
-      tool doing the part it can actually do. There is no photogrammetry of the
-      inside of an apartment and, at this scale, not much of the outside of one
-      either.
+      Until 0.80 the camera is directly over the target looking straight down,
+      which is what a descent from orbit looks like and what keeps the move
+      legible while the ground is still a map. Then it swings back and out to
+      about a street's width and the aim rises to fifty metres, so the shot
+      finishes looking along a block at building fronts.
     */
-    const height = floor + 3400 + (endHeight - 3400) * fall;
-    // Down the length of a block rather than across a street, which is the
-    // framing that works at this height: a corridor of facades running away
-    // from the camera, with the skyline behind it.
-    const back = 2600 + (95 - 2600) * close;
-    // And a little to one side, so the buildings are met at an angle rather
-    // than square on. Square on is an elevation drawing.
-    const side = 900 + (34 - 900) * close;
+    const tilt = smooth((t - 0.80) / 0.20);
 
-    this.camera.position.set(side, height, back);
+    // Not exactly zero before the tilt: a camera at precisely (0, h, 0) looking
+    // at (0, 0, 0) is looking straight down its own up-vector, and lookAt has
+    // no way to choose a roll. It gimbals, and the picture spins. A thousandth
+    // of the altitude is enough to give it an answer and is invisible.
+    const back = height * 0.001 + (95 - height * 0.001) * tilt;
+    const side = height * 0.0004 + (34 - height * 0.0004) * tilt;
 
-    /*
-      What it looks at, which rises faster than the camera falls.
-
-      At the start the aim is the street and the camera is three kilometres
-      above it, so the shot looks steeply down. By the end the aim is fifty
-      metres up and the camera is at eighty, so the lens is tilted about twenty
-      degrees down the length of a street: high enough that the facades still
-      hold, low enough that the frame is a street rather than a map.
-    */
+    this.camera.position.set(side, floor + height, back);
     this.camera.lookAt(0, floor + 50 * tilt, 0);
     this.camera.updateMatrixWorld();
   }
