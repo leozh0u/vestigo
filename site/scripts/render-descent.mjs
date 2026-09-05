@@ -90,14 +90,20 @@ const END = Number(args.end ?? 80);
 const OUT = args.out ?? "media/descent.mp4";
 
 /*
-  Where the shot lands.
+  Where the shot lands, and it has to be a building.
 
-  The East Village rather than the Financial District. The shot has to finish
-  on a pre-war walk-up with a fire escape and a street under it, and those are
-  tenement blocks: from among the towers downtown there is nothing of the kind
-  in frame.
+  East 6th near Avenue B. The first choice was two blocks north and turned out
+  to be Tompkins Square Park: the descent spent its last two seconds falling
+  towards trees and finished on a wide view over rooftops, which is a flyover
+  ending rather than an arrival. This block is tenement stock — six storeys,
+  brick, fire escapes on the street front — which is what the generated
+  interior has to plausibly belong to.
+
+  The East Village rather than the Financial District for the same reason. The
+  towers downtown have no fire escapes and the brownstones further west have
+  them at the back where no camera can see them.
 */
-const PLACE = { lat: 40.7264, lon: -73.9818 };
+const PLACE = { lat: 40.72466, lon: -73.98096 };
 
 const harness = ({ width, height, place, scene }) => `
 <!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
@@ -121,7 +127,10 @@ const harness = ({ width, height, place, scene }) => `
       // frames came back empty.
       const camera = new THREE.PerspectiveCamera(38, ${width} / ${height}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
-      await m.load();
+      // No cross-fade. Every frame here is fully settled before it is
+      // photographed, so the plugin's dithered alpha is a stipple over
+      // the whole city and nothing else. See Manhattan.load.
+      await m.load({ fade: false });
       window.__m = m;
       window.state = { stage: "ready" };
     } catch (e) {

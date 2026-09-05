@@ -20,7 +20,9 @@ import puppeteer from "puppeteer";
 const TS = process.argv.slice(2).map(Number).filter((n) => !Number.isNaN(n));
 const MOMENTS = TS.length ? TS : [0, 0.5, 1];
 const OUT = path.resolve("media/move");
-const PLACE = { lat: 40.7264, lon: -73.9818 };
+// The same block render-descent lands on: East 6th near Avenue B, tenement
+// stock rather than the park two blocks north.
+const PLACE = { lat: 40.72466, lon: -73.98096 };
 
 async function bundleScene() {
   const env = await fs.readFile(".env.local", "utf8").catch(() => "");
@@ -58,7 +60,10 @@ const harness = (w, h, place, scene) => `
       renderer.setSize(${w}, ${h}, false);
       const camera = new THREE.PerspectiveCamera(38, ${w} / ${h}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
-      await m.load();
+      // No cross-fade. Every frame here is fully settled before it is
+      // photographed, so the plugin's dithered alpha is a stipple over
+      // the whole city and nothing else. See Manhattan.load.
+      await m.load({ fade: false });
       window.__m = m; window.__cam = camera;
       window.state = { stage: "ready" };
     } catch (e) { window.state = { stage: "failed", why: String(e).slice(0, 300) }; }

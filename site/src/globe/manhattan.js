@@ -58,7 +58,22 @@ export class Manhattan {
 
   /* Nothing is requested until this is called, because requesting the root
      tileset is what starts a billed session. */
-  async load() {
+  /*
+    `fade` is on for a visitor and off for a render.
+
+    TilesFadePlugin dissolves one level of detail into the next so a building
+    does not appear whole in front of the camera. It does that with a dithered
+    alpha — a checkerboard of pixels that switches over during the fade — which
+    is the right trick live, where it lasts 400 ms and reads as softness.
+
+    Offscreen it is only damage. Every frame waits until nothing is downloading
+    or parsing before it is photographed, so there is no pop-in to hide, and
+    each frame catches whatever dither pattern happened to be mid-transition: a
+    stipple over the whole city that changes shape frame to frame. It is the
+    most conspicuous artifact in the footage, and it is guarding against a
+    problem the renderer has already solved.
+  */
+  async load({ fade = true } = {}) {
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!key) throw new Error("no VITE_GOOGLE_MAPS_KEY in site/.env.local");
 
@@ -66,7 +81,7 @@ export class Manhattan {
     tiles.registerPlugin(new GoogleCloudAuthPlugin({ apiToken: key }));
     // Tiles pop in as they arrive otherwise, and a building appearing whole in
     // front of the camera is the one thing that says "streaming" out loud.
-    tiles.registerPlugin(new TilesFadePlugin({ fadeDuration: 400 }));
+    if (fade) tiles.registerPlugin(new TilesFadePlugin({ fadeDuration: 400 }));
 
     tiles.setCamera(this.camera);
     tiles.setResolutionFromRenderer(this.camera, this.renderer);
@@ -295,10 +310,13 @@ export class Manhattan {
       new THREE.SphereGeometry(60000, 32, 24),
       new THREE.ShaderMaterial({
         uniforms: {
-          uHigh:   { value: new THREE.Color(0x0a1526) },   // overhead
-          uMid:    { value: new THREE.Color(0x1d3149) },
-          uLow:    { value: new THREE.Color(0x4a4a58) },   // haze at the horizon
-          uGlow:   { value: new THREE.Color(0xb8703f) },   // where the sun went
+          // Late afternoon rather than twenty minutes after sunset. The sky
+          // has to belong to the same hour as the ground, and the ground is
+          // Google's, which is always the middle of a clear day.
+          uHigh:   { value: new THREE.Color(0x2c5f95) },   // overhead
+          uMid:    { value: new THREE.Color(0x76a6cf) },
+          uLow:    { value: new THREE.Color(0xc3d2e0) },   // haze at the horizon
+          uGlow:   { value: new THREE.Color(0xe8c9a4) },   // low sun, not sunset
           uSunDir: { value: new THREE.Vector3(-0.72, 0.05, -0.69).normalize() },
         },
         vertexShader: `
@@ -406,7 +424,7 @@ export class Manhattan {
         // The colour distance dissolves into. It has to be what the sky is
         // doing near the horizon, or the skyline fades towards one colour in
         // front of a different one and the join shows as a line.
-        uHaze:  { value: new THREE.Color(0x2f3d52) },
+        uHaze:  { value: new THREE.Color(0x9fb4c9) },
         /*
           How far light travels before the air has swallowed it, in metres, and
           it cannot be a constant.
@@ -468,10 +486,37 @@ export class Manhattan {
           // Highlights fall further than shadows: the sun has gone and the sky
           // is doing all the work, so the difference between a lit face and a
           // shaded one collapses.
-          // 0.86 to 0.46, up from 0.66 to 0.34. The first pair was judged from
-          // a still on a bright screen; over seven seconds of footage it read as
-          // underexposed rather than as evening, and the brick lost its colour.
-          c *= mix(0.86, 0.46, smoothstep(0.15, 0.85, l));
+          /*
+            Barely darkened at all now.
+
+            The whole grade was built to turn midday into night, back when the
+            intro had to match a night Earth. It does not any more: the planet
+            on the site stays NASA's night imagery and the intro is daylight,
+            which is the trade Google's data forces and the one Leo took.
+
+            So this stops pretending. A touch off the highlights, nothing off
+            the shadows, and what is left of the grade is the colour separation
+            and the haze — the two parts that make a photograph read as a
+            photograph rather than as a texture. At 0.86/0.46 the same footage
+            came back looking like a night flight over an unlit city.
+          */
+          c *= mix(1.02, 0.86, smoothstep(0.15, 0.85, l));
+
+          /*
+            Lift the shadows, because the satellite imagery is very dark and
+            the exposure curve above cannot help it.
+
+            That curve takes light off the highlights, which is right for a
+            frame with a sky in it and does nothing for one that has no
+            highlights at all. From six hundred kilometres the land is dense
+            forest and dark cities against a bright ocean, and it came back
+            reading almost black beside water that was fine.
+
+            A gamma on the dark end instead: pixels near zero move a long way,
+            pixels near one barely move. That is what opens shadow detail
+            without flattening anything that was already bright.
+          */
+          c = pow(clamp(c, 0.0, 1.0), vec3(0.78));
 
           /*
             Shadows blue, highlights warm.
@@ -482,8 +527,12 @@ export class Manhattan {
             almost nothing. A tint moves the hue and leaves the brightness where
             the exposure put it, which is what a grade is supposed to do.
           */
-          vec3 cool = vec3(0.74, 0.89, 1.28);
-          vec3 warm = vec3(1.26, 1.02, 0.74);
+          // Halved towards neutral. At full strength this was doing the work of
+          // a time-of-day change; over daylight imagery it only has to suggest
+          // late afternoon, and a strong split over a bright frame reads as a
+          // filter rather than as light.
+          vec3 cool = vec3(0.88, 0.95, 1.12);
+          vec3 warm = vec3(1.11, 1.01, 0.89);
           c *= mix(cool, warm, smoothstep(0.10, 0.52, l));
 
           /*
@@ -508,10 +557,10 @@ export class Manhattan {
 
           // A little lift, because air scatters and a true black at dusk is a
           // hole rather than a shadow.
-          c += vec3(0.010, 0.015, 0.026);
+          c += vec3(0.004, 0.006, 0.011);
 
           float r = distance(vUv, vec2(0.5)) * 1.42;
-          c *= 1.0 - 0.24 * pow(clamp(r, 0.0, 1.0), 2.4);
+          c *= 1.0 - 0.16 * pow(clamp(r, 0.0, 1.0), 2.4);
 
           gl_FragColor = vec4(mix(day, c, uAmount), 1.0);
         }`,
@@ -557,6 +606,35 @@ export class Manhattan {
       back on during the descent, at which point it is the sky again.
     */
     if (this.sky) this.sky.visible = above < 55000;
+
+    /*
+      Near and far, from altitude, and this is not a nicety.
+
+      The camera was fixed at near 8, far 40,000,000 — the far plane has to
+      clear the planet at the top of the move — which is a ratio of five million
+      to one. A depth buffer cannot hold that. Every pixel quantised to 1.0, and
+      the grade reads depth to decide what is sky:
+
+          if (d >= 0.9999) { output the frame ungraded; return; }
+
+      So at altitude *every* pixel took the sky path. The whole grade was
+      silently off for the first half of the descent, which is why changing the
+      exposure curve and then adding a gamma moved the measured brightness of
+      those frames by nothing at all — twice, to the same decimal.
+
+      Both planes scale with height instead. Near is a fiftieth of the altitude,
+      far is twenty times it: about a thousand to one throughout, which a depth
+      buffer holds comfortably. The floors matter at the bottom of the move,
+      where the camera is eighty metres up and still needs to see a skyline
+      twenty kilometres away.
+    */
+    const near = Math.max(5, above * 0.02);
+    const far = Math.max(100000, above * 20);
+    if (this.camera.near !== near || this.camera.far !== far) {
+      this.camera.near = near;
+      this.camera.far = far;
+      this.camera.updateProjectionMatrix();
+    }
 
     this.grade.uniforms.uNear.value = this.camera.near;
     this.grade.uniforms.uFar.value = this.camera.far;
