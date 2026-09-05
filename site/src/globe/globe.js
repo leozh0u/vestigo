@@ -30,13 +30,28 @@
 */
 import * as THREE from "three";
 
+/*
+  The living Earth is NASA's, not mine.
+
+  The procedural map was drawn from coastline polygons: latitude bands for
+  climate, noise for terrain, a rule about how far inland the deserts start.
+  It was a diagram of Earth, and no amount of tuning gets a diagram to the
+  point where somebody says it looks real, because what they compare it
+  against is a photograph.
+
+  Blue Marble Next Generation is that photograph: a cloud-free true-colour
+  composite of the whole planet at 500 m per pixel. Black Marble is the night
+  lights. Both public domain, fetched by scripts/fetch_earth_imagery.py.
+
+  The metal half stays procedural, because that one is not trying to be real.
+*/
 const TEXTURES = {
   metal: "/textures/globe-metal.png",
-  natural: "/textures/globe-natural.png",
+  natural: "/textures/earth-day.jpg",
   land: "/textures/globe-land.png",
   growth: "/textures/globe-growth.png",
   relief: "/textures/globe-relief.png",
-  lights: "/textures/globe-lights.png",
+  lights: "/textures/earth-night.jpg",
   clouds: "/textures/globe-clouds.png",
   rough: "/textures/globe-rough.png",
   normal: "/textures/globe-normal.png",
@@ -144,7 +159,11 @@ export class Globe {
       */
       roughnessMap: load(TEXTURES.rough, false),
       normalMap: load(TEXTURES.normal, false),
-      normalScale: new THREE.Vector2(0.55, 0.55),
+      // Halved. The normal map is machining marks, which belong on tungsten
+      // and not on an ocean, and there is no way to fade a normal map per
+      // pixel from inside the standard material. Lowering it costs the metal
+      // a little bite and stops the living Earth being visibly grooved.
+      normalScale: new THREE.Vector2(0.28, 0.28),
       /*
         Displacement, not just a normal map, and the difference matters here.
 
@@ -218,7 +237,12 @@ export class Globe {
           // Until a pixel is alive, roughnessFactor is whatever the metal's
           // roughness map said, which is the machining. Only once it comes
           // alive does it become land or water.
-          roughnessFactor = mix(roughnessFactor, mix(0.95, 0.14, vWet), vAlive);
+          // 0.34 for water, not 0.14. At 0.14 the sea was a mirror and the
+          // anisotropic grain from the metal's roughness map showed straight
+          // through it as bright streaks running around the globe: the planet
+          // came alive still wearing its machining. Ocean seen from orbit is
+          // not a mirror at this scale.
+          roughnessFactor = mix(roughnessFactor, mix(0.92, 0.34, vWet), vAlive);
         `)
         .replace("#include <metalnessmap_fragment>", `
           #include <metalnessmap_fragment>
@@ -243,7 +267,12 @@ export class Globe {
         .replace("#include <tonemapping_fragment>", `
           float night = smoothstep(0.18, -0.28, dot(normalize(vGlobeNormal), uSun));
           float lamps = texture2D(uLights, vGlobeUv).r;
-          gl_FragColor.rgb += vec3(1.0, 0.82, 0.52) * lamps * night * vAlive * 1.15;
+          // The mosaic is dimmer than the synthetic map it replaced and
+          // already carries its own colour, so it is tinted less and lifted
+          // more. Multiplied by itself to hold back the faint airglow that
+          // covers most of the ocean in that image and would otherwise put a
+          // haze over the whole night side.
+          gl_FragColor.rgb += vec3(1.0, 0.88, 0.66) * lamps * lamps * night * vAlive * 2.4;
           #include <tonemapping_fragment>
         `);
 
@@ -394,7 +423,37 @@ export class Globe {
     // The reflections fade as the surface stops being metal. Without this the
     // sea keeps a chrome sheen and the planet reads as painted metal rather
     // than as water.
-    this.material.envMapIntensity = 2.6 * (1 - 0.72 * eased);
+    /*
+      The environment map goes away almost entirely.
+
+      It is a studio: a bright sky and three hard-edged softboxes, built so
+      tungsten reads as tungsten. An ocean reflecting that studio picks up the
+      softbox edges as bright bands running around the globe, which is exactly
+      what it did once the satellite imagery went in. Real ocean from orbit has
+      one sun glint, not stripes.
+
+      Held at 0.06 rather than zero so water keeps some sky in it. The
+      directional lights supply the glint, and one moving highlight is what a
+      sea looks like from space.
+    */
+    this.material.envMapIntensity = 2.6 * (1 - eased) + 0.06 * eased;
+
+    /*
+      The machining marks go with it, and this was the actual cause of the
+      bands across the Atlantic.
+
+      The normal map is an anisotropic grain, grooves running around the
+      sphere, and it is what makes tungsten look turned rather than moulded.
+      It was still applying at full strength once the satellite imagery
+      arrived, so the directional lights raked across those grooves and drew
+      bright stripes over the ocean. Fading the environment map did nothing,
+      because the environment map was not what was doing it.
+
+      normalScale is a material uniform rather than a per-pixel value, so it
+      cannot be faded only over water from out here. It does not need to be:
+      by the time the world is alive there is no metal left for it to serve.
+    */
+    this.material.normalScale.setScalar(0.28 * (1 - eased));
     this.renderer.toneMappingExposure = 1.45 - 0.12 * eased;
     // It wakes up as it works out where it is.
     this.spin = 0.045 + 0.03 * eased;

@@ -57,16 +57,22 @@ function beat(t) {
   // shot ended over the Caribbean, because New York is at 40 degrees north and
   // nothing was tilting the globe to bring it up to the centre of frame. Both
   // axes, or the target is on screen and in the wrong half of it.
-  const spin = easeOut(Math.min(1, t / 0.86));
+  const spin = easeOut(Math.min(1, t / 0.80));
   const target = -(NYC.lon * Math.PI) / 180 - Math.PI / 2;
   const rotationY = -0.9 + (target + Math.PI * 2 - -0.9) * spin;
   // Damped, as in the live flight: taking a latitude literally tips the camera
   // towards looking down the pole, which reads as a diagram rather than a place.
   const rotationX = ((NYC.lat * Math.PI) / 180) * 0.62 * spin;
 
-  // Growth: holds as metal for a beat, then comes alive across the middle.
-  const growth = t < 0.14 ? 0
-    : easeInOut(Math.min(1, (t - 0.14) / 0.62));
+  // Growth: a short beat as metal, then alive.
+  //
+  // The hold was 14% of the shot and the transformation took 62%, which read
+  // as a long wait followed by a slow change. Watching it back, the metal
+  // establishes itself in about a second and everything after that is dead
+  // time. Now it starts turning almost immediately and finishes sooner,
+  // leaving the last third for the approach.
+  const growth = t < 0.05 ? 0
+    : easeInOut(Math.min(1, (t - 0.05) / 0.48));
 
   // Approach: still at first, then closing. Ends near enough that the frame is
   // most planet, which is where a descent can take over.
