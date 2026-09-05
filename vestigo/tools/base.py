@@ -210,6 +210,28 @@ def validate_inputs(schema: dict, inputs: dict) -> None:
         if "enum" in spec and value not in spec["enum"]:
             raise ToolInputError(f"input {key!r} must be one of {spec['enum']}, got {value!r}")
 
+        # Inside an array, one level deep. Without this a bad member passes
+        # validation and the tool either crashes on it later or, worse, filters
+        # it out silently: the model reports an observation, nothing uses it,
+        # and nothing says so. Found by a test asking for a script that does
+        # not exist, which was accepted and quietly discarded.
+        items = spec.get("items")
+        if items and expected == "array" and isinstance(value, list):
+            for i, member in enumerate(value):
+                want = items.get("type")
+                if want:
+                    wanted = _JSON_TYPES.get(want)
+                    if wanted and (not isinstance(member, wanted)
+                                   or (want in ("number", "integer")
+                                       and isinstance(member, bool))):
+                        raise ToolInputError(
+                            f"input {key!r}[{i}] should be {want}, "
+                            f"got {type(member).__name__}")
+                if "enum" in items and member not in items["enum"]:
+                    raise ToolInputError(
+                        f"input {key!r}[{i}] must be one of {items['enum']}, "
+                        f"got {member!r}")
+
 
 # --------------------------------------------------------------------------
 # Cache

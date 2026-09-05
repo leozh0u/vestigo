@@ -353,3 +353,49 @@ def test_a_tool_may_have_an_input_called_name():
     result = registry.call(board, "echo", name="Hauptstraße")
     assert result.ok
     assert result.value == {"echoed": "Hauptstraße"}
+
+
+# -- array validation ------------------------------------------------------
+
+ARRAY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "tags": {"type": "array", "items": {"type": "string",
+                                            "enum": ["a", "b"]}},
+        "counts": {"type": "array", "items": {"type": "integer"}},
+    },
+}
+
+
+def test_array_members_are_checked_against_their_enum():
+    """Without this a bad member passes validation and the tool either crashes
+    on it later or filters it out silently, which means the model reported an
+    observation, nothing used it, and nothing said so."""
+    validate_inputs(ARRAY_SCHEMA, {"tags": ["a", "b"]})
+    with pytest.raises(ToolInputError, match=r"'tags'\[1\]"):
+        validate_inputs(ARRAY_SCHEMA, {"tags": ["a", "z"]})
+
+
+def test_array_members_are_checked_against_their_type():
+    validate_inputs(ARRAY_SCHEMA, {"counts": [1, 2, 3]})
+    with pytest.raises(ToolInputError, match=r"'counts'\[1\]"):
+        validate_inputs(ARRAY_SCHEMA, {"counts": [1, "two"]})
+
+
+def test_a_boolean_is_not_an_integer_inside_an_array_either():
+    """bool is an int in Python, which is the reason the top-level check has a
+    special case. The member check needs the same one."""
+    with pytest.raises(ToolInputError):
+        validate_inputs(ARRAY_SCHEMA, {"counts": [1, True]})
+
+
+def test_an_empty_array_is_valid():
+    validate_inputs(ARRAY_SCHEMA, {"tags": []})
+
+
+def test_items_are_ignored_on_a_field_that_is_not_an_array():
+    """A schema can carry `items` on a non-array field by mistake. Validation
+    should reject on the type and not trip over the leftover key."""
+    schema = {"type": "object",
+              "properties": {"x": {"type": "string", "items": {"type": "integer"}}}}
+    validate_inputs(schema, {"x": "fine"})

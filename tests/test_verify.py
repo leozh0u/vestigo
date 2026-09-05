@@ -197,3 +197,56 @@ def test_no_check_sees_a_refutation_another_check_produced():
 
     verify(b, checks=(check_against_gazetteer, nosy))
     assert seen == [0] * len(seen)
+
+
+# --------------------------------------------------------------------------
+# Running it twice
+# --------------------------------------------------------------------------
+
+def test_verifying_twice_does_not_discount_twice():
+    """The same check finding the same disagreement is one piece of evidence
+    seen twice, which is the case `independent_groups` exists to stop elsewhere
+    on this board. Before this was fixed, two passes took a claim from 0.99 to
+    0.04 and three took it to 0.008."""
+    b = board_with(LatLon(39.21, -76.07), [(LatLon(41.88, -87.63), "Chicago")])
+    verify(b)
+    once = b.evidence_confidence(b.claims["c2"])
+    verify(b)
+    verify(b)
+    assert b.evidence_confidence(b.claims["c2"]) == pytest.approx(once)
+
+
+def test_verifying_twice_adds_no_second_evidence_record():
+    b = board_with(LatLon(39.21, -76.07), [(LatLon(41.88, -87.63), "Chicago")])
+    verify(b)
+    verify(b)
+    assert len([e for e in b.evidence.values() if e.source == "verify"]) == 1
+
+
+def test_a_second_pass_still_reports_what_it_found():
+    """Idempotent in effect, not silent. The second pass must still say the
+    claim is refuted, or a caller cannot tell 'already handled' from 'fine'."""
+    b = board_with(LatLon(39.21, -76.07), [(LatLon(41.88, -87.63), "Chicago")])
+    verify(b)
+    second = verify(b)
+    assert second.refuted
+    assert second.refutations_applied == 0
+
+
+def test_a_new_check_still_applies_after_an_earlier_pass():
+    """Idempotence is per check, not per claim. A different check finding a
+    different problem is new evidence and must land."""
+    b = board_with(LatLon(39.21, -76.07), [(LatLon(41.88, -87.63), "Chicago")])
+    verify(b)
+    before = b.evidence_confidence(b.claims["c2"])
+
+    def another(board, claim):
+        from vestigo.verify import Check
+        if claim.id != "c2":
+            return None
+        return Check(claim_id="c2", source="a_different_check",
+                     verdict=Verdict.REFUTED, detail="also disagrees",
+                     weight=0.5)
+
+    verify(b, checks=(another,))
+    assert b.evidence_confidence(b.claims["c2"]) < before

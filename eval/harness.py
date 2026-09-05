@@ -48,6 +48,7 @@ from vestigo.tools.base import Registry
 from vestigo.consensus import consense
 from vestigo.trace import write_trace
 from vestigo.tools.gazetteer import PlaceLookup
+from vestigo.tools.metas import MetaTool
 from vestigo.tools.geocell import GeocellTool
 from vestigo.tools.solar import SolarTool
 
@@ -152,6 +153,10 @@ def main() -> int:
                          "one JSON per run. Free, and it is what the site plays "
                          "back. Also the fastest way to see why a tool changed "
                          "nothing")
+    ap.add_argument("--no-metas", action="store_true",
+                    help="drop the country-property constraints. They are the "
+                         "only thing that can push the model's own guess down, "
+                         "so this measures what that is worth")
     ap.add_argument("--no-gazetteer", action="store_true",
                     help="drop the OpenStreetMap name lookup, to measure what "
                          "external retrieval is worth on its own")
@@ -182,6 +187,11 @@ def main() -> int:
         router, budget = build(args.preset, limit_usd=args.limit, batched=args.batched)
 
     tools = [SolarTool()]
+    if not args.no_metas:
+        try:
+            tools.append(MetaTool())
+        except Exception as exc:           # no boundary file on disk
+            print(f"  country metas unavailable, running without them: {exc}\n")
     if not args.no_gazetteer:
         tools.append(PlaceLookup())
     if not args.no_classifier:

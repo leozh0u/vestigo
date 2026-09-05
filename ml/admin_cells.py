@@ -58,6 +58,21 @@ class Country:
         return self.west <= lon <= self.east and self.south <= lat <= self.north
 
 
+def _iso(props: dict) -> str:
+    """The country's ISO 3166 alpha-3 code, working around Natural Earth.
+
+    Eight features, France and Norway among them, carry "-99" in both ISO_A2
+    and ISO_A3. Anything reading those fields directly merges all eight into a
+    single country called "-99", which is silent and wrong rather than loud and
+    wrong.
+    """
+    for key in ("ISO_A3_EH", "ISO_A3", "ADM0_A3"):
+        value = props.get(key)
+        if value and value != "-99":
+            return value
+    return "??"
+
+
 def load_countries(path: pathlib.Path | str = BOUNDARIES) -> list[Country]:
     data = json.loads(pathlib.Path(path).read_text())
     out = []
@@ -79,7 +94,11 @@ def load_countries(path: pathlib.Path | str = BOUNDARIES) -> list[Country]:
             continue
         out.append(Country(
             name=props.get("NAME") or props.get("ADMIN") or "?",
-            iso=props.get("ISO_A2") or props.get("ADM0_A3") or "??",
+            # ISO_A3_EH first. Natural Earth stores "-99" in ISO_A2 and
+            # ISO_A3 for eight entries including France, Norway and Kosovo,
+            # and reading those fields directly collapses all eight into one
+            # country. The _EH variant carries the real codes.
+            iso=_iso(props),
             rings=tuple(rings),
             west=min(xs), south=min(ys), east=max(xs), north=max(ys),
         ))

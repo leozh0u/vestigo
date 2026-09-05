@@ -240,10 +240,23 @@ def verify(board: Board, *, checks=CHECKS) -> Verification:
             if outcome is not None:
                 results.append(outcome)
 
+    # What has already been refuted, and by which check. Running this pass
+    # twice must not discount a claim twice: the same check finding the same
+    # disagreement is one piece of evidence seen twice, which is the exact case
+    # `independent_groups` exists to stop elsewhere on this board. Without it,
+    # two calls take a claim from 0.99 to 0.04 and three take it to 0.008.
+    already = {
+        (e.inputs.get("claim"), e.inputs.get("check"))
+        for e in board.evidence.values() if e.source == "verify"
+    }
+
     applied = 0
     for outcome in results:
         if outcome.verdict is not Verdict.REFUTED or outcome.weight <= 0.0:
             continue
+        if (outcome.claim_id, outcome.source) in already:
+            continue
+        already.add((outcome.claim_id, outcome.source))
         claim = board.claims[outcome.claim_id]
         evidence = board.add_evidence(
             source="verify",
