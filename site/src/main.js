@@ -62,6 +62,9 @@ async function run(entry) {
   clearEvidence();
   globe.clearMarkers();
   globe.setProgress(0);
+  // The previous answer, if there was one, left the globe holding still. A new
+  // question has nothing to hold still for.
+  globe.release();
 
   machine.go("submitted", { entry });
   const trace = await (await fetch(`/traces/${entry.file}`)).json();

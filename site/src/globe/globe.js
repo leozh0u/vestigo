@@ -87,6 +87,19 @@ export class Globe {
     // got to. See setProgress and ease.
     this.targetProgress = 0;
     this.spin = 0.045;
+    /*
+      Whether something else owns the rotation rate.
+
+      The flight sets spin to 0.010 when it lands, so the answer stays under
+      the camera instead of sliding out of frame. That line never did anything:
+      apply() runs from ease() on every single frame and reassigned spin from
+      the growth, so the slower rate was overwritten about sixteen times a
+      second. The globe kept turning at full speed after arriving and carried
+      Lahore off the right-hand limb while the receipt still said Lahore.
+
+      Nothing errored, and on a short look it reads as the planet idling.
+    */
+    this.held = false;
     // The flight turns this off. An idle rotation and a directed one fight
     // each other, and the fight looks like a stutter.
     this.spinning = true;
@@ -696,8 +709,9 @@ export class Globe {
       belongs and the cities have somewhere to go.
     */
     this.renderer.toneMappingExposure = 1.45 - 0.59 * eased;
-    // It wakes up as it works out where it is.
-    this.spin = 0.045 + 0.03 * eased;
+    // It wakes up as it works out where it is. Not while something else is
+    // holding the rate: see `held` above.
+    if (!this.held) this.spin = 0.045 + 0.03 * eased;
   }
 
   /*
@@ -734,6 +748,17 @@ export class Globe {
       this.markers.remove(child);
     }
   }
+
+  /*
+    Take and give back the rotation rate.
+
+    hold() is for the moment after an answer arrives, when the planet should
+    keep breathing but not travel. release() puts it back under apply()'s
+    control, and a new run has to call it or the second question is answered by
+    a globe that is still holding still for the first.
+  */
+  hold(rate) { this.spin = rate; this.held = true; }
+  release() { this.held = false; }
 
   /* Where the camera sits when it is not going anywhere. */
   get idleDistance() { return this.baseDistance * this.fit; }

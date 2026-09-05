@@ -146,7 +146,9 @@ export class Flight {
       if (t >= 1) {
         this.active = null;
         globe.spinning = true;
-        globe.spin = 0.010;        // barely turning, so the answer stays put
+        // Barely turning, so the answer stays under the camera. hold() rather
+        // than assigning spin: apply() runs every frame and would put it back.
+        globe.hold(0.010);
         onDone?.();
       }
     };
@@ -165,7 +167,9 @@ export class Flight {
       if (t >= 1) {
         this.active = null;
         globe.spinning = true;
-        globe.spin = 0.045;
+        // Back under apply()'s control, which is where the rate belongs once
+        // there is no answer on screen to keep still for.
+        globe.release();
         onDone?.();
       }
     };
