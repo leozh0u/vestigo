@@ -54,3 +54,5 @@ site/.render-*/
 site/public/textures/earth-night-raw.jpg
 site/media/
 site/dist/
+site/.descent-*/
+site/.render-*/
