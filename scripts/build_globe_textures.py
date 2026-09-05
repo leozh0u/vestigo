@@ -352,6 +352,80 @@ def relief(mask: Image.Image, coast: Image.Image) -> Image.Image:
     return Image.fromarray((np.clip(height, 0, 1) * 255).astype("uint8"), "L")
 
 
+def city_lights(w: int, h: int) -> Image.Image:
+    """Where the night side glows, drawn from this project's own training set.
+
+    A planet with no lights on its dark half reads as a model of a planet. The
+    lights are the single clearest signal that the thing is inhabited, and they
+    are the detail people check without knowing they are checking it.
+
+    The positions are not invented and not a downloaded raster. They are the
+    65,300 photographs the classifier was trained on: street-level imagery
+    exists where people are, so the distribution of the training set is a map
+    of where people are. The globe's night side is lit by the same data that
+    taught the model, which is a better reason for a texture to look the way it
+    does than any amount of art direction.
+
+    It inherits the dataset's bias, and that is worth saying rather than hiding:
+    41% of those photographs are European, so Europe is brighter here than it
+    should be relative to Asia. The map is honest about the data; the data is
+    not honest about the Earth.
+    """
+    import numpy as np
+
+    index_path = ROOT / "data/train_index.json"
+    canvas = np.zeros((h, w), np.float32)
+    if not index_path.exists():
+        return Image.fromarray(canvas.astype("uint8"), "L")
+
+    rows = json.loads(index_path.read_text())
+    for r in rows:
+        x = int((r["lon"] + 180.0) / 360.0 * w) % w
+        y = int((90.0 - r["lat"]) / 180.0 * h)
+        if 0 <= y < h:
+            canvas[y, x] += 1.0
+
+    # A single pixel per photograph is invisible, so each becomes a small
+    # bloom. Twice, at two radii: the tight pass makes cities, the loose one
+    # makes the haze around them.
+    tight = Image.fromarray(np.clip(canvas * 90, 0, 255).astype("uint8"), "L")
+    tight = tight.filter(ImageFilter.GaussianBlur(max(1, w // 1400)))
+    loose = Image.fromarray(np.clip(canvas * 26, 0, 255).astype("uint8"), "L")
+    loose = loose.filter(ImageFilter.GaussianBlur(max(2, w // 380)))
+
+    out = np.clip(np.asarray(tight, np.float32) + np.asarray(loose, np.float32) * 0.55,
+                  0, 255)
+    return Image.fromarray(out.astype("uint8"), "L")
+
+
+def clouds(w: int, h: int) -> Image.Image:
+    """A cloud layer, as coverage from 0 to 1.
+
+    Weather is banded: a wet belt at the equator where the trade winds meet,
+    clear skies over the deserts at about thirty degrees, and storm tracks in
+    the mid-latitudes. Noise alone gives an evenly cloudy planet, which is
+    wrong in a way that is hard to name and easy to see.
+
+    Stretched horizontally, because wind runs east and west and clouds are
+    drawn out along it.
+    """
+    import numpy as np
+
+    base = _fbm(w, h, octaves=6, seed=907)
+    streaks = _fbm(w // 5, h, octaves=5, seed=311)
+    streaks = np.asarray(Image.fromarray((streaks * 255).astype("uint8"))
+                         .resize((w, h), Image.BILINEAR), np.float32) / 255.0
+    field = base * 0.45 + streaks * 0.55
+
+    lat = np.abs(90.0 - (np.arange(h, dtype=np.float32) / h) * 180.0)[:, None]
+    belt = (np.exp(-((lat - 4) ** 2) / 150) * 0.55        # intertropical convergence
+            + np.exp(-((lat - 55) ** 2) / 420) * 0.45     # mid-latitude storm track
+            - np.exp(-((lat - 27) ** 2) / 190) * 0.40)    # the desert latitudes
+
+    coverage = np.clip((field - 0.52 + belt) * 2.6, 0, 1)
+    return Image.fromarray((coverage * 255).astype("uint8"), "L")
+
+
 def growth_order(mask: Image.Image) -> Image.Image:
     """When each pixel comes alive, as a greyscale map from 0 (first) to 1 (last).
 
@@ -416,6 +490,11 @@ def main() -> int:
     # The mask ships too: the shader uses it to keep the sea shiny while the
     # land goes matte, which is the single strongest cue that a sphere is wet
     # in some places and not others.
+    for name, image in (("globe-lights.png", city_lights(w, h)),
+                        ("globe-clouds.png", clouds(w, h))):
+        image.save(OUT / name, optimize=True)
+        print(f"  {name:<20} {(OUT / name).stat().st_size / 1024:>7.0f} KB")
+
     relief(mask, coast).save(OUT / "globe-relief.png", optimize=True)
     print(f"  {'globe-relief.png':<20} "
           f"{(OUT / 'globe-relief.png').stat().st_size / 1024:>7.0f} KB")

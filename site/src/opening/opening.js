@@ -33,16 +33,39 @@ export class Opening {
   mount(parent = document.body) {
     const el = document.createElement("div");
     el.className = "opening";
+    /*
+      No headline and no explanatory paragraph.
+
+      The first version led with "Where was this taken?" over "Most systems
+      will tell you. This one tells you how much to believe the answer." Both
+      are the house style of every AI product page of the last two years, and
+      a sentence explaining what the page does is an admission that the page
+      does not show it.
+
+      What is here instead is a reading, in the same format the system emits:
+      a coordinate, a level, a confidence. It states the thesis by being an
+      example of it rather than by describing one. Somebody who does not read
+      it still sees the shape of the answer this thing gives.
+
+      The control says ENTER, not "Begin". Begin is a word from an onboarding
+      flow.
+    */
     el.innerHTML = `
       <div class="opening-inner">
-        <p class="opening-eyebrow">Evidence-based geolocation</p>
-        <h2 class="opening-title">Where was this taken?</h2>
-        <p class="opening-body">
-          Most systems will tell you. This one tells you how much to believe
-          the answer, and stops when the evidence runs out.
-        </p>
-        <button class="opening-go" type="button">Begin</button>
-        <button class="opening-skip" type="button">Skip the intro</button>
+        <div class="opening-reading">
+          <span class="opening-coord">31.5885, 74.3106</span>
+          <span class="opening-meta">POINT &middot; 0.98</span>
+        </div>
+        <div class="opening-reading opening-reading-dim">
+          <span class="opening-coord">-33.45, -70.67</span>
+          <span class="opening-meta">COUNTRY &middot; 0.61</span>
+        </div>
+        <div class="opening-reading opening-reading-dim">
+          <span class="opening-coord">&mdash;&mdash;.&mdash;&mdash;, &mdash;&mdash;.&mdash;&mdash;</span>
+          <span class="opening-meta">NO CLAIM</span>
+        </div>
+        <button class="opening-go" type="button">ENTER</button>
+        <button class="opening-skip" type="button">skip</button>
       </div>`;
     parent.append(el);
     this.root = el;

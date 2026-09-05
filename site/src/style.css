@@ -138,6 +138,17 @@ html, body {
 /* --------------------------------------------------------------------------
    Masthead
    -------------------------------------------------------------------------- */
+.masthead {
+  /* Explicit. The wordmark is an inline-flex anchor and the tagline is a
+     block after it, which should stack and did not reliably: with the anchor
+     inline-level, the line box it sits in and the paragraph below it ended up
+     overlapping at some widths. A grid makes the two rows a fact rather than
+     a consequence of how the boxes happen to lay out. */
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+}
+
 .wordmark {
   display: inline-flex;
   align-items: center;
@@ -158,7 +169,7 @@ html, body {
   text-indent: 0.34em;   /* the tracking adds space after the last letter too */
 }
 .tagline {
-  margin: 0.65rem 0 0;
+  margin: 0;
   max-width: 46ch;
   font-family: var(--mono);
   font-weight: 300;
@@ -414,7 +425,7 @@ html, body {
 .opening-done { opacity: 0; pointer-events: none; }
 
 .opening-inner {
-  max-width: 34rem;
+  width: min(30rem, 84vw);
   padding: 0 1.5rem;
   text-align: center;
   transition: opacity 600ms ease, transform 600ms ease;
@@ -425,60 +436,61 @@ html, body {
   pointer-events: none;
 }
 
-.opening-eyebrow {
-  margin: 0;
+/*
+  Three readings, finest to coarsest, ending in one that has no answer. The
+  page's whole argument, stated by example rather than described: it answers as
+  precisely as the evidence allows, and sometimes that is not at all.
+*/
+.opening-reading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--edge);
   font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-.opening-title {
-  margin: 0.9rem 0 0;
-  font-family: var(--mono);
-  font-size: clamp(1.5rem, 3.4vw, 2.2rem);
-  font-weight: 400;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-.opening-body {
-  margin: 1.1rem auto 0;
-  max-width: 32rem;
-  font-family: var(--mono);
-  font-weight: 300;
   font-size: 0.78rem;
-  line-height: 1.7;
-  color: var(--ink-dim);
 }
+.opening-reading-dim { opacity: 0.55; }
+.opening-reading:nth-of-type(3) { opacity: 0.3; }
+.opening-coord { color: var(--ink); letter-spacing: 0.02em; }
+.opening-meta {
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--live);
+}
+.opening-reading-dim .opening-meta { color: var(--ink-faint); }
+
 .opening-go {
-  margin-top: 2rem;
-  padding: 0.8rem 2.2rem;
+  margin-top: 2.4rem;
+  padding: 0.7rem 2.6rem;
   font-family: var(--mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  color: var(--void);
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--edge);
   border-radius: 2px;
   cursor: pointer;
-  transition: background 200ms ease, color 200ms ease;
+  transition: color 200ms ease, border-color 200ms ease;
 }
-.opening-go:hover { background: var(--live); transform: translateY(-1px); }
+.opening-go:hover { color: var(--live); border-color: var(--live); }
 
 .opening-skip {
   display: block;
-  margin: 1rem auto 0;
+  margin: 1.1rem auto 0;
   padding: 0.3rem 0.6rem;
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
   color: var(--ink-faint);
   background: none;
   border: 0;
   cursor: pointer;
 }
 .opening-skip:hover { color: var(--ink-dim); }
-/* Over the video it has to stay reachable and out of the way. Somebody who has
-   seen this once should never be trapped in it. */
 .opening-skip.over-video {
   position: absolute;
   right: 1.2rem;

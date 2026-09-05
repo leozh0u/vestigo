@@ -36,6 +36,8 @@ const TEXTURES = {
   land: "/textures/globe-land.png",
   growth: "/textures/globe-growth.png",
   relief: "/textures/globe-relief.png",
+  lights: "/textures/globe-lights.png",
+  clouds: "/textures/globe-clouds.png",
   rough: "/textures/globe-rough.png",
   normal: "/textures/globe-normal.png",
 };
@@ -44,6 +46,9 @@ export class Globe {
   constructor(canvas) {
     this.canvas = canvas;
     this.progress = 0;
+    // Where the run says it has got to, as opposed to where the surface has
+    // got to. See setProgress and ease.
+    this.targetProgress = 0;
     this.spin = 0.045;
     // The flight turns this off. An idle rotation and a directed one fight
     // each other, and the fight looks like a stutter.
@@ -114,6 +119,11 @@ export class Globe {
       uNatural: { value: load(TEXTURES.natural) },
       uGrowthMap: { value: load(TEXTURES.growth, false) },
       uLand: { value: load(TEXTURES.land, false) },
+      uLights: { value: load(TEXTURES.lights, false) },
+      // Which way the sun is, in world space. The shader needs it to know
+      // which half of the planet is dark, and lights only belong on the dark
+      // half. Kept in step with the key light in render().
+      uSun: { value: new THREE.Vector3(2.4, 1.0, 2.6).normalize() },
     };
 
     this.material = new THREE.MeshStandardMaterial({
@@ -169,7 +179,10 @@ export class Globe {
           uniform sampler2D uNatural;
           uniform sampler2D uGrowthMap;
           uniform sampler2D uLand;
+          uniform sampler2D uLights;
+          uniform vec3 uSun;
           varying vec2 vGlobeUv;
+          varying vec3 vGlobeNormal;
         `)
         // The colour is decided here, where diffuseColor exists.
         .replace("#include <map_fragment>", `
@@ -208,15 +221,43 @@ export class Globe {
         .replace("#include <metalnessmap_fragment>", `
           #include <metalnessmap_fragment>
           metalnessFactor = mix(metalnessFactor, mix(0.02, 0.12, vWet), vAlive);
+        `)
+        /*
+          City lights, added at the very end.
+
+          A planet with a dark half and nothing on it reads as a model of a
+          planet. The lights are the clearest signal the thing is inhabited,
+          and the detail people check without knowing they are checking it.
+
+          Added after tone mapping rather than mixed into the surface colour,
+          because these emit light rather than reflect it: a lit window does
+          not get darker when the sun goes down, which is what folding them
+          into the albedo would do.
+
+          `night` is one where the surface faces away from the sun, and the
+          smoothstep makes a soft terminator instead of a hard line across the
+          globe. They fade in with the world, so metal has no cities on it.
+        */
+        .replace("#include <tonemapping_fragment>", `
+          float night = smoothstep(0.18, -0.28, dot(normalize(vGlobeNormal), uSun));
+          float lamps = texture2D(uLights, vGlobeUv).r;
+          gl_FragColor.rgb += vec3(1.0, 0.82, 0.52) * lamps * night * vAlive * 1.15;
+          #include <tonemapping_fragment>
         `);
+
       shader.vertexShader = shader.vertexShader
         .replace("#include <common>", `
           #include <common>
           varying vec2 vGlobeUv;
+          varying vec3 vGlobeNormal;
         `)
         .replace("#include <uv_vertex>", `
           #include <uv_vertex>
           vGlobeUv = uv;
+        `)
+        .replace("#include <defaultnormal_vertex>", `
+          #include <defaultnormal_vertex>
+          vGlobeNormal = normalize(mat3(modelMatrix) * objectNormal);
         `);
     };
 
@@ -309,27 +350,49 @@ export class Globe {
   }
 
   /*
-    Dead metal to living planet, on one number.
+    Where the run has got to. Not where the surface has got to.
 
-    Every visual change rides on `progress`, which is why the look can be tuned
-    by editing this method rather than by chasing four animations that each
-    have to agree with the others.
+    The player reports progress once per step, so this arrives as about
+    twenty-seven discrete jumps held four hundred milliseconds each. Applied
+    straight to the shader that is a staircase, and it looked like one: the
+    world lurched forward and stopped, lurched and stopped.
 
-    The fades are not linear. Nature arrives on a curve that holds back early
-    and then commits, so the world stays metal while the evidence is still
-    thin and turns over decisively once it is not.
+    So this sets a target and `ease` walks the surface towards it every frame.
+    The run stays in charge of how far the world has come, and the frame loop
+    is in charge of how it gets there, which is the split that was missing.
   */
   setProgress(t) {
-    this.progress = Math.min(1, Math.max(0, t));
-    const k = this.progress;
+    this.targetProgress = Math.min(1, Math.max(0, t));
+  }
+
+  /*
+    One frame of catching up.
+
+    Exponential rather than linear: the distance remaining is cut by a fixed
+    fraction each second, so it moves quickly when it is far behind and settles
+    softly. Framerate-independent, because the fraction is raised to the power
+    of the elapsed time rather than applied once per frame; done the naive way
+    the world grows faster on a fast machine.
+  */
+  ease(dt) {
+    const remaining = this.targetProgress - this.progress;
+    if (Math.abs(remaining) < 0.0005) {
+      this.progress = this.targetProgress;
+    } else {
+      this.progress += remaining * (1 - Math.pow(0.06, dt));
+    }
+    this.apply(this.progress);
+  }
+
+  apply(k) {
     const eased = k * k * (3 - 2 * k);          // smoothstep
 
     this.uniforms.uGrowth.value = eased;
     this.halo.material.opacity = 0.42 * eased;
     // The reflections fade as the surface stops being metal. Without this the
-    // sea keeps a chrome sheen and the whole planet reads as painted metal
-    // rather than as water.
-    this.material.envMapIntensity = 2.2 * (1 - 0.72 * eased);
+    // sea keeps a chrome sheen and the planet reads as painted metal rather
+    // than as water.
+    this.material.envMapIntensity = 2.6 * (1 - 0.72 * eased);
     this.renderer.toneMappingExposure = 1.45 - 0.12 * eased;
     // It wakes up as it works out where it is.
     this.spin = 0.045 + 0.03 * eased;
