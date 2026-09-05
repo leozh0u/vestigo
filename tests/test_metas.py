@@ -42,7 +42,22 @@ def fake_resolver(mapping):
 
 @pytest.fixture(scope="module")
 def resolve():
-    return country_resolver()
+    """The real Natural Earth resolver, when the boundaries are on disk.
+
+    They are a 4 MB download that scripts/fetch_boundaries.py fetches and
+    .gitignore keeps out of the repository, so a fresh checkout does not have
+    them and neither does CI. Without this the seven tests below do not fail —
+    they *error*, which is louder, less informative, and turns the whole run red
+    over a missing input rather than a broken behaviour.
+
+    Skipped with a reason instead. The rules these check are about geometry, and
+    geometry needs the geometry.
+    """
+    try:
+        return country_resolver()
+    except FileNotFoundError as missing:
+        pytest.skip(f"no boundary data: {missing.filename} "
+                    "(run scripts/fetch_boundaries.py)")
 
 
 # --------------------------------------------------------------------------

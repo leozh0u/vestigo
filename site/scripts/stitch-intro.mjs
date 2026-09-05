@@ -69,8 +69,18 @@ if (!present.length) {
 console.log(`joining ${present.length}: ${present.map((f) => path.basename(f)).join(", ")}`);
 
 if (present.length === 1) {
+  /*
+    One beat is still a finished intro and has to be published like one.
+
+    This used to copy the file and exit, which skipped the hashing and the
+    manifest entirely — so the page fetched /opening/intro.json, got a 404,
+    concluded there was no cinematic, and started on the globe with no way in.
+    The ENTER panel simply stopped appearing, which is an odd thing to debug:
+    nothing errors, and the page is behaving exactly as designed for the case
+    where no intro exists.
+  */
   fs.copyFileSync(present[0], OUT);
-  console.log(`only one clip, copied to ${OUT}`);
+  publish(await duration(OUT));
   process.exit(0);
 }
 
@@ -125,29 +135,32 @@ await run("ffmpeg", [
   it.
 
   The intro lived at a fixed /opening/intro.mp4. Replacing it therefore did not
-  change its URL, and a browser that had the old one kept playing the old one:
-  a new intro shipped, the site served it, and the person it was made for saw
-  the previous cut and reported that nothing had changed. Twice.
+  change its URL, and a browser that had the old one kept playing the old one: a
+  new intro shipped, the site served it, and the person it was made for saw the
+  previous cut and reported that nothing had changed. Twice.
 
   Hashing the filename makes a new video a new URL, which no cache can get
   wrong. The page cannot hardcode a hash, so it reads this manifest — one small
   JSON file that is allowed to be re-fetched, pointing at a video that never
   needs to be.
 */
-const digest = crypto.createHash("sha256")
-  .update(fs.readFileSync(OUT)).digest("hex").slice(0, 10);
-const hashed = path.join(DIR, `intro-${digest}.mp4`);
+function publish(seconds) {
+  const digest = crypto.createHash("sha256")
+    .update(fs.readFileSync(OUT)).digest("hex").slice(0, 10);
+  const hashed = path.join(DIR, `intro-${digest}.mp4`);
 
-// Anything from a previous build, gone. Otherwise every intro ever stitched
-// accumulates in public/ and ships with the site.
-for (const f of fs.readdirSync(DIR)) {
-  if (/^intro-[0-9a-f]{10}\.mp4$/.test(f) && path.join(DIR, f) !== hashed) {
-    fs.unlinkSync(path.join(DIR, f));
+  // Anything from a previous build, gone. Otherwise every intro ever stitched
+  // accumulates in public/ and ships with the site.
+  for (const f of fs.readdirSync(DIR)) {
+    if (/^intro-[0-9a-f]{10}\.mp4$/.test(f) && path.join(DIR, f) !== hashed) {
+      fs.unlinkSync(path.join(DIR, f));
+    }
   }
+  fs.renameSync(OUT, hashed);
+  fs.writeFileSync(path.join(DIR, "intro.json"),
+                   `${JSON.stringify({ src: `/opening/${path.basename(hashed)}`,
+                                       seconds: Number(seconds.toFixed(2)) }, null, 2)}\n`);
+  console.log(`wrote ${hashed}  (${seconds.toFixed(1)}s)`);
 }
-fs.renameSync(OUT, hashed);
-fs.writeFileSync(path.join(DIR, "intro.json"),
-                 `${JSON.stringify({ src: `/opening/${path.basename(hashed)}`,
-                                     seconds: Number(elapsed.toFixed(2)) }, null, 2)}\n`);
 
-console.log(`wrote ${hashed}  (${elapsed.toFixed(1)}s)`);
+publish(elapsed);
