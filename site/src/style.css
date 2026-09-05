@@ -291,8 +291,100 @@ html, body {
 @keyframes rise { to { opacity: 1; transform: none; } }
 
 /* --------------------------------------------------------------------------
-   The receipt
+   The right column: the working, then the answer
+
+   Both live in the same column and only one is ever showing. The machinery is
+   what the run is doing; the receipt is what it concluded. Once there is a
+   conclusion the working is no longer the interesting thing, so it goes.
    -------------------------------------------------------------------------- */
+.right {
+  display: grid;
+  align-content: end;
+  justify-items: end;
+  min-height: 0;
+}
+
+.machinery {
+  width: 19rem;
+  padding: 0.85rem 0.95rem 0.75rem;
+  background: color-mix(in srgb, var(--steel) 88%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  opacity: 0;
+  transition: opacity 320ms ease;
+  pointer-events: none;
+}
+/* Only while there is something happening. An empty readout sitting on the
+   page before anything has been asked is furniture. */
+#ui[data-state="resolving"] .machinery { opacity: 1; }
+
+.mach-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+.mach-percent {
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+  transition: color 400ms ease;
+}
+/* Green the moment the world stops being all of it. The number going from
+   100.0% to something less is the single most important event on this panel. */
+.mach-narrowed { color: var(--live); }
+
+.mach-grid {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.5rem 0 0.65rem;
+  /* One pixel per 4-degree cell, scaled up. Not smoothed: interpolating
+     between cells draws a soft gradient that implies a resolution the
+     computation does not have. */
+  image-rendering: pixelated;
+  border-radius: 1px;
+}
+
+.mach-log {
+  display: grid;
+  gap: 1px;
+  font-size: 0.58rem;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+.mach-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  white-space: nowrap;
+  animation: machIn 200ms ease both;
+}
+.mach-k { overflow: hidden; text-overflow: ellipsis; }
+.mach-v { color: var(--ink-faint); flex: none; }
+/* The four kinds are told apart by the value, not by a badge. A row of
+   coloured labels down the left is a legend nobody reads. */
+.mach-cand .mach-v { color: #8fb3c9; }
+.mach-con  .mach-v { color: var(--live); }
+.mach-claim .mach-k { color: var(--ink); }
+.mach-ref  .mach-v { color: var(--warm); }
+
+@keyframes machIn {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.mach-count {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--edge);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
 .receipt {
   align-self: end;
   justify-self: end;
@@ -382,22 +474,82 @@ html, body {
    -------------------------------------------------------------------------- */
 .bar { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 
+/* --------------------------------------------------------------------------
+   The strip
+
+   A window with a track inside it. The window runs out past the page padding
+   to both screen edges; the track is the whole set of photographs twice over,
+   sliding left by exactly the width of one set and then starting again, which
+   is the only way a loop of images has no seam.
+
+   Masked at the ends rather than cut. A photograph that vanishes at a hard
+   edge announces there is a box; one that fades reads as the strip continuing
+   past the screen, which it does.
+   -------------------------------------------------------------------------- */
 .examples {
+  min-width: 0;
+  margin: 0 calc(-1 * var(--pad));
+  overflow: hidden;
+  /*
+    Headroom for the hover enlargement, and it has to be measured rather than
+    guessed. The strip is a window with overflow hidden — that is what makes
+    the loop seamless — so anything growing past the top is cut off, and it
+    was: a photograph enlarged on hover lost its top third to the edge of a
+    box the visitor cannot see.
+
+    The photographs are 104px and grow from their bottom edge, so 1.55x needs
+    0.55 x 104 = 58px of clearance above them. 4.25rem is 68, which leaves the
+    shadow somewhere to go as well.
+  */
+  padding: 4.25rem 0 0.2rem;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(to right,
+    transparent, #000 5%, #000 95%, transparent);
+}
+
+.examples-track {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  width: max-content;
   align-items: flex-end;
-  /* Same reason as the grid column above: a flex item defaults to the width of
-     its contents, and a box that already fits everything never scrolls. */
-  min-width: 0;
-  /* The row must not clip a photograph that has grown past its bounds. */
-  overflow: visible;
+  padding-left: 0.5rem;
+  /* Set from the measured width in main.js, so adding a tenth photograph does
+     not silently speed the whole strip up. */
+  --travel: 1200px;
+  --duration: 20s;
+  animation: strip var(--duration) linear infinite;
+  /* Transform only: no layout, no repaint, so it stays on the compositor
+     alongside a live WebGL canvas. */
+  will-change: transform;
 }
+
+@keyframes strip {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-1 * var(--travel)), 0, 0); }
+}
+
+/*
+  It does not stop under the cursor.
+
+  It used to, on the theory that a target sliding away is hard to hit. In
+  practice the strip travels at about sixty pixels a second, which is nothing
+  to click, and the stop was the more noticeable of the two: the whole row
+  freezing the moment the pointer crossed it read as the page having hung.
+
+  It does stop once a run starts, because at that point the strip is no longer
+  the thing being chosen from and motion along the bottom of the frame competes
+  with the answer arriving above it.
+*/
+#ui[data-state="resolving"] .examples-track,
+#ui[data-state="arrived"] .examples-track { animation-play-state: paused; }
 
 /* A photograph, not a label.
    Square and dimmed until hovered, so the row reads as a set of choices rather
    than as a gallery competing with the globe behind it. */
 .photo {
+  /* The track is flex and these must not be squeezed to fit it. */
+  flex: 0 0 auto;
   /* Larger than the first pass. These are the only interactive thing on the
      page, and at 76px they read as decoration in the corner rather than as the
      controls. A visitor should not have to work out where to click. */
@@ -433,7 +585,10 @@ html, body {
 .photo:hover {
   opacity: 1;
   border-color: var(--ink-dim);
-  transform: scale(1.9);
+  /* 1.55, down from 1.9. The strip is a clipping window now and the taller
+     the enlargement the more headroom it costs; at 1.9 the padding needed to
+     contain it pushed the row a third of the way up the globe. */
+  transform: scale(1.55);
   z-index: 3;
   box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
 }
@@ -522,26 +677,14 @@ html, body {
    -------------------------------------------------------------------------- */
 @media (max-width: 720px) {
   .stack { grid-template-columns: minmax(0, 1fr); }
+  .right { justify-items: stretch; }
   .evidence { display: none; }          /* the globe is the story on a phone */
   .receipt { min-width: 0; width: 100%; }
 
-  .examples {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    /* Out past the page padding and back again, so the strip runs to both
-       edges of the screen while its first photograph still lines up with the
-       wordmark. A strip that stops short of the edge looks like it has ended. */
-    margin: 0 calc(-1 * var(--pad));
-    padding: 0 var(--pad) 0.4rem;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-    /* The globe's drag listens on the page, so the browser has to be told this
-       strip owns horizontal movement or the two fight over the same gesture. */
-    touch-action: pan-x;
-  }
-  .examples::-webkit-scrollbar { display: none; }
-  .photo { flex: 0 0 auto; scroll-snap-align: start; }
+  .machinery { display: none; }   /* the globe is the story on a phone */
+  /* Faster, because a phone shows three photographs at a time rather than
+     nine, so the same speed reads as nothing happening. */
+  .examples-track { animation-duration: calc(var(--duration) * 0.55); }
 }
 
 /* Two and a bit across on the narrowest phones, where 116px leaves nothing of

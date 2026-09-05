@@ -13,6 +13,7 @@ import { Drag } from "./globe/drag.js";
 import { Machine } from "./sequence/machine.js";
 import { Player } from "./sequence/player.js";
 import { renderEvidence, renderReceipt, clearEvidence } from "./ui/panels.js";
+import { Machinery } from "./ui/machinery.js";
 import { mountField } from "./ui/field.js";
 import { mountTyping } from "./ui/typing.js";
 import "./style.css";
@@ -25,6 +26,7 @@ const flight = new Flight(globe);
 const drag = new Drag(globe, document.body);
 const machine = new Machine("idle");
 const ui = document.getElementById("ui");
+const machinery = new Machinery(document.getElementById("machinery"));
 
 let player = null;
 let final = null;
@@ -65,14 +67,19 @@ async function run(entry) {
   // The previous answer, if there was one, left the globe holding still. A new
   // question has nothing to hold still for.
   globe.release();
+  machinery.reset();
 
   machine.go("submitted", { entry });
   const trace = await (await fetch(`/traces/${entry.file}`)).json();
+  // The grid comes from the trace, since a run is free to have used a
+  // different resolution and the panel should draw what was actually computed.
+  machinery.setGrid(trace.grid);
   machine.go("resolving", { trace });
 
   player = new Player(trace, {
     onStep: (step) => {
       renderEvidence(step);
+      machinery.step(step);
       // Candidates appear as they are proposed, so the field of possibilities
       // is visible before it narrows.
       for (const c of step.candidates ?? []) {
@@ -101,31 +108,80 @@ async function run(entry) {
   });
 }
 
+/*
+  The strip of photographs, built twice.
+
+  It travels, so it has to be seamless, and the only way to make a loop of
+  images seamless is to have two of them: the track holds the whole set and
+  then the whole set again, and the animation slides it exactly half its width
+  before starting over. At that instant the second copy is sitting where the
+  first one started and there is nothing to see.
+
+  Which means every photograph exists as two buttons, so pressing either has to
+  do the same thing and both have to show as pressed. Keyed on the entry's file
+  rather than on the element.
+*/
 function mountExamples(entries) {
-  const holder = document.getElementById("examples");
-  holder.replaceChildren(...entries.map((entry) => {
+  const track = document.getElementById("examples-track");
+  const buttons = [];
+
+  const make = (entry, copy) => {
     const button = document.createElement("button");
     button.className = "photo";
+    button.dataset.file = entry.file;
     button.setAttribute("aria-pressed", "false");
+    // The second copy is the same control as the first, so a screen reader
+    // should be told about it once.
+    if (copy) button.setAttribute("aria-hidden", "true");
     if (entry.photo) {
       const img = document.createElement("img");
       img.src = entry.photo;
       // The alt text says what it is, not where it is. Naming the place would
       // hand a screen reader the answer the page exists to work out.
       img.alt = "A photograph of an unknown place";
-      img.loading = "lazy";
+      // Not lazy any more. Half of these start off screen by design and a lazy
+      // image that scrolls into view mid-loop arrives as a grey gap.
       button.append(img);
     } else {
       button.textContent = entry.subject;
     }
     button.addEventListener("click", () => {
       if (machine.state !== "idle") machine.go("idle");
-      for (const b of holder.children) b.setAttribute("aria-pressed", "false");
-      button.setAttribute("aria-pressed", "true");
+      for (const b of buttons) {
+        b.setAttribute("aria-pressed", String(b.dataset.file === entry.file));
+      }
       run(entry).catch((err) => console.error(err));
     });
+    buttons.push(button);
     return button;
-  }));
+  };
+
+  track.replaceChildren(
+    ...entries.map((e) => make(e, false)),
+    ...entries.map((e) => make(e, true)),
+  );
+
+  /*
+    The duration is set from the width rather than fixed.
+
+    A constant duration means the strip moves at whatever speed nine
+    photographs happen to imply, and adding a tenth silently speeds it all up.
+    Sixteen seconds per screen width is slow enough to read a photograph as it
+    passes.
+  */
+  const measure = () => {
+    const half = track.scrollWidth / 2;
+    if (!half) return;
+    track.style.setProperty("--travel", `${half}px`);
+    track.style.setProperty("--duration", `${(half / 60).toFixed(1)}s`);
+  };
+  measure();
+  // Widths are wrong until the photographs have decoded, so measure again once
+  // they have rather than guessing at a delay.
+  Promise.all(
+    [...track.querySelectorAll("img")].map((i) => i.decode().catch(() => {})),
+  ).then(measure);
+  window.addEventListener("resize", measure);
 }
 
 /*
