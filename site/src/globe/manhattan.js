@@ -312,7 +312,19 @@ export class Manhattan {
       about a street's width and the aim rises to fifty metres, so the shot
       finishes looking along a block at building fronts.
     */
-    const tilt = smooth((t - 0.80) / 0.20);
+    /*
+      The tilt takes the last 45% rather than the last 20%.
+
+      At 20% it is a ninety-degree swing in under two seconds, and
+      check-intro.mjs measured the frame-to-frame change at four and a half
+      times the run of the shot for a solid half-second — a pan fast enough to
+      read as a whip. Nothing was wrong with it geometrically; it was hurried.
+
+      Spread over 45% it overlaps most of the second half of the fall, which is
+      also better than a pan that waits for the descent to finish and then
+      happens: the camera straightens as it arrives rather than after.
+    */
+    const tilt = smooth((t - 0.55) / 0.45);
 
     // Not exactly zero before the tilt: a camera at precisely (0, h, 0) looking
     // at (0, 0, 0) is looking straight down its own up-vector, and lookAt has

@@ -50,8 +50,19 @@ const DIR = "public/opening";
   The zoom is one camera falling through one dataset from six hundred kilometres
   to a street. Nothing goes in front of it.
 */
+/*
+  The Earth beat is back, and it is back because it now ends where the descent
+  begins rather than somewhere near it.
+
+  Taking it out was the right call while the two shots disagreed about altitude,
+  field of view, light and exposure — joining them then was a cut wearing a
+  fade. All four are matched now, measured at the seam, so the dissolve has two
+  frames of the same place at the same moment to work with and there is nothing
+  for the eye to catch.
+*/
 const ORDER = [
-  "media/descent.mp4",   // orbit to a street, from scripts/render-descent.mjs
+  "media/earth.mp4",     // metal to a lit planet, then the dive
+  "media/descent.mp4",   // three thousand kilometres to a street
   "media/room.mp4",      // generated; see src/opening/PROMPTS.md
 ];
 const OUT = path.join(DIR, "intro.mp4");
