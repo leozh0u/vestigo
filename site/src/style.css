@@ -139,14 +139,11 @@ html, body {
    Masthead
    -------------------------------------------------------------------------- */
 .masthead {
-  /* Explicit. The wordmark is an inline-flex anchor and the tagline is a
-     block after it, which should stack and did not reliably: with the anchor
-     inline-level, the line box it sits in and the paragraph below it ended up
-     overlapping at some widths. A grid makes the two rows a fact rather than
-     a consequence of how the boxes happen to lay out. */
+  /* One row now. The tagline and the footnote under it were both sentences
+     explaining what the page does, which is an admission that the page does
+     not show it. The examples and the receipt say the same thing by being it. */
   display: grid;
   justify-items: start;
-  gap: 0.55rem;
 }
 
 .wordmark {
@@ -168,29 +165,8 @@ html, body {
   letter-spacing: 0.34em;
   text-indent: 0.34em;   /* the tracking adds space after the last letter too */
 }
-.tagline {
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.7ch;
-  /* One line, or the separator ends up orphaned at the start of the second
-     and stops reading as a separator. Below the breakpoint the halves stack
-     and the // is dropped, since a divider between two stacked lines is just
-     a mark. */
-  white-space: nowrap;
-  font-family: var(--mono);
-  font-weight: 300;
-  font-size: 0.74rem;
-  letter-spacing: 0.02em;
-  color: var(--ink-dim);
-}
-.tagline .sep { color: var(--live); opacity: 0.7; }
-.tagline .soft { color: var(--ink-faint); }
-
 @media (max-width: 620px) {
-  .tagline { display: block; white-space: normal; }
-  .tagline .sep { display: none; }
-}
+    }
 
 /* --------------------------------------------------------------------------
    The middle row
@@ -385,13 +361,6 @@ html, body {
   transition: background 180ms ease;
 }
 .prompt button:hover { background: var(--live); }
-
-.note {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  color: var(--ink-faint);
-}
 
 /* The state machine is readable from CSS too: #ui carries data-state, so the
    stylesheet reacts to it without any JavaScript setting a style directly. */
