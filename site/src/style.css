@@ -343,7 +343,14 @@ html, body {
    -------------------------------------------------------------------------- */
 .bar { display: flex; flex-direction: column; gap: 0.7rem; }
 
-.examples { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; }
+.examples {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  /* The row must not clip a photograph that has grown past its bounds. */
+  overflow: visible;
+}
 
 /* A photograph, not a label.
    Square and dimmed until hovered, so the row reads as a set of choices rather
@@ -361,14 +368,40 @@ html, body {
   cursor: pointer;
   overflow: hidden;
   opacity: 0.72;
-  transition: opacity 200ms ease, border-color 200ms ease, transform 200ms ease;
+  /* Slightly slower on the way in than a default, because the point is to let
+     somebody look at the photograph rather than to acknowledge the pointer. */
+  transition: opacity 200ms ease,
+              border-color 200ms ease,
+              box-shadow 260ms ease,
+              transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/*
+  Hover enlarges rather than nudges.
+
+  At 104px you can tell there is a building in the picture and not much else,
+  which makes choosing between four of them a guess. Scaling from the bottom
+  edge grows the photograph upward into empty space instead of shoving the row
+  around, and lifting the z-index keeps it above its neighbours rather than
+  being clipped by them.
+
+  1.9x, which is about 200px: large enough to actually read the photograph and
+  small enough that it does not cover the globe it is asking a question about.
+*/
 .photo:hover {
   opacity: 1;
   border-color: var(--ink-dim);
-  transform: translateY(-3px);
+  transform: scale(1.9);
+  z-index: 3;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.8);
 }
+.photo {
+  transform-origin: bottom left;
+  will-change: transform;
+}
+/* The last two grow from their right edge, or they would push off the side of
+   a narrow window. */
+.photo:nth-last-child(-n + 2) { transform-origin: bottom right; }
 .photo:focus-visible {
   outline: 1px solid var(--live);
   outline-offset: 2px;
@@ -438,9 +471,18 @@ html, body {
   .receipt { min-width: 0; width: 100%; }
 }
 
+@media (hover: none) {
+  /* Nothing hovers on a touch screen, so the enlargement would only ever fire
+     as a flash on tap. The photographs are simply larger there instead. */
+  .photo { width: 116px; height: 116px; }
+  .photo:hover { transform: none; box-shadow: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aurora, .grain { animation: none; }
   .evidence .line, .receipt { animation: none; opacity: 1; transform: none; }
+  .photo:hover { transform: none; }
+  #ui[data-state="idle"] .photo:first-child::after { animation: none; opacity: 0.4; }
 }
 
 
