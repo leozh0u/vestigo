@@ -31,7 +31,9 @@ const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round(WIDTH * 9 / 16);
 const FPS = Number(args.fps ?? 60);
 const SECONDS = Number(args.seconds ?? 12);
-const OUT = args.out ?? "public/opening/earth.mp4";
+// Outside public/, because this is the raw beat that stitch-intro.mjs joins
+// to the generated clips. Only the joined intro.mp4 is served.
+const OUT = args.out ?? "media/earth.mp4";
 const URL = args.url ?? "http://localhost:5173/?render";
 
 // New York, which is where the next clip has to begin. The globe is rotated so

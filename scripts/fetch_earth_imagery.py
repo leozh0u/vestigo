@@ -33,6 +33,10 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "site/public/textures"
+# Downloads and intermediates live outside public/, because vite copies that
+# directory wholesale into the build. The raw mosaic is 0.8 MB of input to a
+# derivation nobody's browser needs to run.
+WORK = ROOT / "site/media"
 
 AGENT = "vestigo/0.1 (research project; github.com/leozh0u/vestigo)"
 
@@ -79,8 +83,9 @@ licence demands it.
 """
 
 
-def fetch(name: str, url: str, label: str, force: bool = False) -> None:
-    dest = OUT / name
+def fetch(name: str, url: str, label: str, force: bool = False,
+          into: pathlib.Path | None = None) -> None:
+    dest = (into or OUT) / name
     if dest.exists() and not force:
         print(f"  {name:<18} already here ({dest.stat().st_size / 1e6:.1f} MB)")
         return
@@ -117,7 +122,7 @@ def make_night() -> None:
     """
     from PIL import Image, ImageFilter
 
-    raw = Image.open(OUT / "earth-night-raw.jpg").convert("L")
+    raw = Image.open(WORK / "earth-night-raw.jpg").convert("L")
     lights = raw.point(
         lambda v: 0 if v <= FLOOR else int((v - FLOOR) / (255 - FLOOR) * 255)
     )
@@ -145,8 +150,9 @@ def main() -> int:
 
     OUT.mkdir(parents=True, exist_ok=True)
     print(f"NASA imagery -> {OUT.relative_to(ROOT)}")
+    WORK.mkdir(parents=True, exist_ok=True)
     for name, (url, label) in SOURCES.items():
-        fetch(name, url, label, args.force)
+        fetch(name, url, label, args.force, into=WORK if name.endswith("-raw.jpg") else OUT)
     make_night()
     (OUT / "CREDIT.txt").write_text(CREDIT)
     return 0

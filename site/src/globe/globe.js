@@ -75,7 +75,6 @@ const TEXTURES = {
   lights: "/textures/earth-night.jpg",
   // The same lights, blurred. See the glow note in the shader below.
   glow: "/textures/earth-glow.jpg",
-  clouds: "/textures/globe-clouds.png",
   rough: "/textures/globe-rough.png",
   normal: "/textures/globe-normal.png",
 };

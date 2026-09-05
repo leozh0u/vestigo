@@ -52,3 +52,5 @@ site/public/textures/
 site/public/opening/*.mp4
 site/.render-*/
 site/public/textures/earth-night-raw.jpg
+site/media/
+site/dist/

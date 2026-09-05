@@ -14,6 +14,21 @@
 
   Loaded only when the URL carries ?render, so it costs a visitor nothing.
 */
+/*
+  How much brighter the footage is than the page, and it is a multiplier now.
+
+  On screen the globe sits on a dark page and is read against it. In a video it
+  fills the frame with nothing to compare against, and an exposure that looks
+  moody in a browser window looks underlit at full bleed.
+
+  This used to be an absolute 2.0, set here and again after every apply(). That
+  was written against a day-lit planet. Against the night side it is nearly a
+  stop over: the ocean lifts to grey and every city rolls off into
+  white, so the one thing the shot is about disappears. A multiplier keeps
+  whatever curve apply() decided and only lifts it.
+*/
+const RENDER_LIFT = 1.12;
+
 export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
   const api = {
     ready: false,
@@ -22,25 +37,17 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
        every time, which is what makes a rerun produce identical footage. */
     async setup({ trace, width = 1920, height = 1080 } = {}) {
       globe.renderer.setPixelRatio(1);           // exact pixels, not the display's
-      /*
-        Brighter than the live page.
-
-        On screen the globe sits on a dark page and is read against it. In a
-        video it fills the frame with nothing to compare against, and the same
-        exposure that looks moody in a browser window looks underlit at full
-        bleed. The first probe came out almost black.
-      */
-      globe.renderer.toneMappingExposure = 2.0;
       globe.renderer.setSize(width, height, false);
       globe.camera.aspect = width / height;
       globe.camera.updateProjectionMatrix();
 
       globe.spinning = false;
       globe.earth.rotation.set(0, -0.9, 0);
-      globe.camera.position.set(0, 0.18, 3.55);
+      globe.camera.position.set(0, 0.18, globe.baseDistance);
       globe.targetProgress = 0;
       globe.progress = 0;
       globe.apply(0);
+      globe.renderer.toneMappingExposure *= RENDER_LIFT;
 
       if (trace) await loadTrace(trace);
       api.ready = true;
@@ -53,10 +60,9 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
       globe.progress += (globe.targetProgress - globe.progress)
         * (1 - Math.pow(0.06, dt));
       globe.apply(globe.progress);
-      // apply() sets exposure from the growth, so the render's own brightness
-      // has to be restored after it or every frame goes back to the live
-      // page's level.
-      globe.renderer.toneMappingExposure = 2.0 - 0.25 * globe.progress;
+      // apply() sets exposure from the growth, so the lift has to be reapplied
+      // after it or every frame falls back to the live page's level.
+      globe.renderer.toneMappingExposure *= RENDER_LIFT;
       globe.earth.rotation.y += dt * globe.spin;
       globe.halo.rotation.copy(globe.earth.rotation);
       globe.renderer.render(globe.scene, globe.camera);
@@ -73,7 +79,7 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
       if (rotationX !== undefined) globe.earth.rotation.x = rotationX;
       if (cameraZ !== undefined) globe.camera.position.z = cameraZ;
       if (cameraY !== undefined) globe.camera.position.y = cameraY;
-      globe.renderer.toneMappingExposure = 2.0 - 0.25 * globe.progress;
+      globe.renderer.toneMappingExposure *= RENDER_LIFT;
     },
 
     /* Whether every texture has arrived. Rendering before they have gives a
@@ -85,6 +91,7 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
         globe.material.normalMap, globe.material.displacementMap,
         globe.uniforms.uNatural.value, globe.uniforms.uGrowthMap.value,
         globe.uniforms.uLand.value, globe.uniforms.uLights.value,
+        globe.uniforms.uGlow.value,
       ];
       return maps.every((t) => t && t.image && t.image.width > 0);
     },

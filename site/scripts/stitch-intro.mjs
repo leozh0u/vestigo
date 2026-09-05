@@ -22,7 +22,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DIR = "public/opening";
-const ORDER = ["earth.mp4", "clip1.mp4", "clip2.mp4", "clip3.mp4"];
+const ORDER = ["../media/earth.mp4", "clip1.mp4", "clip2.mp4", "clip3.mp4"];
 const OUT = path.join(DIR, "intro.mp4");
 const FADE = 0.45;            // seconds of overlap at each seam
 
