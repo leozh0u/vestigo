@@ -340,6 +340,9 @@ export class Manhattan {
       }),
     );
     sky.renderOrder = -1;
+    // Kept, because render() has to switch it off once the camera climbs above
+    // it. See the note there.
+    this.sky = sky;
     return sky;
   }
 
@@ -536,6 +539,25 @@ export class Manhattan {
     if (this.target.width !== w || this.target.height !== h) {
       this.target.setSize(w, h);
     }
+    const above = Math.max(0, this.camera.position.y - (this.groundLevel() ?? 0));
+
+    /*
+      Above sixty kilometres there is no sky, because there is no air.
+
+      The dome has a radius of 60 km, which is generous for an atmosphere and
+      nothing at all next to a descent that begins at six hundred. Climbing
+      past it put the camera *outside* its own sky looking at the back of it,
+      and the Earth — correctly — was on the far side. The opening frames came
+      back as a small dark circle on black: not a planet, a sphere seen from
+      outside with the planet hidden inside it.
+
+      Which is also the physically right answer. At six hundred kilometres you
+      are above the atmosphere and the background is space. So the dome is
+      simply switched off once the camera is higher than it is, and switched
+      back on during the descent, at which point it is the sky again.
+    */
+    if (this.sky) this.sky.visible = above < 55000;
+
     this.grade.uniforms.uNear.value = this.camera.near;
     this.grade.uniforms.uFar.value = this.camera.far;
     /*
@@ -548,8 +570,18 @@ export class Manhattan {
       Floored at 600 so a camera on the pavement still gets aerial perspective,
       capped so the opening frames do not lose it altogether.
     */
-    const above = Math.max(0, this.camera.position.y - (this.groundLevel() ?? 0));
-    this.grade.uniforms.uFog.value = Math.min(24000, Math.max(600, 180 + above * 1.6));
+    /*
+      The cap has to clear the whole descent, not just the bottom of it.
+
+      24,000 m was set when this shot began at 3,400. From six hundred
+      kilometres the ground is six hundred kilometres away, which against a
+      24 km haze horizon is twenty-five e-foldings: every pixel in frame goes to
+      solid fog and the planet disappears into a flat rectangle. Four million
+      metres is past anything this camera can be, so at altitude the haze does
+      what it should, which is almost nothing.
+    */
+    this.grade.uniforms.uFog.value =
+      Math.min(4000000, Math.max(600, 180 + above * 1.6));
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);

@@ -37,10 +37,24 @@ else
   git worktree add --orphan -b gh-pages "$WORKTREE"
 fi
 
+# -c, and this is not paranoia.
+#
+# rsync decides whether to copy by comparing size and modification time. Vite
+# rewrites index.html by swapping one ten-character content hash for another,
+# which does not change its length: the old file and the new one are both
+# exactly 9231 bytes. Given a checked-out mtime that matches, rsync concludes
+# they are the same file and skips it — so the assets update, the HTML that
+# names them does not, and the deploy ships an index.html pointing at files
+# that were deleted in the same breath.
+#
+# That is the failure that took the site down: a white page with an underlined
+# heading. The one file whose contents matter most is the one whose size can
+# never change, because a hash swap is length-preserving. Compare contents.
+#
 # --delete, so a file dropped from the build is dropped from the branch too.
 # Without it the branch accumulates every asset the site has ever carried,
 # which is how a 16 MB deploy quietly becomes a 200 MB one.
-rsync -a --delete --exclude .git dist/ "$WORKTREE/"
+rsync -ac --delete --exclude .git dist/ "$WORKTREE/"
 
 cd "$WORKTREE"
 
