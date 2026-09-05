@@ -31,8 +31,49 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" />
+    <!--
+      The icon, in four forms, because one is not enough.
+
+      The SVG is the sharp one and is what a current browser will use. The 96
+      is what Google's crawler asks for and it wants a raster at a stable URL.
+      The 180 is what iOS puts on a home screen, and without it the phone
+      screenshots the page instead, which for a mostly black page is a black
+      square. favicon.ico exists because a handful of surfaces still request
+      that path whatever the document says.
+    -->
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
-    <script type="module" crossorigin src="/assets/index-Dz3jFNLb.js"></script>
+    <link rel="icon" href="/favicon-96x96.png" sizes="96x96" type="image/png" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+
+    <!--
+      What a shared link looks like.
+
+      There was none of this, so posting the address anywhere gave a bare grey
+      rectangle with a domain in it. The image is a photograph of the running
+      page rather than a drawing of it: scripts/icons.mjs loads the site, brings
+      the world to full growth, hides the controls and screenshots the planet.
+
+      og:image has to be an absolute URL. Several of the services that fetch it
+      do not resolve relative paths, and the failure is silent.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vestigo.earth/" />
+    <meta property="og:title" content="Vestigo" />
+    <meta property="og:description"
+          content="An evidence-based geolocation agent. It answers at the
+                   precision the evidence supports, and stops." />
+    <meta property="og:image" content="https://vestigo.earth/card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vestigo" />
+    <meta name="twitter:description"
+          content="An evidence-based geolocation agent. It answers at the
+                   precision the evidence supports, and stops." />
+    <meta name="twitter:image" content="https://vestigo.earth/card.jpg" />
+    <link rel="canonical" href="https://vestigo.earth/" />
+    <script type="module" crossorigin src="/assets/index-D2mHLZP3.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-1LIEth58.css">
   </head>
   <body>

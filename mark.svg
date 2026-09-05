@@ -1,9 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    The same survey mark as the wordmark in index.html, drawn heavier.
+
+    The old favicon was a different mark: a perfect circle with a perfect
+    ellipse through it, which is what every geolocation logo looks like and is
+    recognisably something drawn in one pass by a machine. This is the hand
+    version, with the ring not quite closing and the fix off-centre.
+
+    Thicker strokes and fewer of them, because a favicon is read at sixteen
+    pixels. At 1.4 the meridian and the equator disappeared into grey and what
+    was left was a smudge with a green dot on it.
+  -->
   <rect width="32" height="32" rx="7" fill="#0a0b0d"/>
-  <g stroke="#8fb3c9" fill="none" stroke-width="1.4">
-    <circle cx="16" cy="16" r="11" opacity="0.55"/>
-    <ellipse cx="16" cy="16" rx="4.5" ry="11" opacity="0.35"/>
-    <path d="M5 16h22" opacity="0.35"/>
+  <g fill="none" stroke="#8fb3c9" stroke-linecap="round">
+    <path d="M27.4 14.2c1 6.6-3.6 12.6-10.2 13.3C10.7 28.2 4.9 23.4 4.2 16.8
+             3.6 10.3 8.2 4.4 14.7 3.6c6.1-.7 11.6 3.3 13 9.2"
+          stroke-width="2.4" opacity="0.92"/>
+    <path d="M16.4 3.8c-3.4 4-3.6 18.8-.3 23.6" stroke-width="1.7" opacity="0.5"/>
+    <path d="M4.6 15.6c6.8 1.4 16 1.2 22.9-.4" stroke-width="1.7" opacity="0.5"/>
   </g>
-  <circle cx="21.6" cy="9.8" r="2.6" fill="#6ee7a8"/>
+  <!-- The fix. Larger than the wordmark's, because at sixteen pixels the
+       cross reads as a blur and a filled mark reads as a mark. -->
+  <circle cx="22.1" cy="10.3" r="3.5" fill="#0a0b0d"/>
+  <circle cx="22.1" cy="10.3" r="2.4" fill="#6ee7a8"/>
 </svg>
