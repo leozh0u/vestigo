@@ -110,10 +110,23 @@ anything finer well short.
 | encoder | dims | accuracy | median | within 200 km | calibration error |
 |---|---|---|---|---|---|
 | ViT-B/32 | 512 | 31.9% | 527 km | 37% | 2.6% |
-| **ViT-L/14** | **768** | **44.8%** | **198 km** | **50%** | **3.5%** |
+| ViT-L/14 | 768 | 44.8% | 198 km | 50% | 3.5% |
+| **SigLIP SO400M** | **1152** | **51.6%** | **142 km** | **58%** | **3.7%** |
 
-**527 km to 198 km**, for a frozen encoder swap and ninety seconds of
-retraining. Larger than everything else tried here put together.
+**527 km to 142 km**, for two frozen encoder swaps and three minutes of
+retraining between them. Larger than everything else tried here put together,
+and larger than tripling the training set.
+
+For scale, on a set of photographs this messy: PIGEON reports 44 km on Street
+View panoramas with a fine-tuned encoder and millions of images, and a frontier
+model call managed 94 km on the rural half of this eval. A linear layer on
+frozen features, trained on a laptop in ninety seconds, is now within about
+1.5x of the frontier call rather than 5.6x.
+
+Calibration held throughout, which is the part that matters here: 3.7%
+expected error after scaling, so the number the classifier reports still means
+what it says. A more accurate model that had lost its calibration would be
+worth less to this project than a worse one that kept it.
 
 The head is one linear layer, so whatever the backbone fails to separate is
 gone before training starts. ViT-B/32 was chosen because it runs on a laptop
