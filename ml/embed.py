@@ -54,6 +54,22 @@ MODEL = "ViT-B-32"
 PRETRAINED = "laion2b_s34b_b79k"
 
 
+def _alive(pid: int) -> bool:
+    """Whether a process is still running.
+
+    Signal 0 performs the permission and existence checks without delivering
+    anything, which is the standard way to ask. A process owned by somebody
+    else raises PermissionError, and that still means it exists.
+    """
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 def slug(model: str, pretrained: str) -> str:
     """A directory name per encoder, so two of them cannot overwrite each other.
 
@@ -139,11 +155,24 @@ def main() -> int:
     # starting the same command twice, which is what happened.
     lock = out / ".embedding.lock"
     if lock.exists():
-        raise SystemExit(
-            f"{lock} exists, so another run is using {out}.\n"
-            f"If nothing is running, delete the lock and check that "
-            f"vectors.npy and keys.json still have the same length."
-        )
+        # The lock holds the writer's process id, so a lock left behind by a
+        # run that was killed can be told apart from one held by a run that is
+        # still going. Without the check, one Ctrl-C leaves a directory that
+        # refuses every future run until somebody deletes a file by hand, and
+        # the message telling them to do that is the message I wrote and then
+        # had to follow myself.
+        try:
+            holder = int(lock.read_text().strip())
+        except (ValueError, OSError):
+            holder = None
+        if holder is not None and _alive(holder):
+            raise SystemExit(
+                f"{lock} is held by process {holder}, which is running.\n"
+                f"Two runs against one directory corrupt each other, so this "
+                f"one will not start."
+            )
+        print(f"  clearing a lock from process {holder}, which is gone")
+        lock.unlink(missing_ok=True)
     lock.write_text(f"{os.getpid()}\n")
 
     todo = [r for r in index if r["file"] not in done]

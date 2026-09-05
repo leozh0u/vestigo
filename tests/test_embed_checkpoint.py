@@ -9,6 +9,7 @@ partial run lands on disk, that a rerun resumes from it rather than redoing it,
 and that an interrupted write cannot leave a corrupt array behind.
 """
 import json
+import os
 import pathlib
 import sys
 
@@ -104,7 +105,8 @@ def test_a_second_run_against_one_directory_is_refused():
     unrecoverable, two hours of GPU time gone."""
     source = pathlib.Path(embed.__file__).read_text()
     assert ".embedding.lock" in source
-    assert "another run is using" in source
+    # A run that is genuinely in progress keeps everyone else out.
+    assert "which is running" in source
     # Released on the way out however the run ends, or the next one is blocked
     # by a lock nobody holds.
     assert "finally:" in source
@@ -129,3 +131,21 @@ def test_the_corrupt_case_is_detectable_from_the_files_alone(tmp_path):
     np.save(tmp_path / "vectors.npy", np.zeros((3, 8), dtype=np.float32))
     loaded = np.load(tmp_path / "vectors.npy")
     assert loaded.shape[0] != len(json.loads((tmp_path / "keys.json").read_text()))
+
+
+def test_a_lock_from_a_dead_process_does_not_block_forever():
+    """A lock that cannot be cleaned automatically turns one Ctrl-C into a
+    directory that refuses every future run. That happened: an interrupted
+    SigLIP2 embedding left a lock holding a dead pid, and the next run would
+    have failed with a message telling a human to go and delete a file."""
+    source = pathlib.Path(embed.__file__).read_text()
+    assert "_alive(" in source
+    assert "which is gone" in source
+
+
+def test_a_live_holder_still_blocks():
+    """Self-healing must not mean self-ignoring. A run that is genuinely in
+    progress has to keep everyone else out, which is the whole point."""
+    assert embed._alive(os.getpid()) is True
+    # A pid that cannot plausibly be running.
+    assert embed._alive(999_999) is False
