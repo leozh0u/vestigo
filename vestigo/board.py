@@ -706,6 +706,45 @@ class Board:
         self.journal.append(("claim", claim.id))
         return claim
 
+    def refute(self, claim_id: str, evidence_id: str, strength: float,
+               note: str = "") -> Claim:
+        """Attach evidence arguing against a claim that is already on the board.
+
+        `evidence_confidence` already handles this: supporting evidence is
+        combined, opposing evidence is combined the same way, and the second
+        discounts the first. Nothing here is new arithmetic. What was missing
+        was a way to reach a claim after it had been stated, which is when a
+        refutation arrives, because you cannot check a claim before it exists.
+
+        This appends a support to a claim rather than editing one, so nothing
+        on the board is removed or altered and the claim's original citations
+        stand exactly as they were made. That keeps the append-only guarantee
+        the rest of this class relies on.
+
+        Per claim, deliberately. A refutation of "Chestertown" says nothing
+        about "the United States", and the first attempt at this expressed
+        refutations as constraints on the point, which knocked out the correct
+        country claim along with the wrong city one.
+        """
+        if claim_id not in self.claims:
+            raise KeyError(f"no claim {claim_id!r}")
+        if evidence_id not in self.evidence:
+            raise KeyError(f"refutation cites unknown evidence {evidence_id!r}")
+        claim = self.claims[claim_id]
+        against = Support(
+            evidence_id=evidence_id,
+            strength=min(strength, self.evidence[evidence_id].max_strength),
+            supports=False,
+        )
+        updated = replace(
+            claim,
+            supports=claim.supports + (against,),
+            note=f"{claim.note}; {note}".strip("; ") if note else claim.note,
+        )
+        self.claims[claim_id] = updated
+        self.journal.append(("refutation", claim_id))
+        return updated
+
     def add_constraint(self, constraint: Constraint) -> Constraint:
         for eid in constraint.evidence_ids:
             if eid not in self.evidence:

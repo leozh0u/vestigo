@@ -28,6 +28,7 @@ import pathlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from .verify import Verification, verify
 from .board import Board, Level, Resolution, Support
 from .geo import LatLon
 from .llm import Budget, Image, Message, Request, Router, Text, Usage
@@ -176,6 +177,7 @@ class Run:
     turns: int
     trace: Trace
     rejected: list[str] = field(default_factory=list)
+    verification: Verification = field(default_factory=Verification)
 
     @property
     def answer(self):
@@ -469,6 +471,12 @@ class Agent:
         turns = self._use_tools(board, context, trace, sample, str(path))
         rejected = self._make_claims(board, trace, sample)
 
+        # Everything above builds. This is the only step that tries to knock
+        # something down, and it runs before resolution so a refuted claim
+        # falls by the board's own arithmetic rather than by being deleted.
+        verification = verify(board)
+        trace.add("verify", verification.describe())
+
         resolution = board.resolve()
         trace.add("resolve", resolution.describe())
         return Run(
@@ -480,6 +488,7 @@ class Agent:
             turns=turns,
             trace=trace,
             rejected=rejected,
+            verification=verification,
         )
 
     def run_samples(self, image_path: pathlib.Path | str, n: int = 3, **kw) -> list[Run]:

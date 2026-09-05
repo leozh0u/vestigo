@@ -290,6 +290,10 @@ def main() -> int:
                             if ev.kind == EvidenceKind.TOOL
                         ],
                         "rejected": run.rejected,
+                        # What tried to knock the answer down and whether it
+                        # succeeded. Without this a refuted run and a run
+                        # nothing could check look identical in the record.
+                        "verification": run.verification.to_dict(),
                     })
 
                 # What the samples agree on, scored alongside the per-sample

@@ -74,7 +74,10 @@ def test_a_run_goes_all_the_way_through(photo):
     assert run.answer.value == "Mexico"
     assert run.answer.level is Level.COUNTRY
     assert [step for step, _ in run.trace.steps] == \
-           ["observe", "guess", "claims", "resolve"]
+           ["observe", "guess", "claims", "verify", "resolve"]
+    # Verification runs before resolution on purpose: a refuted claim has to
+    # fall by the board's own arithmetic, not be deleted after the fact.
+    assert run.verification is not None
 
 
 def test_the_unaided_guess_is_kept_as_a_candidate(photo):
