@@ -17,7 +17,16 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "ml"))
-import embed
+
+# embed.py imports torch at module scope, and torch is two gigabytes. Nothing in
+# this file needs it — every test here is about files on disk — but importing
+# the module drags it in, so on a machine without it the whole file fails to
+# collect and takes the rest of the suite down with it. That is what CI was
+# doing: one skippable test turning the run red and reporting nothing about the
+# behaviour it was meant to guard.
+pytest.importorskip("torch", reason="embed.py imports torch at module scope")
+
+import embed  # noqa: E402  (after the skip, deliberately)
 
 
 def test_each_encoder_gets_its_own_directory():
