@@ -302,10 +302,20 @@ html, body {
   align-content: end;
   justify-items: end;
   min-height: 0;
+  /* The two panels are separate objects and have to look it. Edge to edge they
+     read as one box with a rule through it, and a hairline of page showing
+     between two borders reads as a mistake rather than as a gap. Enough that
+     the background is plainly visible between them. */
+  gap: 1.15rem;
 }
 
 .machinery {
   width: 19rem;
+  /* The panel keeps nine lines, and it has to keep the same height whether it
+     is holding nine or two. Otherwise the receipt underneath it walks up and
+     down the screen as the log fills, which is the sort of movement nobody can
+     name and everybody notices. */
+  min-height: 0;
   padding: 0.85rem 0.95rem 0.75rem;
   background: color-mix(in srgb, var(--steel) 88%, transparent);
   border: 1px solid var(--edge);
@@ -315,9 +325,23 @@ html, body {
   transition: opacity 320ms ease;
   pointer-events: none;
 }
-/* Only while there is something happening. An empty readout sitting on the
-   page before anything has been asked is furniture. */
+/*
+  Visible while it works, and still visible once it has finished.
+
+  It used to go to zero opacity on arrival, which left it holding its full
+  height as an invisible box: the receipt sat at the bottom with a screen of
+  empty space above it and no way to tell why.
+
+  Keeping it costs nothing and is the more honest ending anyway — the working
+  is what the receipt is a conclusion *from*, and hiding it the moment there is
+  an answer is the habit this whole page argues against. Dimmed, so the answer
+  is plainly the thing to read.
+
+  Still nothing before a run: an empty readout on a page nobody has asked
+  anything of is furniture.
+*/
 #ui[data-state="resolving"] .machinery { opacity: 1; }
+#ui[data-state="arrived"] .machinery { opacity: 0.55; }
 
 .mach-head {
   display: flex;
@@ -354,6 +378,11 @@ html, body {
   font-size: 0.58rem;
   line-height: 1.45;
   color: var(--ink-dim);
+  /* Nine lines at 1.45 plus the gaps between them. Fixed, so the panel does
+     not grow as the log fills and shove the receipt down the screen. */
+  height: calc(9 * 0.58rem * 1.45 + 8px);
+  align-content: end;
+  overflow: hidden;
 }
 .mach-line {
   display: flex;
@@ -374,6 +403,26 @@ html, body {
 @keyframes machIn {
   from { opacity: 0; transform: translateX(6px); }
   to   { opacity: 1; transform: none; }
+}
+
+/*
+  Short windows.
+
+  The working and the conclusion both live in the right column and both want to
+  be at the bottom of it. On a 760px laptop the pair is about 530px against a
+  446px column, so the machinery was clipped by eighty-five pixels at the top:
+  its map lost its northern edge to an invisible boundary.
+
+  The log is the part that can go. The map and the percentage are the reading;
+  the log is the detail behind it, and on a screen with no room the reading is
+  what should survive.
+*/
+@media (max-height: 880px) {
+  .mach-log { height: calc(5 * 0.58rem * 1.45 + 4px); }
+}
+@media (max-height: 780px) {
+  .mach-log { display: none; }
+  .mach-count { margin-top: 0.15rem; }
 }
 
 .mach-count {

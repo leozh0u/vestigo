@@ -879,20 +879,85 @@ export class Globe {
     );
   }
 
+  /*
+    A candidate, marked so it can be found.
+
+    A single translucent green dot was invisible where it mattered most. The
+    places this system proposes are cities, cities are the bright parts of a
+    night side, and a soft green disc laid over a cluster of white lights at
+    the same size and nearly the same brightness simply disappears into it. The
+    marker was clearest over open ocean, which is the one place there is never
+    anything to mark.
+
+    Three parts, and each one solves a different background:
+
+    **A dark collar**, slightly larger and nearly opaque. This is the one that
+    does the work. It punches a hole in whatever is behind — city lights, coast,
+    cloud — so the bright dot has something to sit against instead of competing.
+    An outline, in other words, and outlining is what every map symbol does for
+    exactly this reason.
+
+    **The dot**, opaque and at full strength rather than 0.9. Transparency on a
+    small bright mark buys nothing and costs contrast.
+
+    **A ring** further out and faint, which reads as a survey mark rather than
+    as a bullet hole and ties the marker to the wordmark. It also gives the eye
+    something to catch at sizes where the dot alone is two pixels.
+
+    Sitting at 1.02 rather than 1.01. The relief displaces the surface by up to
+    0.028 of a radius once the world is alive, and at 1.01 a marker on high
+    ground was buried inside the mountain it was pointing at.
+  */
   mark(lat, lon, { color = 0x6ee7a8, size = 0.014 } = {}) {
-    const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(size, 12, 12),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 }),
+    const at = Globe.toVector(lat, lon, 1.02);
+    const group = new THREE.Group();
+    group.position.copy(at);
+
+    /*
+      Both of the outer shells draw only their far side.
+
+      A sphere of radius 1.85r centred on a sphere of radius r contains it
+      completely, so drawn the obvious way the collar is not an outline: it is a
+      lid. The first version put opaque black balls on the map where the
+      candidates were.
+
+      BackSide renders only the inside of the far hemisphere, which sits behind
+      the dot and is occluded by it in the middle — so what reaches the screen
+      is a dark annulus with the bright dot in the hole. An outline, which is
+      what was wanted, and it costs nothing extra.
+    */
+    const collar = new THREE.Mesh(
+      new THREE.SphereGeometry(size * 1.7, 14, 14),
+      new THREE.MeshBasicMaterial({
+        color: 0x04070a, transparent: true, opacity: 0.86,
+        side: THREE.BackSide, depthWrite: false,
+      }),
     );
-    dot.position.copy(Globe.toVector(lat, lon, 1.01));
-    this.markers.add(dot);
-    return dot;
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(size, 14, 14),
+      new THREE.MeshBasicMaterial({ color }),
+    );
+    const ring = new THREE.Mesh(
+      new THREE.SphereGeometry(size * 2.3, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0.22,
+        side: THREE.BackSide, depthWrite: false,
+      }),
+    );
+    group.add(ring, collar, dot);
+    this.markers.add(group);
+    return group;
   }
 
   clearMarkers() {
+    // A marker is a group of three meshes now, so this has to walk into it.
+    // Disposing the group alone leaks every geometry and material it holds,
+    // and a page where somebody clicks through nine examples makes nine sets.
     for (const child of [...this.markers.children]) {
-      child.geometry.dispose();
-      child.material.dispose();
+      child.traverse((node) => {
+        node.geometry?.dispose();
+        node.material?.dispose();
+      });
       this.markers.remove(child);
     }
   }

@@ -85,7 +85,10 @@ async function run(entry) {
       for (const c of step.candidates ?? []) {
         // Small. These are read against a sphere of radius 1, and anything
         // larger becomes a blob covering a country once the camera closes in.
-        if (c.score > 0.06) globe.mark(c.lat, c.lon, { size: 0.004 + c.score * 0.006 });
+        // Bigger than before across the whole range. These are read against a
+        // night side covered in city lights, and at 0.004 the weakest
+        // candidates were a green pixel on top of a white one.
+        if (c.score > 0.06) globe.mark(c.lat, c.lon, { size: 0.006 + c.score * 0.008 });
       }
     },
     onProgress: (t) => globe.setProgress(t),
