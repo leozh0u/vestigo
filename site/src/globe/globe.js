@@ -143,7 +143,7 @@ export class Globe {
     // Key light from behind and left. Metal reads as metal because of the
     // bright edge on its silhouette, which an environment map alone will not
     // give you.
-    this.rim = new THREE.DirectionalLight(0xdCE9FF, 3.1);
+    this.rim = new THREE.DirectionalLight(0xdCE9FF, 1.55);
     this.rim.position.set(-3.2, 1.4, -1.8);
     this.scene.add(this.rim);
     /*
@@ -292,7 +292,17 @@ export class Globe {
       // at 1. Setting both fights: the map would be scaled down into a narrow
       // band and the variation would disappear.
       roughness: 1.0,
-      envMapIntensity: 3.0,
+      /*
+        1.35, and it was 3.0 for one render.
+
+        Those two numbers are the same knob as the F0 above and have to move
+        together. The old value was compensating for a base map that reflected
+        at about half strength over most of the sphere; with F0 raised to
+        chrome's real 0.95 the same intensity blew the whole thing to a white
+        pearl with no band in it. Contrast is what makes a mirror look like a
+        mirror, and contrast is what saturation destroys first.
+      */
+      envMapIntensity: 1.35,
     });
 
     this.material.onBeforeCompile = (shader) => {
@@ -314,6 +324,27 @@ export class Globe {
         // The colour is decided here, where diffuseColor exists.
         .replace("#include <map_fragment>", `
           #include <map_fragment>
+          /*
+            Chrome, and only faintly engraved.
+
+            At metalness 0.98 there is no diffuse term: diffuseColor stops
+            being a colour the surface *has* and becomes F0, the colour the
+            surface reflects *with*. Polished steel reflects at about 0.95
+            across the spectrum, near white.
+
+            globe-metal.png runs from 111 to 238 and puts most of its mass near
+            128, so more than half the sphere was reflecting at roughly half
+            strength in soft irregular patches. That is what read as blurry and
+            fake: not a blurred reflection but a reflection tinted down by a
+            cloud map. Twenty-two per cent of the map over near-white keeps the
+            coastlines as an etch and stops the blotches dimming the mirror.
+
+            Only while it is metal. Once the world is alive the same variable is
+            an ordinary albedo again and the satellite photograph replaces it.
+          */
+          diffuseColor.rgb = mix(vec3(0.95, 0.96, 0.98),
+                                 clamp(diffuseColor.rgb * 1.45, 0.0, 1.0), 0.22);
+
           float vMoment = texture2D(uGrowthMap, vGlobeUv).r;
           float vLand = texture2D(uLand, vGlobeUv).r;
           // The clock runs slightly past 1, so the last pixels finish rather
@@ -365,7 +396,7 @@ export class Globe {
             only decides *how* clean the reflection is, which is the
             difference between polished steel and a matte one.
           */
-          roughnessFactor = 0.04 + roughnessFactor * 0.15;
+          roughnessFactor = 0.028 + roughnessFactor * 0.10;
           // Until a pixel is alive, roughnessFactor is the polished band above. Only once it comes
           // alive does it become land or water.
           // 0.34 for water, not 0.14. At 0.14 the sea was a mirror and the
@@ -613,13 +644,28 @@ export class Globe {
       it is standing on, bouncing light back up. That band is what gives the
       lower half its gradient and what draws the bottom edge.
     */
+    /*
+      Most of the range is dark, and that is the point.
+
+      A chrome ball is not evenly lit and a photograph of one is mostly a dark
+      band with two bright edges. The version before this lifted the whole lower
+      half to give the underside a floor to bounce off, and lifted it so far
+      that there was no dark band left anywhere: the sphere came out an even
+      pearl. Contrast is the only thing that reads as a mirror, and an evenly
+      bright surround destroys it more completely than an evenly dark one.
+
+      So: bright sky over the top third, a fast fall, a long dark floor, and the
+      bounce squeezed into the last tenth where it draws the bottom edge without
+      lighting the whole underside.
+    */
     const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0.00, "#d6e0ee");
-    sky.addColorStop(0.32, "#9aa9bd");
-    sky.addColorStop(0.50, "#454f5c");
-    sky.addColorStop(0.66, "#1b212a");   // the horizon, and the darkest part
-    sky.addColorStop(0.84, "#39424e");   // the floor coming back up
-    sky.addColorStop(1.00, "#5b6675");
+    sky.addColorStop(0.00, "#eaf0f8");
+    sky.addColorStop(0.24, "#b4c0d0");
+    sky.addColorStop(0.42, "#3c4552");
+    sky.addColorStop(0.55, "#12161c");
+    sky.addColorStop(0.86, "#0b0e13");   // the long dark floor
+    sky.addColorStop(0.95, "#2e3742");   // the bounce, and it is narrow
+    sky.addColorStop(1.00, "#6d7a8c");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 
@@ -637,11 +683,19 @@ export class Globe {
       a mirror". Three sources of similar size gave three similar highlights
       and none of them read as either.
     */
-    box(w * 0.22, h * 0.24, w * 0.26, h * 0.34, 1.0);   // the key, wide and soft
-    box(w * 0.30, h * 0.19, w * 0.05, h * 0.06, 1.0);   // the hotspot inside it
-    box(w * 0.76, h * 0.40, w * 0.11, h * 0.15, 0.45);  // a fill, far side
-    // The bounce off the floor, wide and weak. It is what lights the underside.
-    box(w * 0.50, h * 0.98, w * 0.60, h * 0.22, 0.35);
+    box(w * 0.22, h * 0.22, w * 0.24, h * 0.30, 1.0);   // the key, wide and soft
+    box(w * 0.29, h * 0.17, w * 0.045, h * 0.055, 1.0); // the hotspot inside it
+    box(w * 0.74, h * 0.34, w * 0.09, h * 0.12, 0.40);  // a fill, far side
+    /*
+      No radial source on the floor.
+
+      There was one here, and it drew a hard-edged oval on the underside of the
+      sphere: a radial gradient reflected off a curved mirror is a lens shape
+      with a visible boundary, and on a planet it read as a smudge somebody had
+      left. A floor is not a lamp. What it does is return light evenly across
+      the whole lower hemisphere, which is the linear band already in the
+      gradient above, and nothing more is needed.
+    */
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -704,7 +758,7 @@ export class Globe {
       instance rather than dropped into the scene and forgotten.
     */
     this.ambient.intensity = 0.95 * (1 - eased) + 0.05 * eased;
-    this.rim.intensity = 3.1 * (1 - eased) + 0.12 * eased;
+    this.rim.intensity = 1.55 * (1 - eased) + 0.12 * eased;
     // Sunlight proper, once there is a planet for it to fall on. It lights the
     // crescent past the terminator and nothing else.
     /*
@@ -737,7 +791,7 @@ export class Globe {
     // water. On a night side it is the studio's softbox, dragged out along the
     // terminator into a chrome smear a thousand kilometres wide, and it was
     // the last thing on the sphere that still looked machined.
-    this.material.envMapIntensity = 2.6 * (1 - eased) + 0.02 * eased;
+    this.material.envMapIntensity = 1.35 * (1 - eased) + 0.02 * eased;
 
     /*
       The machining marks go with it, and this was the actual cause of the
@@ -782,7 +836,16 @@ export class Globe {
       grey planet with white smears. Down at 0.86 the ocean stays where it
       belongs and the cities have somewhere to go.
     */
-    this.renderer.toneMappingExposure = 1.45 - 0.59 * eased;
+    /*
+      1.05 down to 0.86.
+
+      It was 1.45 at the metal end, which was set when the base map reflected at
+      about half strength and needed the help. With F0 at chrome's real value
+      that exposure clipped the sphere's whole upper half to white and took the
+      band out of it. The night end is unchanged at 0.86: see the note below on
+      why a studio exposure over a night side lifts the ocean to grey.
+    */
+    this.renderer.toneMappingExposure = 1.05 - 0.19 * eased;
     // It wakes up as it works out where it is. Not while something else is
     // holding the rate: see `held` above.
     if (!this.held) this.spin = 0.045 + 0.03 * eased;
