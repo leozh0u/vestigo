@@ -37,9 +37,21 @@ const DIR = "public/opening";
 // relative to DIR, which resolved public/opening/../media — a directory that
 // does not exist — so every beat was silently "missing" and the script reported
 // an empty opening directory that was not empty.
+/*
+  The beats, and the Earth beat is deliberately not one of them.
+
+  media/earth.mp4 still exists and is still rendered by render-intro.mjs — it is
+  the metal sphere becoming a night planet, and it is good. It is not in the
+  intro because putting it there means a cut. The descent begins in space
+  already; joining another shot of space to the front of it is two shots of the
+  same subject with a dissolve between, which is the thing this whole rebuild
+  removed.
+
+  The zoom is one camera falling through one dataset from six hundred kilometres
+  to a street. Nothing goes in front of it.
+*/
 const ORDER = [
-  "media/earth.mp4",     // the planet, from scripts/render-intro.mjs
-  "media/descent.mp4",   // Manhattan, from scripts/render-descent.mjs
+  "media/descent.mp4",   // orbit to a street, from scripts/render-descent.mjs
   "media/room.mp4",      // generated; see src/opening/PROMPTS.md
 ];
 const OUT = path.join(DIR, "intro.mp4");
@@ -79,7 +91,21 @@ if (present.length === 1) {
     nothing errors, and the page is behaving exactly as designed for the case
     where no intro exists.
   */
-  fs.copyFileSync(present[0], OUT);
+  /*
+    Encoded, not copied.
+
+    The beats are mastered at crf 18, which is right for a file that is an input
+    to this join: quality lost there cannot be recovered. The output is
+    different — every visitor downloads it before they see anything — and a
+    straight copy shipped 36.6 MB against a whole site of 14. Same treatment as
+    the multi-clip path, which is the only sane arrangement: what leaves this
+    script is a web file however many beats went in.
+  */
+  await run("ffmpeg", [
+    "-y", "-i", present[0],
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "27", "-preset", "slow",
+    "-movflags", "+faststart", OUT,
+  ]);
   publish(await duration(OUT));
   process.exit(0);
 }
