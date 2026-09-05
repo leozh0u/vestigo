@@ -22,7 +22,25 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DIR = "public/opening";
-const ORDER = ["../media/earth.mp4", "clip1.mp4", "clip2.mp4", "clip3.mp4"];
+/*
+  The beats, in order, and where each one comes from.
+
+  The first two are rendered by this repository and live outside public/,
+  because they are inputs to this join rather than things the site serves. The
+  third is generated elsewhere and dropped into media/ by hand.
+
+  Missing files are skipped, so this works with one beat or with all three and
+  the page always has something to play.
+*/
+// Relative to the site root, which is where this script is run from. They were
+// relative to DIR, which resolved public/opening/../media — a directory that
+// does not exist — so every beat was silently "missing" and the script reported
+// an empty opening directory that was not empty.
+const ORDER = [
+  "media/earth.mp4",     // the planet, from scripts/render-intro.mjs
+  "media/descent.mp4",   // Manhattan, from scripts/render-descent.mjs
+  "media/room.mp4",      // generated; see src/opening/PROMPTS.md
+];
 const OUT = path.join(DIR, "intro.mp4");
 const FADE = 0.45;            // seconds of overlap at each seam
 
@@ -39,11 +57,11 @@ const duration = async (file) => Number(await run("ffprobe", [
   "-of", "default=noprint_wrappers=1:nokey=1", file,
 ]));
 
-const present = ORDER.map((f) => path.join(DIR, f)).filter((f) => fs.existsSync(f));
+const present = ORDER.filter((f) => fs.existsSync(f));
 
 if (!present.length) {
-  console.error(`nothing in ${DIR}. Render the Earth beat first:\n` +
-                `  node scripts/render-intro.mjs`);
+  console.error("no beats rendered yet. Start with:\n" +
+                "  node scripts/render-intro.mjs");
   process.exit(1);
 }
 
@@ -83,7 +101,20 @@ await run("ffmpeg", [
   "-map", `[${label}]`,
   // Same encoding rules as the render: yuv420p and even dimensions, or Safari
   // and QuickTime refuse the file.
-  "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "slow",
+  /*
+    27, not 18.
+
+    18 is a mastering setting and belongs on the individual beats, where the
+    file is an input to this join and quality lost there cannot be recovered.
+    The output is different: it is downloaded by every visitor before they see
+    anything, and at 18 the twelve seconds came to 19 MB against a whole site
+    of 16.
+
+    27 brings it to 5 MB. The footage is dark, slow and grainy, which is the
+    kind that survives compression best — most of the bitrate at 18 was being
+    spent on noise in a night sky.
+  */
+  "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "27", "-preset", "slow",
   "-movflags", "+faststart",
   OUT,
 ]);

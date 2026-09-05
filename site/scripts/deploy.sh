@@ -20,6 +20,12 @@ cd "$(dirname "$0")/.."
 
 WORKTREE="${TMPDIR:-/tmp}/vestigo-gh-pages"
 
+# Cleaned first. Vite hashes asset filenames and does not remove the old ones,
+# so dist/ accumulates every build it has ever done. That is normally harmless
+# and once was not: a deploy went out with an index.html from one build and
+# assets from another, and the live site came up as unstyled HTML with a plain
+# underlined VESTIGO on white.
+rm -rf dist
 npm run build
 
 git worktree remove --force "$WORKTREE" 2>/dev/null || true
@@ -37,6 +43,30 @@ fi
 rsync -a --delete --exclude .git dist/ "$WORKTREE/"
 
 cd "$WORKTREE"
+
+# ---------------------------------------------------------------------------
+# Refuse to publish a set that does not agree with itself.
+#
+# index.html names its script and stylesheet by content hash. If either is
+# missing from what is about to be pushed, the page loads and renders nothing —
+# no error in the console anyone will see, no failed request anyone is
+# watching, just a white page with an underlined heading on it. That shipped
+# once. It cannot be allowed to ship silently again, so this turns it from a
+# broken deploy into a failed one.
+# ---------------------------------------------------------------------------
+missing=""
+for ref in $(grep -oE '/assets/[^"]+' index.html | sort -u); do
+  [ -f ".${ref}" ] || missing="${missing} ${ref}"
+done
+if [ -n "$missing" ]; then
+  echo "refusing to publish: index.html references files that are not here:" >&2
+  for m in $missing; do echo "  $m" >&2; done
+  echo "what is here:" >&2
+  ls assets/ >&2
+  exit 1
+fi
+echo "  index.html and assets agree"
+
 git add -A
 # Nothing to say that the diff does not, and the branch is not a record of
 # anything. The date is the only part worth writing down.

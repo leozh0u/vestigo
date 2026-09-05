@@ -36,6 +36,15 @@
     "photo": "/photos/im2gps_9b27118e24.jpg"
   },
   {
+    "file": "mapillary_d267ae5246_s0.json",
+    "subject": "mapillary_d267ae5246",
+    "steps": 31,
+    "level": "city",
+    "value": "Seoul",
+    "confidence": 0.94,
+    "photo": "/photos/mapillary_d267ae5246.jpg"
+  },
+  {
     "file": "im2gps_0fc6f7a8d1_s0.json",
     "subject": "im2gps_0fc6f7a8d1",
     "steps": 19,
@@ -70,6 +79,24 @@
     "value": "Warsaw",
     "confidence": 0.8976,
     "photo": "/photos/mapillary_7301b58289.jpg"
+  },
+  {
+    "file": "rural_2dafd2f200_s0.json",
+    "subject": "rural_2dafd2f200",
+    "steps": 22,
+    "level": "region",
+    "value": "Interior S\u00e3o Paulo state, Brazil",
+    "confidence": 0.776,
+    "photo": "/photos/rural_2dafd2f200.jpg"
+  },
+  {
+    "file": "rural_3e5efad504_s0.json",
+    "subject": "rural_3e5efad504",
+    "steps": 24,
+    "level": "region",
+    "value": "Central/Eastern Europe",
+    "confidence": 0.776,
+    "photo": "/photos/rural_3e5efad504.jpg"
   },
   {
     "file": "im2gps_2d187a1317_s0.json",
@@ -117,6 +144,24 @@
     "photo": "/photos/mapillary_867c10a9aa.jpg"
   },
   {
+    "file": "rural_1e85f5921d_s0.json",
+    "subject": "rural_1e85f5921d",
+    "steps": 22,
+    "level": "country",
+    "value": "Castilian meseta (central Spain)",
+    "confidence": 0.72,
+    "photo": "/photos/rural_1e85f5921d.jpg"
+  },
+  {
+    "file": "rural_42816b32de_s0.json",
+    "subject": "rural_42816b32de",
+    "steps": 20,
+    "level": "country",
+    "value": "Germany",
+    "confidence": 0.8464,
+    "photo": "/photos/rural_42816b32de.jpg"
+  },
+  {
     "file": "im2gps_04881af57a_s0.json",
     "subject": "im2gps_04881af57a",
     "steps": 19,
@@ -160,5 +205,14 @@
     "value": null,
     "confidence": null,
     "photo": "/photos/mapillary_71a9117d55.jpg"
+  },
+  {
+    "file": "rural_58bb638a1b_s0.json",
+    "subject": "rural_58bb638a1b",
+    "steps": 28,
+    "level": null,
+    "value": null,
+    "confidence": null,
+    "photo": "/photos/rural_58bb638a1b.jpg"
   }
 ]
