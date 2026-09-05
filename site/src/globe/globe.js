@@ -654,18 +654,29 @@ export class Globe {
       pearl. Contrast is the only thing that reads as a mirror, and an evenly
       bright surround destroys it more completely than an evenly dark one.
 
-      So: bright sky over the top third, a fast fall, a long dark floor, and the
+      So: bright sky over the top third, a long fall, a dark floor, and the
       bounce squeezed into the last tenth where it draws the bottom edge without
       lighting the whole underside.
+
+      The fall has to be long. The first version dropped from mid grey to near
+      black across thirteen per cent of the image, and a sphere compresses its
+      whole surround into a small band near the silhouette: that thirteen per
+      cent came out as a hard line across the middle of the ball with visible
+      steps in it. Ten stops spread over the full height instead, none of them
+      more than about fifteen per cent apart, so there is nowhere for an edge
+      to form.
     */
     const sky = ctx.createLinearGradient(0, 0, 0, h);
     sky.addColorStop(0.00, "#eaf0f8");
-    sky.addColorStop(0.24, "#b4c0d0");
-    sky.addColorStop(0.42, "#3c4552");
-    sky.addColorStop(0.55, "#12161c");
-    sky.addColorStop(0.86, "#0b0e13");   // the long dark floor
-    sky.addColorStop(0.95, "#2e3742");   // the bounce, and it is narrow
-    sky.addColorStop(1.00, "#6d7a8c");
+    sky.addColorStop(0.16, "#d2dbe8");
+    sky.addColorStop(0.30, "#a9b6c7");
+    sky.addColorStop(0.42, "#788495");
+    sky.addColorStop(0.53, "#4d5766");
+    sky.addColorStop(0.64, "#2d3540");
+    sky.addColorStop(0.75, "#191e26");
+    sky.addColorStop(0.87, "#0d1117");   // the floor, and it is the darkest
+    sky.addColorStop(0.95, "#252d38");   // the bounce coming back up
+    sky.addColorStop(1.00, "#5f6b7b");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 

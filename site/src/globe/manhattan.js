@@ -121,14 +121,72 @@ export class Manhattan {
     the framing the next clip has to pick up from: a window, seen from the
     street.
   */
-  place(t) {
-    const e = t < 0.5 ? 4 * t ** 3 : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    const height = 4200 + (180 - 4200) * e;
-    const back = 3000 + (240 - 3000) * e;
-    this.camera.position.set(0, height, back);
-    // The aim rises as the camera falls, so the shot tilts from looking down
-    // at a city to looking up at a building without a separate move.
-    this.camera.lookAt(0, 0 + 120 * e, 0);
+  place(t, endHeight = 58) {
+    /*
+      Three overlapping moves, and none of them start or stop together.
+
+      **Falling.** Eased at both ends: it leaves the top of the shot slowly,
+      because a cut that begins already at speed reads as a jump, and it arrives
+      slowly, because the last thing before a cut has to be still.
+
+      **Closing.** The camera does not drop straight down. It comes in on a
+      slant, which is what turns a descent into an approach: falling vertically
+      onto a city gives you a map that gets bigger, and coming in at an angle
+      gives you buildings that pass.
+
+      **Tilting.** The aim rises as the camera falls, from looking down at a
+      grid of blocks to looking level along a street and then slightly up at
+      the front of a building. That is one continuous move rather than a
+      separate pan, so there is no moment where the shot changes its mind.
+
+      They are offset from each other on purpose. Beats that begin and end
+      together read as a slideshow.
+    */
+    const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+
+    const fall = easeInOut(t);
+    // Starts a fifth of the way in and finishes early, so the last stretch is
+    // the camera settling rather than still travelling.
+    const close = easeOut(Math.min(1, Math.max(0, (t - 0.18) / 0.74)));
+    const tilt = easeInOut(Math.min(1, Math.max(0, (t - 0.34) / 0.66)));
+
+    /*
+      3400 m down to about 58.
+
+      Not to street level, and this is a limit of the data rather than a
+      choice. Google's photogrammetry is captured from the air, so facades are
+      reconstructed from oblique passes and windows are inferred: it holds up
+      beautifully from above and smears into wax somewhere under about forty
+      metres. Ending at roughly a fifth floor is the lowest altitude where a
+      pre-war walk-up still has a fire escape you can see rather than a brown
+      stain where one should be.
+
+      That is also why the next beat is generated rather than flown. There is
+      no photogrammetry of the inside of an apartment, and there is not much of
+      the outside of one either.
+    */
+    const height = 3400 + (endHeight - 3400) * fall;
+    // How far back along the street. It ends about a road's width away, which
+    // is what puts a whole building front in frame rather than one brick.
+    const back = 2600 + (34 - 2600) * close;
+    // And a little to one side, so the building is met at an angle. Straight
+    // on is an elevation drawing.
+    const side = 900 + (11 - 900) * close;
+
+    this.camera.position.set(side, height, back);
+
+    /*
+      What it looks at, which rises faster than the camera falls.
+
+      At the start it is the ground: the aim is the origin and the camera is
+      three kilometres above it, so the shot looks steeply down. By the end the
+      aim is 26 m up the face of a building while the camera is at 58, so the
+      lens is barely tilted down at all and a fifth-floor window sits in the
+      upper half of the frame. The tilt is the difference between those two,
+      and it happens without a separate move.
+    */
+    this.camera.lookAt(0, 26 * tilt, 0);
     this.camera.updateMatrixWorld();
   }
 
