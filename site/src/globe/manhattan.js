@@ -19,10 +19,17 @@
   directly means every position is a seven-digit number and every "up" is a
   different direction.
 
-  `setLatLonToYUp` re-orients the whole tileset so that a chosen point sits at
-  the origin with the sky pointing up the Y axis, which turns the problem back
-  into the one everybody knows: a camera at some height above a place, looking
-  at something.
+  The fix is to put the *whole tileset* where the chosen point lands at the
+  origin, by building the frame for that latitude and longitude and inverting
+  it. `WGS84_ELLIPSOID.getObjectFrame` gives the matrix that would place an
+  object at a point on the globe; applying its inverse to the tiles brings that
+  point to the origin instead, with the sky up the Y axis. That turns the
+  problem back into the one everybody knows: a camera at some height above a
+  place, looking at something.
+
+  A first version called `tiles.setLatLonToYUp`, which is an API this library
+  used to have and does not. It was written from memory rather than from the
+  package, and it failed on the first live run.
 
   ## Cost
 
@@ -32,7 +39,7 @@
   call time rather than at import.
 */
 import * as THREE from "three";
-import { TilesRenderer } from "3d-tiles-renderer";
+import { TilesRenderer, WGS84_ELLIPSOID } from "3d-tiles-renderer";
 import { GoogleCloudAuthPlugin, TilesFadePlugin } from "3d-tiles-renderer/plugins";
 
 // Lower Manhattan, looking north up the island. Chosen because the skyline
@@ -63,8 +70,6 @@ export class Manhattan {
 
     tiles.setCamera(this.camera);
     tiles.setResolutionFromRenderer(this.camera, this.renderer);
-    // ECEF into something a camera can be aimed in. See the note above.
-    tiles.group.rotation.x = -Math.PI / 2;
     this.scene.add(tiles.group);
 
     // Daylight, because the tiles are photographs taken in daylight and lighting
@@ -74,11 +79,29 @@ export class Manhattan {
     sun.position.set(1, 2, 1);
     this.scene.add(sun);
 
-    this.tiles = tiles;
-    await tiles.setLatLonToYUp(
+    /*
+      Bring Manhattan to the origin.
+
+      getObjectFrame builds the matrix that places something at a point on the
+      ellipsoid, facing along the local horizon. Inverting it and applying that
+      to the tileset moves the world instead of the object, so the chosen
+      coordinate ends up at (0, 0, 0) with up along Y.
+
+      Radians, not degrees: everything in this library's geodesy is radians and
+      passing degrees puts you several planets away without an error.
+    */
+    const frame = new THREE.Matrix4();
+    WGS84_ELLIPSOID.getObjectFrame(
       MANHATTAN.lat * THREE.MathUtils.DEG2RAD,
       MANHATTAN.lon * THREE.MathUtils.DEG2RAD,
+      0, 0, 0, 0, frame,
     );
+    tiles.group.matrix.copy(frame).invert();
+    tiles.group.matrix.decompose(
+      tiles.group.position, tiles.group.quaternion, tiles.group.scale);
+    tiles.group.updateMatrixWorld(true);
+
+    this.tiles = tiles;
     this.ready = true;
     return this;
   }
