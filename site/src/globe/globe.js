@@ -93,10 +93,20 @@ export class Globe {
     const rim = new THREE.DirectionalLight(0xdCE9FF, 3.1);
     rim.position.set(-3.2, 1.4, -1.8);
     this.scene.add(rim);
-    const key = new THREE.DirectionalLight(0xffffff, 1.5);
+    /*
+      The key light, and it doubles as the sun glint on the ocean.
+
+      At 1.5 the glint was a soft white blob covering most of the North
+      Atlantic. A real glint is small and hard: the sun is half a degree wide
+      seen from Earth, so what it makes on water is a tight spot, not a wash.
+      Lower intensity with a rougher sea is what tightens it.
+    */
+    const key = new THREE.DirectionalLight(0xffffff, 0.85);
     key.position.set(2.4, 1.0, 2.6);
     this.scene.add(key);
-    this.scene.add(new THREE.AmbientLight(0x4a5666, 0.55));
+    // Raised to carry what the key light gave up, so the planet does not
+    // go dark just because its highlight got smaller.
+    this.scene.add(new THREE.AmbientLight(0x5c6b80, 0.95));
 
     const loader = new THREE.TextureLoader();
     const load = (url, srgb = true) => {
@@ -242,7 +252,7 @@ export class Globe {
           // through it as bright streaks running around the globe: the planet
           // came alive still wearing its machining. Ocean seen from orbit is
           // not a mirror at this scale.
-          roughnessFactor = mix(roughnessFactor, mix(0.92, 0.34, vWet), vAlive);
+          roughnessFactor = mix(roughnessFactor, mix(0.92, 0.46, vWet), vAlive);
         `)
         .replace("#include <metalnessmap_fragment>", `
           #include <metalnessmap_fragment>
@@ -314,15 +324,55 @@ export class Globe {
     // `metal`, and one sphere now serves both roles.
     this.metal = this.earth;
 
-    // A thin shell of atmosphere. Rendered from the inside and added rather
-    // than blended, so it reads as light scattering at the limb instead of a
-    // coloured ring drawn on top.
+    /*
+      Atmosphere.
+
+      The first version was a plain coloured sphere five percent larger than
+      the planet, rendered from the inside and added. That does not read as
+      atmosphere: because the colour is uniform, you see the shell's own
+      silhouette, so the planet gets a distinct blue ring around it with a
+      visible gap between the ring and the ground. It looks like a sticker.
+
+      Air does not work that way. Looking straight down you see through very
+      little of it and it is nearly invisible; looking at the limb your line of
+      sight passes through hundreds of kilometres of it and it piles up into a
+      bright band. So the brightness has to depend on how edge-on the surface
+      is, which is a Fresnel term: one minus the dot product of the view
+      direction and the normal.
+
+      Closer, too. 1.5% rather than 5%, because the real atmosphere is a
+      hundred kilometres on a six thousand kilometre planet and the shell only
+      needs to be thick enough to hold the gradient.
+    */
     this.halo = new THREE.Mesh(
-      new THREE.SphereGeometry(1.05, 48, 48),
-      new THREE.MeshBasicMaterial({
-        color: 0x3d84bd,
+      new THREE.SphereGeometry(1.015, 96, 96),
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uOpacity: { value: 0 },
+          uColor: { value: new THREE.Color(0x5aa9e6) },
+        },
+        vertexShader: `
+          varying vec3 vNormalW;
+          varying vec3 vViewW;
+          void main() {
+            vec4 world = modelMatrix * vec4(position, 1.0);
+            vNormalW = normalize(mat3(modelMatrix) * normal);
+            vViewW = normalize(cameraPosition - world.xyz);
+            gl_Position = projectionMatrix * viewMatrix * world;
+          }`,
+        fragmentShader: `
+          uniform float uOpacity;
+          uniform vec3 uColor;
+          varying vec3 vNormalW;
+          varying vec3 vViewW;
+          void main() {
+            // Zero looking straight down, one at the limb. The fourth power
+            // keeps it off the disc: a lower exponent hazes the whole planet.
+            float rim = 1.0 - abs(dot(normalize(vNormalW), normalize(vViewW)));
+            float glow = pow(clamp(rim, 0.0, 1.0), 4.0);
+            gl_FragColor = vec4(uColor, glow * uOpacity);
+          }`,
         transparent: true,
-        opacity: 0,
         side: THREE.BackSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -419,7 +469,7 @@ export class Globe {
     const eased = k * k * (3 - 2 * k);          // smoothstep
 
     this.uniforms.uGrowth.value = eased;
-    this.halo.material.opacity = 0.42 * eased;
+    this.halo.material.uniforms.uOpacity.value = 1.5 * eased;
     // The reflections fade as the surface stops being metal. Without this the
     // sea keeps a chrome sheen and the planet reads as painted metal rather
     // than as water.
