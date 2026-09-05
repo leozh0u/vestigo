@@ -239,11 +239,21 @@ export class Globe {
       */
       roughnessMap: load(TEXTURES.rough, false),
       normalMap: load(TEXTURES.normal, false),
-      // Halved. The normal map is machining marks, which belong on tungsten
-      // and not on an ocean, and there is no way to fade a normal map per
-      // pixel from inside the standard material. Lowering it costs the metal
-      // a little bite and stops the living Earth being visibly grooved.
-      normalScale: new THREE.Vector2(0.28, 0.28),
+      /*
+        Almost nothing, where it used to be 0.28.
+
+        The normal map is machining marks, and machining marks were the wrong
+        idea. A turned finish scatters the reflection into a hundred small
+        highlights, which is what made the ball read as grey plastic: the one
+        thing chrome does is hold a *single* clean reflection of its
+        surroundings, and every groove is one more thing breaking that
+        reflection up.
+
+        Kept above zero because a perfectly smooth reflector reads as a
+        computer-generated sphere. What is left is a fine grain that shows only
+        where the highlight rolls across it.
+      */
+      normalScale: new THREE.Vector2(0.055, 0.055),
       /*
         Displacement, not just a normal map, and the difference matters here.
 
@@ -261,14 +271,28 @@ export class Globe {
         where one vertex ended and the next began.
       */
       displacementMap: load(TEXTURES.relief, false),
-      displacementScale: 0.02,
-      displacementBias: -0.007,
-      metalness: 0.95,
+      /*
+        Zero at the start, and this is the change that makes both halves work.
+
+        The relief used to be displaced the whole time, so the metal was never
+        actually a sphere: it wore the continents as a permanent embossing, and
+        a chrome ball with lumps on it cannot hold the clean reflection that
+        makes it read as chrome.
+
+        Driven from the growth in apply() instead. The metal is a perfect
+        polished sphere, the continents rise and the basins sink as the world
+        arrives, and the sea then fills a hollow that was hollow a moment
+        before. Water pouring into somewhere that is visibly lower is the whole
+        reason the relief is here.
+      */
+      displacementScale: 0,
+      displacementBias: 0,
+      metalness: 0.98,
       // The map supplies the variation, so the base is a multiplier and stays
       // at 1. Setting both fights: the map would be scaled down into a narrow
       // band and the variation would disappear.
       roughness: 1.0,
-      envMapIntensity: 2.6,
+      envMapIntensity: 3.0,
     });
 
     this.material.onBeforeCompile = (shader) => {
@@ -331,8 +355,18 @@ export class Globe {
         */
         .replace("#include <roughnessmap_fragment>", `
           #include <roughnessmap_fragment>
-          // Until a pixel is alive, roughnessFactor is whatever the metal's
-          // roughness map said, which is the machining. Only once it comes
+          /*
+            Polished, not brushed.
+
+            The roughness map runs the full 0 to 1, and a surface that is
+            rough over most of its area is not a mirror anywhere: it was a
+            grey ball with a soft sheen sliding over it. Compressed into a
+            narrow band near zero it stays a mirror everywhere and the map
+            only decides *how* clean the reflection is, which is the
+            difference between polished steel and a matte one.
+          */
+          roughnessFactor = 0.04 + roughnessFactor * 0.15;
+          // Until a pixel is alive, roughnessFactor is the polished band above. Only once it comes
           // alive does it become land or water.
           // 0.34 for water, not 0.14. At 0.14 the sea was a mirror and the
           // anisotropic grain from the metal's roughness map showed straight
@@ -433,7 +467,7 @@ export class Globe {
 
     this.earth = new THREE.Mesh(
       /*
-        160, and this is the one place the vertex count earns itself.
+        200, and this is the one place the vertex count earns itself.
 
         A displacement map moves vertices, so continents can only be as
         detailed as the mesh under them: at 96 segments the coastlines came out
@@ -445,7 +479,7 @@ export class Globe {
         page slow. That was four backdrop-filter blurs reading the framebuffer
         back and a hundred animated text nodes; both are gone.
       */
-      new THREE.SphereGeometry(1, 160, 160),
+      new THREE.SphereGeometry(1, 200, 200),
       this.material,
     );
     this.scene.add(this.earth);
@@ -566,12 +600,26 @@ export class Globe {
     // colour of the texture barely contributes at metalness 1. Two earlier
     // attempts made the texture lighter and the ball stayed dark, because the
     // texture was never the thing being looked at.
+    /*
+      A floor as well as a sky.
+
+      The lower half used to fall to #070a0e, which is a studio with nothing
+      under the ball. A chrome sphere reflects its whole surroundings, so the
+      bottom third of it went black and the silhouette disappeared into the
+      page — the thing looked less like polished metal than like a sphere with
+      its lights off.
+
+      Every photograph of a steel ball has a bright band low down: the surface
+      it is standing on, bouncing light back up. That band is what gives the
+      lower half its gradient and what draws the bottom edge.
+    */
     const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0.00, "#c8d4e4");
-    sky.addColorStop(0.34, "#8d9cb0");
-    sky.addColorStop(0.50, "#3a444f");
-    sky.addColorStop(0.62, "#141920");
-    sky.addColorStop(1.00, "#070a0e");
+    sky.addColorStop(0.00, "#d6e0ee");
+    sky.addColorStop(0.32, "#9aa9bd");
+    sky.addColorStop(0.50, "#454f5c");
+    sky.addColorStop(0.66, "#1b212a");   // the horizon, and the darkest part
+    sky.addColorStop(0.84, "#39424e");   // the floor coming back up
+    sky.addColorStop(1.00, "#5b6675");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
 
@@ -582,9 +630,18 @@ export class Globe {
       ctx.fillStyle = g;
       ctx.fillRect(x - bw, y - bh, bw * 2, bh * 2);
     };
-    box(w * 0.20, h * 0.26, w * 0.19, h * 0.28, 1.0);
-    box(w * 0.74, h * 0.36, w * 0.13, h * 0.19, 0.7);
-    box(w * 0.48, h * 0.14, w * 0.24, h * 0.12, 0.5);
+    /*
+      One large source and one small one, which is how a ball like this is
+      actually lit. The large soft box is the broad gradient that wraps most of
+      the sphere; the small hard one is the hotspot your eye reads as "this is
+      a mirror". Three sources of similar size gave three similar highlights
+      and none of them read as either.
+    */
+    box(w * 0.22, h * 0.24, w * 0.26, h * 0.34, 1.0);   // the key, wide and soft
+    box(w * 0.30, h * 0.19, w * 0.05, h * 0.06, 1.0);   // the hotspot inside it
+    box(w * 0.76, h * 0.40, w * 0.11, h * 0.15, 0.45);  // a fill, far side
+    // The bounce off the floor, wide and weak. It is what lights the underside.
+    box(w * 0.50, h * 0.98, w * 0.60, h * 0.22, 0.35);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -697,7 +754,24 @@ export class Globe {
       cannot be faded only over water from out here. It does not need to be:
       by the time the world is alive there is no metal left for it to serve.
     */
-    this.material.normalScale.setScalar(0.28 * (1 - eased));
+    this.material.normalScale.setScalar(0.055 * (1 - eased));
+
+    /*
+      The relief arrives with the world.
+
+      0.028 of a unit radius is about 180 km of exaggeration at Earth scale:
+      absurd geographically, and about right for making an ocean basin read as
+      a basin from three radii away. It has to show on the limb, because the
+      limb is where the eye checks whether a surface is a surface.
+
+      The bias keeps sea level where the sphere already was, so land rises out
+      of the ball and the seabed drops into it rather than the whole planet
+      inflating. Scaled together, or the coastline slides up and down as it
+      grows.
+    */
+    const relief = 0.028 * eased;
+    this.material.displacementScale = relief;
+    this.material.displacementBias = -0.36 * relief;
     /*
       Exposure comes down hard, and this is the difference between a night
       side and a dim day side.
