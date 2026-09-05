@@ -73,8 +73,8 @@
                    precision the evidence supports, and stops." />
     <meta name="twitter:image" content="https://vestigo.earth/card.jpg" />
     <link rel="canonical" href="https://vestigo.earth/" />
-    <script type="module" crossorigin src="/assets/index-D2mHLZP3.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-1LIEth58.css">
+    <script type="module" crossorigin src="/assets/index-xUFfjE5P.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CcKtcDqP.css">
   </head>
   <body>
     <!-- Depth, painted in CSS behind the globe. Three layers: a cold aurora,
@@ -139,13 +139,38 @@
         </a>
       </header>
 
+      <!--
+        Two columns either side of the globe.
+
+        Left is what was seen. Right is what is being done with it, which the
+        page used to hide: observations arrived, an answer appeared, and every
+        step in between happened off screen. For a page whose whole argument is
+        that each claim is traceable, that was the wrong half to leave out.
+
+        The receipt takes the right column once there is an answer, because at
+        that point the working is finished and the conclusion is what matters.
+      -->
       <div class="stack">
         <section class="evidence" id="evidence" aria-live="polite"></section>
-        <section class="receipt" id="receipt" hidden></section>
+        <div class="right">
+          <section class="machinery" id="machinery" aria-hidden="true"></section>
+          <section class="receipt" id="receipt" hidden></section>
+        </div>
       </div>
 
       <footer class="bar">
-        <div class="examples" id="examples"></div>
+        <!--
+          A strip that moves on its own.
+
+          Nine photographs sitting still at the left edge left a third of the
+          bar empty and read as a leftover row. Moving, and doubled so the loop
+          has no seam, it reads as a set the page is offering rather than as
+          four things somebody forgot to centre. It stops under the cursor,
+          because a target that slides away while you reach for it is a game.
+        -->
+        <div class="examples" id="examples">
+          <div class="examples-track" id="examples-track"></div>
+        </div>
         <!--
           No text input.
 
