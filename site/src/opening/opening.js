@@ -10,7 +10,10 @@
 
   See README.md in this directory for what each half needs.
 */
-const VIDEO = "/opening/interior.mp4";
+// The stitched intro: the rendered Earth beat plus whatever generated clips
+// exist, joined by scripts/stitch-intro.mjs. One file, so the page has one
+// thing to load and one thing to skip.
+const VIDEO = "/opening/intro.mp4";
 
 export class Opening {
   constructor({ onBegin, onFinish }) {

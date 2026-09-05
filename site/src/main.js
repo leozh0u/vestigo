@@ -110,6 +110,42 @@ function mountExamples(entries) {
   flight moves the globe, the drag coasts it if no flight is running, and only
   then is anything drawn.
 */
+/*
+  Render mode, when the URL asks for it.
+
+  A recording must not run on requestAnimationFrame: a real-time loop drops
+  frames while a shader compiles, runs at whatever rate the machine manages,
+  and gives a different result every time. Under ?render the frame loop is not
+  started at all and an external script steps the scene by exact amounts.
+*/
+const RENDERING = new URLSearchParams(location.search).has("render");
+if (RENDERING) {
+  // Everything that is not the globe. The opening panel is appended to the
+  // body rather than into #ui, so hiding #ui alone left ENTER and the readings
+  // sitting in the middle of the footage.
+  document.getElementById("ui").style.display = "none";
+  const hideChrome = document.createElement("style");
+  hideChrome.textContent = `
+    #ui, .opening, .grain, .vignette { display: none !important; }
+    .field { opacity: 0.35; }
+    html, body { background: #04060a; }`;
+  document.head.append(hideChrome);
+  const { installRenderMode } = await import("./render-mode.js");
+  installRenderMode({
+    globe, flight, machine,
+    loadTrace: async (file) => {
+      const trace = await (await fetch(`/traces/${file}`)).json();
+      player = new Player(trace, {
+        onStep: () => {},
+        onProgress: (t) => globe.setProgress(t),
+        onDone: () => {},
+      });
+      return trace;
+    },
+    play: () => player,
+  });
+}
+
 let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);   // capped, so a backgrounded
@@ -123,7 +159,7 @@ function frame(now) {
   globe.render(dt);
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+if (!RENDERING) requestAnimationFrame(frame);
 
 document.body.style.cursor = "grab";
 
@@ -140,7 +176,7 @@ mountField();
   interview.
 */
 Opening.available().then((hasVideo) => {
-  if (!hasVideo) return;
+  if (!hasVideo || RENDERING) return;
   new Opening({
     onBegin: () => { globe.spinning = false; },
     onFinish: () => { globe.spinning = true; },

@@ -199,17 +199,38 @@ def natural(mask: Image.Image, coast: Image.Image) -> Image.Image:
         t = t * t * (3 - 2 * t)
         return [colour_lo[i] + (colour_hi[i] - colour_lo[i]) * t for i in range(3)]
 
-    TROPICS = (42, 92, 52); ARID = (156, 132, 88)
-    TEMPERATE = (72, 108, 66); BOREAL = (48, 76, 58); ICE = (236, 241, 246)
+    TROPICS = (42, 92, 52); ARID = (162, 138, 92)
+    TEMPERATE = (68, 104, 62); BOREAL = (48, 76, 58); ICE = (236, 241, 246)
 
+    # The wet ladder: what a latitude looks like when there is rain on it.
     land = np.zeros((h, w, 3), dtype=np.float32)
     for i in range(3):
         c = np.full((h, 1), float(TROPICS[i]), dtype=np.float32)
-        c = np.where(a > 12, band(12, 30, TROPICS, ARID)[i], c)
-        c = np.where(a > 30, band(30, 46, ARID, TEMPERATE)[i], c)
+        c = np.where(a > 20, band(20, 42, TROPICS, TEMPERATE)[i], c)
         c = np.where(a > 46, band(46, 62, TEMPERATE, BOREAL)[i], c)
         c = np.where(a > 62, band(62, 76, BOREAL, ICE)[i], c)
         land[:, :, i] = c
+
+    """
+    Aridity is not a latitude.
+
+    The first version made a dry band from 28 to 40 degrees and applied it at
+    every longitude, so the whole United States came out as desert. The horse
+    latitudes are where deserts *can* be, and what decides whether one is there
+    is how far the nearest ocean is: coasts at that latitude are Georgia and
+    Portugal, interiors are the Sahara and the Mojave.
+
+    Continentality is approximated by blurring the land mask hard. A pixel deep
+    inside a landmass stays bright through a big blur; one near a coast is
+    pulled down by all the sea around it. That is distance from water, near
+    enough, and it costs one convolution.
+    """
+    inland = np.asarray(mask.filter(ImageFilter.GaussianBlur(w // 34)),
+                        np.float32) / 255.0
+    horse = np.exp(-((a - 27) ** 2) / 340)          # where deserts are possible
+    dryness = np.clip(horse * np.clip((inland - 0.45) / 0.55, 0, 1) * 1.9, 0, 1)
+    for i in range(3):
+        land[:, :, i] = land[:, :, i] * (1 - dryness) + ARID[i] * dryness
 
     # Terrain. Two scales: broad relief, and a finer grain over it.
     relief = _fbm(w, h, octaves=6, seed=11)
