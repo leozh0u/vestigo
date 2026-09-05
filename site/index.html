@@ -9,15 +9,18 @@
                    precision the evidence supports, and stops." />
 
     <!--
-      Two typefaces, doing two jobs.
+      One typeface, everywhere.
 
-      Instrument Serif is the wordmark and the answer. It has the look of an
-      engraved atlas rather than a product, which is the register this is
-      aiming for: an instrument, not a service.
+      The first version paired a display serif with a sans, which is the
+      house style of every AI product launched in the last two years and reads
+      as a template whatever is written in it.
 
-      JetBrains Mono is everything measured. Numbers in a monospace read as
-      readings rather than as copy, and the whole argument of the page is that
-      its numbers mean something.
+      IBM Plex Mono instead, for the headline and the body and the readings
+      alike, with size and weight carrying the whole hierarchy. A monospace
+      used for everything reads as an instrument rather than as a product,
+      which is what this is: a thing that takes measurements and reports them.
+      It was drawn for IBM's engineering documentation, so it carries that
+      register without being asked to.
 
       preconnect first: it opens the connection while the CSS is still being
       parsed, which is worth roughly a round trip on a cold load.
@@ -25,16 +28,31 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" />
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" />
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <!-- Depth, painted in CSS behind the globe. Three layers: a cold aurora,
          a warm one, and film grain over both. -->
-    <div class="atmosphere" aria-hidden="true">
-      <div class="aurora aurora-cold"></div>
-      <div class="aurora aurora-warm"></div>
+    <!--
+      The background is a field of readings rather than a gradient.
+
+      A blurred colour wash behind a globe is the default and it looked like
+      one. What is behind this instead is the project's own output: coordinates,
+      tool names, confidences, fragments of real evidence, laid out at four
+      different scales and drifting at four different speeds. Near text is
+      larger and moves faster, far text is small and almost still, which is
+      what gives it depth.
+
+      Filled by src/ui/field.js from the traces themselves, so it is the same
+      data the page is arguing about rather than decoration that resembles it.
+    -->
+    <div class="field" aria-hidden="true">
+      <div class="field-layer" data-depth="4"></div>
+      <div class="field-layer" data-depth="3"></div>
+      <div class="field-layer" data-depth="2"></div>
+      <div class="field-layer" data-depth="1"></div>
       <div class="grain"></div>
       <div class="vignette"></div>
     </div>
@@ -44,18 +62,33 @@
     <main id="ui" data-state="idle">
       <header class="masthead">
         <a class="wordmark" href="/">
-          <!-- The mark: a meridian crossing a sphere, and the point where a
-               trace lands on it. Vestigo is Latin for "I track". -->
-          <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-            <circle cx="16" cy="16" r="12.5" fill="none"
-                    stroke="currentColor" stroke-width="1.25" opacity="0.55" />
-            <ellipse cx="16" cy="16" rx="5" ry="12.5" fill="none"
-                     stroke="currentColor" stroke-width="1.25" opacity="0.35" />
-            <path d="M3.5 16h25" stroke="currentColor" stroke-width="1.25"
-                  opacity="0.35" />
-            <circle cx="22.2" cy="9.4" r="2.6" fill="currentColor" />
+          <!--
+            A survey mark, drawn rather than constructed.
+
+            The first attempt was a perfect circle with a perfect ellipse
+            through it, which is what every geolocation logo looks like and is
+            recognisably something a machine drew in one pass. This is the same
+            idea done by hand: the ring does not quite close, the meridian
+            wavers, and the fix is off-centre where a real one would be. Vestigo
+            is Latin for "I track", and a tracker's mark should look like it was
+            made in the field.
+          -->
+          <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+            <path d="M27.6 14.4c.9 6.4-3.6 12.2-10 12.9C11.1 28 5.4 23.4 4.7 17
+                     4.1 10.7 8.5 5 14.8 4.2c5.9-.7 11.3 3.2 12.6 8.9"
+                  fill="none" stroke="currentColor" stroke-width="1.4"
+                  stroke-linecap="round" opacity="0.7" />
+            <path d="M16.4 4.2c-3.4 3.9-3.6 18.3-.3 23"
+                  fill="none" stroke="currentColor" stroke-width="1.1"
+                  stroke-linecap="round" opacity="0.4" />
+            <path d="M4.9 15.4c6.6 1.3 15.6 1.1 22.4-.4"
+                  fill="none" stroke="currentColor" stroke-width="1.1"
+                  stroke-linecap="round" opacity="0.4" />
+            <path d="M20.4 9.1l3.4 3.6M23.9 9.2l-3.6 3.4"
+                  stroke="var(--live)" stroke-width="1.6"
+                  stroke-linecap="round" />
           </svg>
-          <span>Vestigo</span>
+          <span>VESTIGO</span>
         </a>
         <p class="tagline">
           Where a photo was taken<span class="soft">, and how much to believe it.</span>

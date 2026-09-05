@@ -35,6 +35,9 @@ const TEXTURES = {
   natural: "/textures/globe-natural.png",
   land: "/textures/globe-land.png",
   growth: "/textures/globe-growth.png",
+  relief: "/textures/globe-relief.png",
+  rough: "/textures/globe-rough.png",
+  normal: "/textures/globe-normal.png",
 };
 
 export class Globe {
@@ -115,9 +118,46 @@ export class Globe {
 
     this.material = new THREE.MeshStandardMaterial({
       map: load(TEXTURES.metal),
-      metalness: 0.86,
-      roughness: 0.29,
-      envMapIntensity: 2.2,
+      /*
+        The two maps that stop this reading as plastic.
+
+        A uniform roughness gives a uniform sheen, and a uniform sheen is what
+        plastic looks like: one soft highlight, identical everywhere, sliding
+        over a shape that has no surface. The roughness map varies it per pixel
+        with a grain stretched around the sphere, so the reflection is sharp in
+        some places and smeared in others and the boundary reads as machining.
+
+        The normal map tilts each pixel by a fraction of a degree. That is
+        enough to make the highlight travel unevenly as the globe turns, and
+        uneven highlight travel is most of what separates metal from a grey
+        ball. Neither is visible on its own; together they are the difference.
+      */
+      roughnessMap: load(TEXTURES.rough, false),
+      normalMap: load(TEXTURES.normal, false),
+      normalScale: new THREE.Vector2(0.55, 0.55),
+      /*
+        Displacement, not just a normal map, and the difference matters here.
+
+        A normal map fakes the lighting of relief and leaves the silhouette
+        flat, which is right for machining marks and wrong for continents. This
+        has to show on the limb of the sphere, because the limb is where the
+        eye checks whether a surface is real, and it is what makes water
+        filling the oceans mean anything: the sea arrives in a basin that is
+        already there rather than being a colour applied to a region.
+
+        Small. 0.035 of a unit radius is roughly 220 km of exaggeration at
+        Earth scale, which is absurd geographically and about right visually.
+        Any more and the planet looks like a golf ball.
+      */
+      displacementMap: load(TEXTURES.relief, false),
+      displacementScale: 0.035,
+      displacementBias: -0.012,
+      metalness: 0.95,
+      // The map supplies the variation, so the base is a multiplier and stays
+      // at 1. Setting both fights: the map would be scaled down into a narrow
+      // band and the variation would disappear.
+      roughness: 1.0,
+      envMapIntensity: 2.6,
     });
 
     this.material.onBeforeCompile = (shader) => {
@@ -160,6 +200,9 @@ export class Globe {
         */
         .replace("#include <roughnessmap_fragment>", `
           #include <roughnessmap_fragment>
+          // Until a pixel is alive, roughnessFactor is whatever the metal's
+          // roughness map said, which is the machining. Only once it comes
+          // alive does it become land or water.
           roughnessFactor = mix(roughnessFactor, mix(0.95, 0.14, vWet), vAlive);
         `)
         .replace("#include <metalnessmap_fragment>", `
@@ -178,6 +221,19 @@ export class Globe {
     };
 
     this.earth = new THREE.Mesh(
+      /*
+        160, and this is the one place the vertex count earns itself.
+
+        A displacement map moves vertices, so continents can only be as
+        detailed as the mesh under them: at 96 segments the coastlines came out
+        as a polygon. The earlier cut to 96 was made when nothing was displaced
+        and every feature was painted, where segments bought only a smoother
+        outline.
+
+        Cost is a fixed vertex load once per frame, which is not what made this
+        page slow. That was four backdrop-filter blurs reading the framebuffer
+        back and a hundred animated text nodes; both are gone.
+      */
       new THREE.SphereGeometry(1, 160, 160),
       this.material,
     );
@@ -190,7 +246,7 @@ export class Globe {
     // than blended, so it reads as light scattering at the limb instead of a
     // coloured ring drawn on top.
     this.halo = new THREE.Mesh(
-      new THREE.SphereGeometry(1.05, 64, 64),
+      new THREE.SphereGeometry(1.05, 48, 48),
       new THREE.MeshBasicMaterial({
         color: 0x3d84bd,
         transparent: true,

@@ -32,9 +32,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 BOUNDARIES = ROOT / "data/boundaries/ne_50m_admin_0_countries.geojson"
 OUT = ROOT / "site/public/textures"
 
-# 2:1, because the projection is. 4096 wide is sharp on a retina display at the
-# size this sphere is drawn and still only a few hundred kilobytes as a PNG.
-WIDTH, HEIGHT = 4096, 2048
+# 2:1, because the projection is.
+#
+# 2048 rather than 4096. The globe is drawn at roughly 600 pixels across, so
+# 4096 was sampling four times the data for a difference nobody can see, and it
+# showed up as a sphere that felt heavy to drag. Four maps at 4096 is a lot of
+# texture memory to push every frame.
+WIDTH, HEIGHT = 2048, 1024
 
 
 def rings(path: pathlib.Path):
@@ -240,6 +244,114 @@ def natural(mask: Image.Image, coast: Image.Image) -> Image.Image:
     return Image.fromarray(np.clip(out, 0, 255).astype("uint8"), "RGB")
 
 
+def metal_surface(mask: Image.Image, coast: Image.Image) -> tuple:
+    """Roughness and normal maps for the metal, which is what stops it reading
+    as plastic.
+
+    A uniform roughness gives a uniform sheen, and a uniform sheen is exactly
+    what plastic looks like: one soft highlight, the same everywhere, sliding
+    over a shape with no surface. Real metal has microscopic structure, and
+    that structure breaks the reflection up into something that catches and
+    fails to catch as the object turns. That variation is the read.
+
+    Two maps do it:
+
+    **Roughness** varies per pixel, stretched horizontally so the grain runs
+    around the sphere the way a turned surface does. Where it is low the
+    reflection is sharp, where it is high the reflection smears, and the
+    boundary between them is what the eye reads as machining.
+
+    **Normal** perturbs which way each pixel is facing, by a fraction of a
+    degree. That is enough to make a highlight travel unevenly, and uneven
+    highlight travel is most of what separates metal from a grey ball.
+    """
+    import numpy as np
+
+    w, h = mask.size
+
+    # Anisotropic grain: sampled at high frequency vertically and low
+    # horizontally, so it stretches into bands around the sphere rather than
+    # looking like sandpaper.
+    fine = _fbm(w, h, octaves=7, seed=101)
+    band = _fbm(w // 8, h, octaves=5, seed=202)
+    band = np.asarray(Image.fromarray((band * 255).astype("uint8"))
+                      .resize((w, h), Image.BILINEAR), np.float32) / 255.0
+    grain = fine * 0.45 + band * 0.55
+
+    m = (np.asarray(mask, np.float32) / 255.0)
+
+    # Land is machined a step rougher than sea, so the continents read even
+    # before any colour arrives. The range is narrow on purpose: metal lives
+    # between about 0.15 and 0.45, and anything above that stops being metal.
+    rough = 0.17 + grain * 0.20 + m * 0.06
+
+    # The coastline seam is polished, which is what makes it catch the light.
+    seam = np.asarray(coast.filter(ImageFilter.GaussianBlur(max(1, w // 2000))),
+                      np.float32) / 255.0
+    rough = rough * (1 - seam * 0.8) + 0.06 * seam * 0.8
+
+    roughness = Image.fromarray(
+        (np.clip(rough, 0, 1) * 255).astype("uint8"), "L")
+
+    # Normal map from the same grain, by slope. The gradient of a height field
+    # is which way its surface tilts, and a normal map is that tilt encoded as
+    # a colour: x in red, y in green, up in blue.
+    height = grain * 0.6 + m * 0.4
+    dx = np.gradient(height, axis=1) * w * 0.02
+    dy = np.gradient(height, axis=0) * h * 0.02
+    normal = np.stack([
+        np.clip(0.5 - dx, 0, 1),
+        np.clip(0.5 - dy, 0, 1),
+        np.full_like(dx, 1.0),
+    ], axis=-1)
+    normals = Image.fromarray((normal * 255).astype("uint8"), "RGB")
+
+    return roughness, normals
+
+
+def relief(mask: Image.Image, coast: Image.Image) -> Image.Image:
+    """A height map where land stands above the sea floor.
+
+    This is what makes water filling the oceans mean anything. Without it the
+    sphere is smooth and the sea is a colour applied to a region, so "filling
+    up" is a recolour and reads as one. With land physically raised, the water
+    arrives in a basin that is already there, and the coastline is where the
+    basin's wall begins rather than where one colour stops.
+
+    Displacement rather than a normal map, because the two do different jobs: a
+    normal map fakes the lighting of relief and leaves the silhouette flat,
+    which is right for machining marks and wrong for continents. This has to
+    show on the limb of the sphere, where the eye checks whether a surface is
+    real.
+
+    The coast is ramped rather than stepped. A cliff at every shoreline is what
+    a raw land mask gives you and it looks like a cake, so the mask is blurred
+    and the blur becomes the continental shelf.
+    """
+    import numpy as np
+
+    w, h = mask.size
+    m = np.asarray(mask, np.float32) / 255.0
+
+    # The shelf: a blurred mask means the ground rises over a distance instead
+    # of at a line.
+    shelf = np.asarray(mask.filter(ImageFilter.GaussianBlur(w // 260)),
+                       np.float32) / 255.0
+
+    # Terrain on top of the land only, so the sea floor stays a basin.
+    ridges = _fbm(w, h, octaves=6, seed=61)
+    detail = _fbm(w, h, octaves=7, seed=83)
+    terrain = (ridges * 0.7 + detail * 0.3)
+
+    # Mountains follow latitude no better than anything else does, but ranges
+    # are ridges rather than blobs, so the noise is sharpened towards its own
+    # crests before being applied.
+    ranges = np.clip((terrain - 0.52) / 0.48, 0, 1) ** 1.6
+
+    height = shelf * 0.62 + m * 0.16 + ranges * m * 0.22
+    return Image.fromarray((np.clip(height, 0, 1) * 255).astype("uint8"), "L")
+
+
 def growth_order(mask: Image.Image) -> Image.Image:
     """When each pixel comes alive, as a greyscale map from 0 (first) to 1 (last).
 
@@ -304,6 +416,18 @@ def main() -> int:
     # The mask ships too: the shader uses it to keep the sea shiny while the
     # land goes matte, which is the single strongest cue that a sphere is wet
     # in some places and not others.
+    relief(mask, coast).save(OUT / "globe-relief.png", optimize=True)
+    print(f"  {'globe-relief.png':<20} "
+          f"{(OUT / 'globe-relief.png').stat().st_size / 1024:>7.0f} KB")
+
+    rough, normals = metal_surface(mask, coast)
+    rough.save(OUT / "globe-rough.png", optimize=True)
+    normals.save(OUT / "globe-normal.png", optimize=True)
+    print(f"  {'globe-rough.png':<20} "
+          f"{(OUT / 'globe-rough.png').stat().st_size / 1024:>7.0f} KB")
+    print(f"  {'globe-normal.png':<20} "
+          f"{(OUT / 'globe-normal.png').stat().st_size / 1024:>7.0f} KB")
+
     growth_order(mask).save(OUT / "globe-growth.png", optimize=True)
     print(f"  {'globe-growth.png':<20} "
           f"{(OUT / 'globe-growth.png').stat().st_size / 1024:>7.0f} KB")

@@ -13,6 +13,7 @@ import { Drag } from "./globe/drag.js";
 import { Machine } from "./sequence/machine.js";
 import { Player } from "./sequence/player.js";
 import { renderEvidence, renderReceipt, clearEvidence } from "./ui/panels.js";
+import { mountField } from "./ui/field.js";
 import "./style.css";
 
 const canvas = document.getElementById("stage");
@@ -125,6 +126,10 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 document.body.style.cursor = "grab";
+
+// The background reads from the traces, so it says the same things the page
+// is arguing about rather than resembling them.
+mountField();
 
 /*
   The opening, if there is one to show.

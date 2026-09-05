@@ -22,10 +22,13 @@
   --warm:    #b8874a;   /* used sparingly, for a refusal */
 
   --gap: 1rem;
-  --radius: 12px;
-  --serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 4px;              /* nearly square. Rounded corners read as app */
+
+  /* One typeface. The first version paired a display serif with a sans, which
+     is the house style of every AI product of the last two years and reads as
+     a template whatever is set in it. Size and weight carry the hierarchy
+     instead, which is more work and does not look like anyone else. */
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -39,82 +42,77 @@ html, body {
   -webkit-user-select: none;
   background: var(--void);
   color: var(--ink);
-  font-family: var(--sans);
+  font-family: var(--mono);
   overflow: hidden;                    /* the globe fills the window */
   -webkit-font-smoothing: antialiased;
 }
 
 /* --------------------------------------------------------------------------
-   Atmosphere
+   The field
 
-   Depth painted behind the globe. Two slow aurorae and a layer of film grain.
+   Four layers of readings at four scales, drifting at four speeds. Parallax
+   does the work: near text is larger and moves faster, far text is small and
+   almost still, and the eye takes the difference as distance. The globe sits
+   between them, so the page has a front and a back.
 
-   The grain is the part that matters and it is the least obvious: a flat dark
-   background reads as cheap because real darkness is never uniform. A few
-   percent of noise over the top is what separates "dark theme" from something
-   that looks lit.
+   Content comes from src/ui/field.js, which reads it out of the traces.
    -------------------------------------------------------------------------- */
-.atmosphere {
+.field {
   position: fixed;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 40%, #0d1218 0%, #06070a 70%);
 }
 
-.aurora {
+.field-layer {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
+  inset: -20%;
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
   will-change: transform;
 }
-.aurora-cold {
-  width: 78vmax; height: 78vmax;
-  left: -18vmax; top: -26vmax;
-  background: radial-gradient(circle at 50% 50%,
-    color-mix(in srgb, var(--cold) 55%, transparent) 0%,
-    transparent 62%);
-  animation: drift-a 42s ease-in-out infinite alternate;
-}
-.aurora-warm {
-  width: 62vmax; height: 62vmax;
-  right: -20vmax; bottom: -24vmax;
-  background: radial-gradient(circle at 50% 50%,
-    color-mix(in srgb, #3f5d7a 45%, transparent) 0%,
-    transparent 64%);
-  animation: drift-b 55s ease-in-out infinite alternate;
-}
-@keyframes drift-a {
-  to { transform: translate3d(9vmax, 7vmax, 0) scale(1.12); }
-}
-@keyframes drift-b {
-  to { transform: translate3d(-8vmax, -6vmax, 0) scale(1.08); }
+/* Alternate directions, so the layers slide across each other rather than
+   travelling as one sheet. */
+.field-layer[data-depth="2"],
+.field-layer[data-depth="4"] { animation-direction: reverse; }
+
+/* Translating a background image is work the compositor does on its own,
+   with no layout and no repaint. Slow, because the point is depth rather than
+   motion: at these speeds it is felt and not watched. */
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-8%, 5%, 0); }
 }
 
-/* Film grain, generated rather than downloaded. feTurbulence is SVG's noise
-   function, and inlining it as a data URI means no extra request. */
+/* No .field-line rule any more: the text is painted into a background image
+   rather than written as elements. See src/ui/field.js for why. */
+
+/* Film grain. A flat dark background reads as cheap because real darkness is
+   never uniform, and a few percent of noise is the difference between "dark
+   theme" and something that looks lit. */
 .grain {
   position: absolute;
-  inset: -50%;
-  opacity: 0.16;
+  inset: 0;
+  opacity: 0.13;
   background-image: url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>\
 <filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/>\
 </filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
-  animation: shift 700ms steps(2) infinite;
-}
-@keyframes shift {
-  0%   { transform: translate(0, 0); }
-  50%  { transform: translate(-1.5%, 1%); }
-  100% { transform: translate(1%, -1.5%); }
+  /* Static. It animated at 700ms steps, which recomposited the entire
+     viewport several times a second for a shimmer nobody consciously sees.
+     Grain is texture, not motion. */
 }
 
-/* Darkens the corners, which pulls the eye to the middle where the globe is. */
 .vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 48%,
-    transparent 34%,
-    color-mix(in srgb, var(--void) 72%, transparent) 78%,
+  background: radial-gradient(ellipse at 50% 46%,
+    transparent 30%,
+    color-mix(in srgb, var(--void) 78%, transparent) 74%,
     var(--void) 100%);
 }
 
@@ -149,16 +147,24 @@ html, body {
 }
 .wordmark svg { color: #8fb3c9; flex: none; }
 .wordmark span {
-  font-family: var(--serif);
-  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  font-family: var(--mono);
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.005em;
+  /* Wide tracking on a monospace is what makes a word read as a mark rather
+     than as the first word of a sentence. It is the whole logotype: no
+     custom lettering, no gradient, no rounded container. */
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;   /* the tracking adds space after the last letter too */
 }
 .tagline {
-  margin: 0.5rem 0 0;
-  max-width: 42ch;
-  font-size: 0.92rem;
-  line-height: 1.5;
+  margin: 0.65rem 0 0;
+  max-width: 46ch;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 0.76rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
   color: var(--ink-dim);
 }
 .tagline .soft { color: var(--ink-faint); }
@@ -171,7 +177,14 @@ html, body {
    taller than the screen and slides underneath the bar below it.
    -------------------------------------------------------------------------- */
 .stack {
+  /* All three are needed. A grid row is min-content by default, so min-height
+     lets the row be shorter than its contents; overflow clips what is left;
+     and position:relative gives the children something to be bounded by.
+     Without the set, a long run of observations walks up over the masthead,
+     which is exactly what it did. */
   min-height: 0;
+  overflow: hidden;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -235,10 +248,13 @@ html, body {
   min-width: 20rem;
   max-width: 26rem;
   padding: 1.1rem 1.25rem;
-  background: color-mix(in srgb, var(--steel) 82%, transparent);
+  background: color-mix(in srgb, var(--steel) 94%, transparent);
   border: 1px solid var(--edge);
   border-radius: var(--radius);
-  backdrop-filter: blur(14px);
+  /* No backdrop-filter. Blurring what is behind an element forces the
+     compositor to read the WebGL framebuffer back to the CPU every frame, and
+     four of these on one page took it to about one frame a second. A solid
+     panel at high opacity looks near enough and costs nothing. */
   animation: rise 520ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 .receipt[hidden] { display: none; }
@@ -251,10 +267,12 @@ html, body {
 }
 .receipt.refused .level { color: var(--warm); }
 .receipt .value {
-  margin-top: 0.35rem;
-  font-family: var(--serif);
-  font-size: 1.7rem;
-  line-height: 1.15;
+  margin-top: 0.4rem;
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 .receipt dl {
   margin: 1rem 0 0;
@@ -298,11 +316,10 @@ html, body {
   font-family: var(--mono);
   font-size: 0.72rem;
   color: var(--ink-dim);
-  background: color-mix(in srgb, var(--steel) 70%, transparent);
+  background: color-mix(in srgb, var(--steel) 88%, transparent);
   border: 1px solid var(--edge);
-  border-radius: 999px;
+  border-radius: 2px;
   cursor: pointer;
-  backdrop-filter: blur(8px);
   transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 .examples button:hover { color: var(--ink); border-color: var(--ink-faint); }
@@ -316,10 +333,9 @@ html, body {
   display: flex;
   gap: 0.5rem;
   padding: 0.45rem 0.45rem 0.45rem 0.9rem;
-  background: color-mix(in srgb, var(--steel) 82%, transparent);
+  background: color-mix(in srgb, var(--steel) 94%, transparent);
   border: 1px solid var(--edge);
   border-radius: var(--radius);
-  backdrop-filter: blur(14px);
   transition: border-color 200ms ease;
 }
 .prompt:focus-within { border-color: var(--ink-faint); }
@@ -341,7 +357,7 @@ html, body {
   color: var(--void);
   background: var(--ink);
   border: 0;
-  border-radius: 8px;
+  border-radius: 2px;
   cursor: pointer;
   transition: background 180ms ease;
 }
@@ -393,7 +409,6 @@ html, body {
   background: radial-gradient(ellipse at 50% 45%,
     color-mix(in srgb, var(--void) 72%, transparent) 0%,
     var(--void) 70%);
-  backdrop-filter: blur(3px);
   transition: opacity 900ms ease;
 }
 .opening-done { opacity: 0; pointer-events: none; }
@@ -419,17 +434,20 @@ html, body {
   color: var(--ink-faint);
 }
 .opening-title {
-  margin: 0.7rem 0 0;
-  font-family: var(--serif);
-  font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+  margin: 0.9rem 0 0;
+  font-family: var(--mono);
+  font-size: clamp(1.5rem, 3.4vw, 2.2rem);
   font-weight: 400;
-  line-height: 1.05;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 .opening-body {
-  margin: 1rem auto 0;
-  max-width: 30rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  margin: 1.1rem auto 0;
+  max-width: 32rem;
+  font-family: var(--mono);
+  font-weight: 300;
+  font-size: 0.78rem;
+  line-height: 1.7;
   color: var(--ink-dim);
 }
 .opening-go {
@@ -440,10 +458,10 @@ html, body {
   letter-spacing: 0.08em;
   color: var(--void);
   background: var(--ink);
-  border: 0;
-  border-radius: 999px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
   cursor: pointer;
-  transition: background 200ms ease, transform 200ms ease;
+  transition: background 200ms ease, color 200ms ease;
 }
 .opening-go:hover { background: var(--live); transform: translateY(-1px); }
 
