@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import time
 
@@ -130,8 +131,24 @@ def main() -> int:
         "model": args.model, "pretrained": args.pretrained,
     }, indent=2) + "\n")
 
+    # One writer per directory.
+    #
+    # Both the vectors and the key list are read-modify-write, so a second run
+    # against the same output silently corrupts the first. The lock is a file
+    # rather than anything cleverer because the failure it prevents is a person
+    # starting the same command twice, which is what happened.
+    lock = out / ".embedding.lock"
+    if lock.exists():
+        raise SystemExit(
+            f"{lock} exists, so another run is using {out}.\n"
+            f"If nothing is running, delete the lock and check that "
+            f"vectors.npy and keys.json still have the same length."
+        )
+    lock.write_text(f"{os.getpid()}\n")
+
     todo = [r for r in index if r["file"] not in done]
     if not todo:
+        lock.unlink(missing_ok=True)
         print("nothing to do")
         return 0
 
@@ -164,6 +181,22 @@ def main() -> int:
         fresh = np.concatenate(rows)
         current = np.load(vec_path) if vec_path.exists() else None
         stacked = fresh if current is None else np.concatenate([current, fresh])
+
+        # Refuse to write a file that cannot be right.
+        #
+        # Two runs of this script against one directory both append, and the
+        # array ends up an interleaving of the two while keys.json holds
+        # whatever the last writer had. That happened: 107,636 vectors for
+        # 65,300 images, unrecoverable, two hours of GPU time gone. The lock
+        # below stops it, and this stops anything else that would produce the
+        # same shape of damage from being written to disk at all.
+        if stacked.shape[0] != len(keys):
+            raise RuntimeError(
+                f"refusing to write {vec_path}: {stacked.shape[0]} vectors "
+                f"against {len(keys)} keys. Something else has written to this "
+                f"directory. Delete it and start again rather than trusting a "
+                f"file that cannot be indexed."
+            )
         # Through a handle, not a path: np.save appends ".npy" to any path
         # that does not already end in it, so saving to "vectors.npy.tmp"
         # silently writes "vectors.npy.tmp.npy" and the move then fails on a
@@ -210,6 +243,8 @@ def main() -> int:
         print(f"\ninterrupted at {len(keys) - len(done)} images, saved. "
               f"Rerun the same command to continue.")
         return 130
+    finally:
+        lock.unlink(missing_ok=True)
 
     save()
     vectors = np.load(vec_path)

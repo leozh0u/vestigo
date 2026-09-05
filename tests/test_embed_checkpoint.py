@@ -95,3 +95,37 @@ def test_the_temporary_file_is_written_through_a_handle(tmp_path):
     with open(by_handle, "wb") as fh:
         np.save(fh, np.zeros((1, 2)))
     assert by_handle.exists()
+
+
+def test_a_second_run_against_one_directory_is_refused():
+    """Both the vectors and the key list are read-modify-write, so two runs
+    against the same output append over each other. That happened: 107,636
+    vectors for 65,300 images, keys.json holding whatever the last writer had,
+    unrecoverable, two hours of GPU time gone."""
+    source = pathlib.Path(embed.__file__).read_text()
+    assert ".embedding.lock" in source
+    assert "another run is using" in source
+    # Released on the way out however the run ends, or the next one is blocked
+    # by a lock nobody holds.
+    assert "finally:" in source
+    assert "lock.unlink(missing_ok=True)" in source
+
+
+def test_it_refuses_to_write_vectors_that_cannot_be_indexed():
+    """The lock stops the known cause. This stops the damage: a file where
+    vectors[i] does not correspond to keys[i] is worse than no file, because
+    nothing downstream can tell."""
+    source = pathlib.Path(embed.__file__).read_text()
+    assert "refusing to write" in source
+    assert "stacked.shape[0] != len(keys)" in source
+
+
+def test_the_corrupt_case_is_detectable_from_the_files_alone(tmp_path):
+    """What the check is looking for, made explicit: a length mismatch between
+    the array and the key list is the whole signature."""
+    import numpy as np
+    keys = ["a.jpg", "b.jpg"]
+    (tmp_path / "keys.json").write_text(json.dumps(keys))
+    np.save(tmp_path / "vectors.npy", np.zeros((3, 8), dtype=np.float32))
+    loaded = np.load(tmp_path / "vectors.npy")
+    assert loaded.shape[0] != len(json.loads((tmp_path / "keys.json").read_text()))

@@ -99,6 +99,17 @@ def load_data(n_cells: int, min_count: int, mode: str = "cluster",
     keys = json.loads((emb / "keys.json").read_text())
     vectors = np.load(emb / "vectors.npy")
 
+    # The pair has to line up, because everything below indexes one by the
+    # other. Two concurrent runs of embed.py once left 107,636 vectors against
+    # 65,300 keys, and training on that would have silently paired photographs
+    # with other photographs' coordinates: a model that learns nothing, from a
+    # file that looks fine.
+    if vectors.shape[0] != len(keys):
+        raise SystemExit(
+            f"{emb} is corrupt: {vectors.shape[0]} vectors against "
+            f"{len(keys)} keys. Delete the directory and re-embed."
+        )
+
     rows = [(i, index[k]) for i, k in enumerate(keys) if k in index]
     points = [(r["lat"], r["lon"]) for _, r in rows]
 
