@@ -105,7 +105,28 @@ managed 94 km median on rural imagery of the same kind. DECISIONS.md predicted
 exactly this before any of it was built: country-level accuracy respectable,
 anything finer well short.
 
-### Data volume was the binding constraint, and that was worth proving
+### The encoder was the ceiling, and it took longest to see
+
+| encoder | dims | accuracy | median | within 200 km | calibration error |
+|---|---|---|---|---|---|
+| ViT-B/32 | 512 | 31.9% | 527 km | 37% | 2.6% |
+| **ViT-L/14** | **768** | **44.8%** | **198 km** | **50%** | **3.5%** |
+
+**527 km to 198 km**, for a frozen encoder swap and ninety seconds of
+retraining. Larger than everything else tried here put together.
+
+The head is one linear layer, so whatever the backbone fails to separate is
+gone before training starts. ViT-B/32 was chosen because it runs on a laptop
+and matches the published work, and it is also the smallest CLIP there is:
+32-pixel patches, so it reads a photograph coarsely.
+
+Why it took so long to test: data was the only variable that had been changed,
+so every result pointed at data. Three experiments in a row measured something
+about the dataset, and the conclusion drawn each time was about the dataset.
+The encoder had been a constant since the first run and constants do not look
+like causes.
+
+### Data volume mattered too, and that was worth proving
 
 Two attempts to improve the model without more data both failed. Haversine
 label smoothing cost calibration and bought nothing; administrative-boundary
@@ -113,9 +134,15 @@ cells lost to clustering, 32.0% against 36.0%. Both are written up below,
 because a prediction that measured wrong is the part of this file worth
 reading.
 
-The third attempt was 3.2x the data and it nearly halved the median. That is
-the answer to which of the three guesses was right, and it took a fetch rather
-than an argument.
+The third attempt was 3.2x the data and it nearly halved the median, 1,024 km
+to 527 km. That answered which of the three guesses was right, and it took a
+fetch rather than an argument.
+
+It was still not the largest lever available. The encoder above was, and 65,000
+images is what makes the larger encoder worth having: a 768-dimensional
+representation needs more examples per cell before a linear layer can use it.
+The two results are not rivals. Data raised the ceiling the encoder then
+reached.
 
 ### Cell count stopped mattering once the data grew
 
