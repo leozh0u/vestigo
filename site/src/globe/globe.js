@@ -155,13 +155,15 @@ export class Globe {
         filling the oceans mean anything: the sea arrives in a basin that is
         already there rather than being a colour applied to a region.
 
-        Small. 0.035 of a unit radius is roughly 220 km of exaggeration at
-        Earth scale, which is absurd geographically and about right visually.
-        Any more and the planet looks like a golf ball.
+        Small, and smaller than the first attempt. 0.02 of a unit radius is
+        about 130 km of exaggeration at Earth scale: absurd geographically and
+        about right visually. At 0.035 the coastlines tore into a visible
+        staircase, because the amplitude was large enough for the mesh to show
+        where one vertex ended and the next began.
       */
       displacementMap: load(TEXTURES.relief, false),
-      displacementScale: 0.035,
-      displacementBias: -0.012,
+      displacementScale: 0.02,
+      displacementBias: -0.007,
       metalness: 0.95,
       // The map supplies the variation, so the base is a multiplier and stays
       // at 1. Setting both fights: the map would be scaled down into a narrow
@@ -442,6 +444,11 @@ export class Globe {
   }
 
   render(dt) {
+    // Growth is eased here rather than being set by the run, so the twenty-odd
+    // discrete steps the player reports become a curve. Without this call the
+    // world never changes at all, which is what it did: the method existed and
+    // nothing invoked it.
+    this.ease(dt);
     if (this.spinning) this.metal.rotation.y += dt * this.spin;
     // The spheres are one object as far as a viewer is concerned, so the
     // others copy the first rather than being animated alongside it. Two

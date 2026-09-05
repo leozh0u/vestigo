@@ -349,7 +349,19 @@ def relief(mask: Image.Image, coast: Image.Image) -> Image.Image:
     ranges = np.clip((terrain - 0.52) / 0.48, 0, 1) ** 1.6
 
     height = shelf * 0.62 + m * 0.16 + ranges * m * 0.22
-    return Image.fromarray((np.clip(height, 0, 1) * 255).astype("uint8"), "L")
+
+    # Smoothed before it is written, and this matters more than it sounds.
+    #
+    # The raw mask has a hard edge at every coastline, and a displacement map
+    # with a hard edge pushes neighbouring vertices to different heights with
+    # nothing between them. The result was a torn, blocky rim around every
+    # island: not a coastline but a staircase, most visible around Japan and
+    # the Philippines where the coast is intricate and the mesh is not.
+    #
+    # A displacement map has to be smoother than the mesh sampling it, or the
+    # mesh reads the discontinuity as geometry.
+    smooth = Image.fromarray((np.clip(height, 0, 1) * 255).astype("uint8"), "L")
+    return smooth.filter(ImageFilter.GaussianBlur(max(1.5, w / 900)))
 
 
 def city_lights(w: int, h: int) -> Image.Image:
