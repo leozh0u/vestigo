@@ -7,6 +7,7 @@
   of them replaceable.
 */
 import { Globe } from "./globe/globe.js";
+import { Opening } from "./opening/opening.js";
 import { Flight } from "./globe/camera.js";
 import { Drag } from "./globe/drag.js";
 import { Machine } from "./sequence/machine.js";
@@ -124,6 +125,22 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 document.body.style.cursor = "grab";
+
+/*
+  The opening, if there is one to show.
+
+  Mounted only when a clip is actually on disk. Showing a "Begin" panel that
+  dismisses itself with nothing behind it is worse than not showing one, and
+  this page has to work for somebody opening it thirty seconds before an
+  interview.
+*/
+Opening.available().then((hasVideo) => {
+  if (!hasVideo) return;
+  new Opening({
+    onBegin: () => { globe.spinning = false; },
+    onFinish: () => { globe.spinning = true; },
+  }).mount();
+});
 
 loadIndex()
   .then(mountExamples)

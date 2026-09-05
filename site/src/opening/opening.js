@@ -1,0 +1,106 @@
+/*
+  The opening: an "activate" panel, then whatever cinematic is available.
+
+  Written so the assets are optional. If the Manhattan tiles have no key and
+  the interior clip is not on disk, this resolves immediately and the page
+  starts on the globe. That is a deliberate default rather than a failure mode:
+  the site has to work for somebody opening it thirty seconds before an
+  interview, and a cinematic that will not load must never be the reason it
+  does not.
+
+  See README.md in this directory for what each half needs.
+*/
+const VIDEO = "/opening/interior.mp4";
+
+export class Opening {
+  constructor({ onBegin, onFinish }) {
+    this.onBegin = onBegin;
+    this.onFinish = onFinish;
+    this.root = null;
+  }
+
+  /* Is there a cinematic to play? A HEAD request rather than loading the file,
+     so a missing clip costs a few bytes instead of a download. */
+  static async available() {
+    try {
+      const res = await fetch(VIDEO, { method: "HEAD" });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  mount(parent = document.body) {
+    const el = document.createElement("div");
+    el.className = "opening";
+    el.innerHTML = `
+      <div class="opening-inner">
+        <p class="opening-eyebrow">Evidence-based geolocation</p>
+        <h2 class="opening-title">Where was this taken?</h2>
+        <p class="opening-body">
+          Most systems will tell you. This one tells you how much to believe
+          the answer, and stops when the evidence runs out.
+        </p>
+        <button class="opening-go" type="button">Begin</button>
+        <button class="opening-skip" type="button">Skip the intro</button>
+      </div>`;
+    parent.append(el);
+    this.root = el;
+
+    el.querySelector(".opening-go").addEventListener("click", () => this.begin());
+    el.querySelector(".opening-skip").addEventListener("click", () => this.finish());
+    return this;
+  }
+
+  async begin() {
+    this.onBegin?.();
+    this.root?.classList.add("opening-playing");
+
+    if (!(await Opening.available())) {
+      this.finish();
+      return;
+    }
+
+    /*
+      The handoff.
+
+      The clip ends on a laptop with a dark screen. The interface fades up
+      inside the bezel and the bezel then scales up and off the edges, so
+      nothing ever has to line up: the UI appears inside a frame this code
+      controls. A straight cut would need a pixel-perfect match against a
+      generated frame, which is hard to produce and obvious when it is close
+      but wrong.
+    */
+    const video = document.createElement("video");
+    video.className = "opening-video";
+    video.src = VIDEO;
+    video.muted = true;              // autoplay is blocked otherwise
+    video.playsInline = true;
+    video.preload = "auto";
+    this.root.append(video);
+
+    // A skip that is visible from the first frame. Somebody who has seen this
+    // once and came back to show a colleague should not have to sit through it.
+    this.root.querySelector(".opening-skip").classList.add("over-video");
+
+    video.addEventListener("ended", () => this.finish());
+    // A clip that fails mid-play should not strand the visitor on a black
+    // rectangle, so any error lands on the same exit as a normal end.
+    video.addEventListener("error", () => this.finish());
+
+    try {
+      await video.play();
+    } catch {
+      this.finish();
+    }
+  }
+
+  finish() {
+    if (this.finished) return;       // ended and skipped can both arrive
+    this.finished = true;
+    this.root?.classList.add("opening-done");
+    // Long enough for the fade in CSS, short enough not to feel like a wait.
+    setTimeout(() => this.root?.remove(), 900);
+    this.onFinish?.();
+  }
+}

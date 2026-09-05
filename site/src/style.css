@@ -376,3 +376,103 @@ html, body {
 .examples button, .prompt button, .wordmark { cursor: pointer; }
 .prompt input { cursor: text; user-select: text; }
 .receipt, .evidence { user-select: text; }
+
+
+/* --------------------------------------------------------------------------
+   The opening
+
+   Sits over everything until it is dismissed. The globe is already running
+   underneath, so the page behind this is warm by the time it lifts.
+   -------------------------------------------------------------------------- */
+.opening {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 45%,
+    color-mix(in srgb, var(--void) 72%, transparent) 0%,
+    var(--void) 70%);
+  backdrop-filter: blur(3px);
+  transition: opacity 900ms ease;
+}
+.opening-done { opacity: 0; pointer-events: none; }
+
+.opening-inner {
+  max-width: 34rem;
+  padding: 0 1.5rem;
+  text-align: center;
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+.opening-playing .opening-inner {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.opening-eyebrow {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.opening-title {
+  margin: 0.7rem 0 0;
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+.opening-body {
+  margin: 1rem auto 0;
+  max-width: 30rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+.opening-go {
+  margin-top: 2rem;
+  padding: 0.8rem 2.2rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--void);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+}
+.opening-go:hover { background: var(--live); transform: translateY(-1px); }
+
+.opening-skip {
+  display: block;
+  margin: 1rem auto 0;
+  padding: 0.3rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.opening-skip:hover { color: var(--ink-dim); }
+/* Over the video it has to stay reachable and out of the way. Somebody who has
+   seen this once should never be trapped in it. */
+.opening-skip.over-video {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  margin: 0;
+  z-index: 2;
+}
+
+.opening-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
