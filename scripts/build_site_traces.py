@@ -44,33 +44,61 @@ def summarise(path: pathlib.Path) -> dict | None:
 
 
 def choose(rows: list[dict], count: int) -> list[dict]:
-    """One example per level, finest first, then a declined run if there is one.
+    """A deliberate spread, finest to coarsest, ending with a refusal.
 
-    Spreading across levels is the argument the site is making. Three examples
-    that all land on a street would show a system that always succeeds, which
-    is both untrue and the opposite of the point.
+    The row of examples is the argument the site is making, so what is in it
+    decides what the site says. Four runs that all land on a street show a
+    system that always succeeds, which is neither true nor the point.
+
+    What the page claims is that it answers as precisely as the evidence allows
+    and stops. Demonstrating that needs the whole ladder: something pinned to a
+    building, something that only reaches a city, something that gets no
+    further than a country, and at least one where it looked and refused. The
+    refusals are the most convincing item in the set and the easiest to leave
+    out, because they look like failures in a list of successes.
+
+    One per photograph. The eval runs each image three times, so without this
+    the same picture appears three times over as three different results, which
+    reads as padding.
     """
+    ladder = ["point", "district", "city", "region", "country", "continent"]
     picked: list[dict] = []
-    seen_levels: set[str] = set()
-    for level in LEVELS:
+    seen_subjects: set[str] = set()
+
+    def take(row: dict) -> None:
+        picked.append(row)
+        seen_subjects.add(row["subject"])
+
+    # Two from the fine end, then one at each remaining level, so the row opens
+    # on the system at its most precise and degrades from there.
+    wanted = ["point", "point", "district", "city", "region", "country", "continent"]
+    for level in wanted:
+        if len(picked) >= count - 2:
+            break
         for row in rows:
-            if row["level"] == level and level not in seen_levels:
-                picked.append(row)
-                seen_levels.add(level)
+            if row["level"] == level and row["subject"] not in seen_subjects:
+                take(row)
                 break
+
+    # Two refusals at the end. Reserved rather than taken if they happen to
+    # fit, because they are the item most likely to be squeezed out and the
+    # one the page most needs.
+    refused = [r for r in rows if r["level"] is None and r["subject"] not in seen_subjects]
+    for row in refused[:2]:
+        take(row)
+
+    # Top up from anything left, still one per photograph.
+    for row in rows:
         if len(picked) >= count:
             break
+        if row["subject"] not in seen_subjects:
+            take(row)
 
-    declined = [r for r in rows if r["level"] is None]
-    if declined and len(picked) < count:
-        picked.append(declined[0])
+    # Finest first, refusals last, which is the order the argument reads in.
+    def rank(row: dict) -> int:
+        return ladder.index(row["level"]) if row["level"] in ladder else len(ladder)
 
-    for row in rows:                       # top up if the set was thin
-        if len(picked) >= count:
-            break
-        if row not in picked:
-            picked.append(row)
-    return picked[:count]
+    return sorted(picked[:count], key=rank)
 
 
 def copy_thumbnail(subject: str) -> str | None:
@@ -107,8 +135,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--from", dest="source", default="results/traces_v9",
                     help="directory of traces written by eval/harness.py --traces")
-    ap.add_argument("--count", type=int, default=4,
-                    help="how many examples the site offers")
+    ap.add_argument("--count", type=int, default=9,
+                    help="how many examples the site offers. The row is the argument, so it needs the whole ladder and at least one refusal")
     ap.add_argument("--all", action="store_true",
                     help="copy every trace rather than a chosen spread")
     args = ap.parse_args()

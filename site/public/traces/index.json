@@ -9,6 +9,15 @@
     "photo": "/photos/im2gps_694f4bfbd7.jpg"
   },
   {
+    "file": "im2gps_a33bc4c242_s0.json",
+    "subject": "im2gps_a33bc4c242",
+    "steps": 29,
+    "level": "point",
+    "value": "Kent County Courthouse, Chestertown, Maryland",
+    "confidence": 0.976,
+    "photo": "/photos/im2gps_a33bc4c242.jpg"
+  },
+  {
     "file": "im2gps_771cffef86_s1.json",
     "subject": "im2gps_771cffef86",
     "steps": 27,
@@ -34,5 +43,41 @@
     "value": "Mediterranean coastal region (Adriatic coast)",
     "confidence": 0.8362,
     "photo": "/photos/im2gps_0fc6f7a8d1.jpg"
+  },
+  {
+    "file": "im2gps_2d187a1317_s0.json",
+    "subject": "im2gps_2d187a1317",
+    "steps": 13,
+    "level": "country",
+    "value": "Lowland Britain / Northwest Europe (temperate deciduous woodland edge and grassland)",
+    "confidence": 0.7984,
+    "photo": "/photos/im2gps_2d187a1317.jpg"
+  },
+  {
+    "file": "im2gps_04881af57a_s0.json",
+    "subject": "im2gps_04881af57a",
+    "steps": 19,
+    "level": "continent",
+    "value": "Europe",
+    "confidence": 0.4,
+    "photo": "/photos/im2gps_04881af57a.jpg"
+  },
+  {
+    "file": "im2gps_db82bcd70c_s2.json",
+    "subject": "im2gps_db82bcd70c",
+    "steps": 36,
+    "level": null,
+    "value": null,
+    "confidence": null,
+    "photo": "/photos/im2gps_db82bcd70c.jpg"
+  },
+  {
+    "file": "mapillary_385508af73_s0.json",
+    "subject": "mapillary_385508af73",
+    "steps": 25,
+    "level": null,
+    "value": null,
+    "confidence": null,
+    "photo": "/photos/mapillary_385508af73.jpg"
   }
 ]
