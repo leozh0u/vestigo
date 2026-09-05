@@ -27,28 +27,54 @@
   because the opposite assumption — that a long flythrough costs per tile —
   would make this whole approach look reckless, and it would be.
 
-  ## Do not edit anything while this runs
+  ## It does not need the dev server
 
-  The harness loads its modules through the dev server, so saving any file the
-  page imports destroys the execution context mid-render and the run dies with
-  "Execution context was destroyed". It has happened twice: once producing a
-  file of entirely black frames, which is worse, because that one looked like a
-  finished render.
+  It used to, and that cost three renders. The harness imported its modules over
+  http://localhost:5173, so saving any file the page transitively imported tore
+  down the execution context and the run died with "Execution context was
+  destroyed" — or worse, survived and wrote a file of entirely black frames,
+  which is the bad kind of failure because it looks like a finished render.
 
-  Commit, then render, then go and do something else.
+  Over ten minutes of rendering, not touching the repository is not a discipline
+  anyone keeps. So the scene is bundled with esbuild into one self-contained
+  script and inlined into the page: no imports, no server, no watcher. Edit
+  whatever you like while this runs.
 
-  ## A self-contained page, deliberately
-
-  Not the site. The dev server's hot reload destroys the execution context
-  whenever a file changes, which during an eight-minute render is close to
-  certain, and borrowing the page's renderer would mean a failure here could be
-  the page's fault rather than the tileset's. This builds its own scene, so what
-  it produces is about the tiles.
+  The API key is baked in by the same bundle step, read from .env.local the way
+  vite would read it. It never leaves this machine — the page is built here and
+  fed to a headless browser here.
 */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
+
+/*
+  Bundle the scene into one script with no imports left in it.
+
+  esbuild resolves three and the tiles renderer out of node_modules and inlines
+  them, and `define` substitutes the key the way vite's env replacement does, so
+  manhattan.js needs no change to work in both places.
+*/
+async function bundleScene() {
+  const env = await fs.readFile(".env.local", "utf8").catch(() => "");
+  const key = /^VITE_GOOGLE_MAPS_KEY=(.*)$/m.exec(env)?.[1]?.trim();
+  if (!key) throw new Error("no VITE_GOOGLE_MAPS_KEY in site/.env.local");
+
+  const out = path.join(await fs.mkdtemp(".bundle-"), "scene.js");
+  await new Promise((resolve, reject) => {
+    const p = spawn("npx", [
+      "esbuild", "scripts/scene-entry.js",
+      "--bundle", "--format=iife", "--global-name=SCENE",
+      `--define:import.meta.env.VITE_GOOGLE_MAPS_KEY=${JSON.stringify(key)}`,
+      `--outfile=${out}`,
+    ], { stdio: ["ignore", "ignore", "inherit"] });
+    p.on("close", (c) => (c === 0 ? resolve() : reject(new Error(`esbuild ${c}`))));
+  });
+  const code = await fs.readFile(out, "utf8");
+  await fs.rm(path.dirname(out), { recursive: true, force: true });
+  return code;
+}
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(" ").split("--").filter(Boolean)
@@ -73,30 +99,26 @@ const OUT = args.out ?? "media/descent.mp4";
 */
 const PLACE = { lat: 40.7264, lon: -73.9818 };
 
-const harness = ({ width, height, place }) => `
+const harness = ({ width, height, place, scene }) => `
 <!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
 <canvas id="c" width="${width}" height="${height}"
         style="display:block;width:${width}px;height:${height}px"></canvas>
-<script type="module">
-  import * as THREE from "/node_modules/three/build/three.module.js";
-  import { Manhattan, MANHATTAN } from "/src/globe/manhattan.js";
-  MANHATTAN.lat = ${place.lat};
-  MANHATTAN.lon = ${place.lon};
-
+<script>${scene}<\/script>
+<script>
   window.state = { stage: "starting" };
   (async () => {
     try {
+      const { THREE, Manhattan, MANHATTAN } = window.SCENE;
+      MANHATTAN.lat = ${place.lat};
+      MANHATTAN.lon = ${place.lon};
       const renderer = new THREE.WebGLRenderer({
         canvas: document.getElementById("c"), antialias: true });
       renderer.setPixelRatio(1);
       renderer.setSize(${width}, ${height}, false);
-      // Far enough for the sky dome at 60 km and the skyline behind it; near
-      // enough that the depth buffer still has precision where the buildings
-      // are, which the haze in the grade depends on.
-      // The far plane has to clear the planet at the top of the move, where
-      // the camera is six hundred kilometres up and the horizon is thousands of
+      // The far plane has to clear the planet at the top of the move, where the
+      // camera is six hundred kilometres up and the horizon is thousands of
       // kilometres away. At 80,000 the Earth was behind it and the opening
-      // frames were empty.
+      // frames came back empty.
       const camera = new THREE.PerspectiveCamera(38, ${width} / ${height}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
       await m.load();
@@ -109,6 +131,7 @@ const harness = ({ width, height, place }) => `
 <\/script></body></html>`;
 
 async function main() {
+  const scene = await bundleScene();
   const frames = Math.round(SECONDS * FPS);
   const dir = await fs.mkdtemp(path.join(process.cwd(), ".descent-"));
   console.log(`${frames} frames at ${WIDTH}x${HEIGHT}, ${FPS}fps -> ${OUT}`);
@@ -124,13 +147,15 @@ async function main() {
     await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
     page.on("pageerror", (e) => console.log("  page:", String(e).slice(0, 160)));
 
-    // Loaded through the dev server so the module graph and the API key both
-    // resolve the way they do on the site.
-    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" })
-      .catch(() => {});
-    await page.setContent(harness({ width: WIDTH, height: HEIGHT, place: PLACE }),
-                          { waitUntil: "networkidle0" });
-    await page.waitForFunction("window.state?.stage !== 'starting'", { timeout: 60_000 });
+    await page.setContent(
+      harness({ width: WIDTH, height: HEIGHT, place: PLACE, scene }),
+      { waitUntil: "domcontentloaded" });
+    // window.state is undefined until the script runs, and `undefined?.stage`
+    // is also not "starting", so the obvious condition passes instantly and the
+    // next line reads a property of nothing.
+    await page.waitForFunction(
+      "window.state !== undefined && window.state.stage !== 'starting'",
+      { timeout: 90_000 });
     const state = await page.evaluate("window.state");
     if (state.stage !== "ready") throw new Error(state.why ?? "tiles did not load");
     console.log("  tileset open");

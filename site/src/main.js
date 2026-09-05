@@ -299,6 +299,34 @@ function frame(now) {
 }
 if (!RENDERING) requestAnimationFrame(frame);
 
+/*
+  Keep the planet clear of the photographs.
+
+  The bar's height is not a constant: the photographs are 104px on a laptop and
+  92 on a narrow phone, and the strip carries different padding at each. So it
+  is measured, and measured again whenever the window changes, rather than
+  written down somewhere as a number that will quietly stop being true.
+*/
+const bar = document.querySelector(".bar");
+/*
+  Observed rather than measured once.
+
+  Measuring at startup caught the bar at 71px, before the photographs had
+  arrived; by the time anyone saw the page it was 175 and the planet was a
+  hundred pixels lower than it should have been. Adding a call after the traces
+  load would fix that one case and not the next: the bar also changes height
+  when a photograph is hovered, when the breakpoint changes the thumbnail size,
+  and when the strip rebuilds on resize.
+
+  A ResizeObserver watches the element itself, so every one of those is the same
+  event and none of them has to be anticipated.
+*/
+if (bar) {
+  new ResizeObserver(([entry]) => {
+    globe.setSafeBottom(entry.contentRect.height);
+  }).observe(bar);
+}
+
 document.body.style.cursor = "grab";
 
 // The background reads from the traces, so it says the same things the page

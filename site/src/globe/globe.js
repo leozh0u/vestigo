@@ -135,8 +135,25 @@ export class Globe {
     this.baseDistance = 3.55;
     this.fit = 1;
     this.camera.position.set(0, 0, this.baseDistance);
-    // Lifted, so the sphere sits above the controls instead of behind them.
-    this.camera.position.y = 0.18;
+    /*
+      How many pixels along the bottom belong to something else.
+
+      The strip of photographs sits over the lower part of the frame, so the
+      space the planet actually has is the window minus that. Centred in the
+      whole window it is centred behind the strip, which is what it looked
+      like: a globe with its southern third under a row of thumbnails.
+
+      Set from the bar's measured height in main.js rather than guessed,
+      because the bar's height depends on the photograph size, which depends on
+      the breakpoint.
+
+      There was a `camera.position.y = 0.18` here with a comment saying it
+      lifted the sphere above the controls. It did the opposite. A camera raised
+      above the origin sees the origin *below* its centre line, so every pixel
+      of that lift pushed the planet further down behind the very row it was
+      meant to clear.
+    */
+    this.safeBottom = 0;
 
     this.scene.environment = this.buildEnvironment();
 
@@ -976,6 +993,20 @@ export class Globe {
   /* Where the camera sits when it is not going anywhere. */
   get idleDistance() { return this.baseDistance * this.fit; }
 
+  /*
+    Tell the globe how much of the bottom of the window it does not have.
+
+    Given in CSS pixels. The camera is moved down by half of it, in world
+    units, which raises the planet in frame by the same amount: what is wanted
+    is the sphere centred in the space *above* the bar, and the centre of that
+    space is half the bar's height above the centre of the window.
+  */
+  setSafeBottom(pixels) {
+    if (pixels === this.safeBottom) return;
+    this.safeBottom = pixels;
+    this.resize();
+  }
+
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
@@ -994,6 +1025,19 @@ export class Globe {
     const halfFov = Math.tan((this.camera.fov * Math.PI) / 360);
     const needed = (1 / 0.92) / (halfFov * this.camera.aspect);
     this.fit = Math.max(1, needed / this.baseDistance);
+
+    /*
+      Raise the planet clear of the bar.
+
+      At the camera's distance the visible half-height in world units is
+      tan(fov/2) times that distance, and that maps to half the window in
+      pixels. So a pixel is worth (halfHeightWorld / halfHeightPixels), and
+      moving the camera down by half the bar's height in those units puts the
+      sphere in the middle of what is left.
+    */
+    const halfWorld = halfFov * this.camera.position.z;
+    const perPixel = h > 0 ? (halfWorld / (h / 2)) : 0;
+    this.camera.position.y = -(this.safeBottom / 2) * perPixel;
 
     // Only when nothing is flying. A resize mid-flight — which on a phone
     // means the address bar sliding away — must not teleport the camera out
