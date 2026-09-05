@@ -93,13 +93,17 @@ class MetaTool(Tool):
 
     def __init__(self, cache=None, resolver=None):
         super().__init__(cache)
-        # Injected so a test can run without the boundary file, and so the
-        # 3 MB of polygons load once rather than per call.
-        self._resolver = resolver
+        # Loaded here, not on first call. The eval harness builds the tool once
+        # and then hands it to six worker threads, so a lazy load would have
+        # several of them racing to read the same three megabytes. Constructing
+        # eagerly also means a missing boundary file fails at startup, where
+        # the harness can report it and carry on, rather than inside a run.
+        #
+        # A resolver may be injected instead, which is how the tests run with
+        # no boundary file at all.
+        self._resolver = resolver if resolver is not None else country_resolver()
 
     def resolver(self):
-        if self._resolver is None:
-            self._resolver = country_resolver()
         return self._resolver
 
     def _run(self, **inputs) -> ToolResult:

@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import functools
 import pathlib
+import threading
 from dataclasses import dataclass
 
 from .board import Constraint, Level, RegionSet
@@ -60,17 +61,24 @@ BOUNDARIES = pathlib.Path("data/boundaries/ne_50m_admin_0_countries.geojson")
 # Resolving a point to a country
 # --------------------------------------------------------------------------
 
+_load_lock = threading.Lock()
+
+
 @functools.lru_cache(maxsize=1)
 def _countries():
     """Natural Earth polygons, loaded once per process.
 
-    Imported lazily. `ml/` is the only place that needs a heavy dependency
-    tree, and `vestigo/` must stay importable on a machine with no ML stack.
+    Imported inside the function rather than at module scope. `ml/` pulls in
+    numpy, and `vestigo/` has to stay importable on a machine with no ML stack
+    so that the board, the agent and the other tools work without one.
+
+    Behind a lock as well as a cache. `lru_cache` makes repeat calls cheap but
+    does not stop two threads entering the body at once, and the eval harness
+    runs six workers over a three megabyte file.
     """
-    import sys
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-    from ml.admin_cells import load_countries
-    return load_countries(BOUNDARIES)
+    with _load_lock:
+        from ml.admin_cells import load_countries
+        return load_countries(BOUNDARIES)
 
 
 def country_resolver():
