@@ -10,10 +10,20 @@
 
   See README.md in this directory for what each half needs.
 */
-// The stitched intro: the rendered Earth beat plus whatever generated clips
-// exist, joined by scripts/stitch-intro.mjs. One file, so the page has one
-// thing to load and one thing to skip.
-const VIDEO = "/opening/intro.mp4";
+/*
+  Where the intro is, asked rather than assumed.
+
+  It used to be a constant, /opening/intro.mp4, and that was a mistake with a
+  cost. Replacing the video did not change its URL, so a browser holding the old
+  one went on playing the old one: a new cut shipped, the site served it, and
+  the person it was made for saw the previous version and reported that nothing
+  had changed. Twice, before anyone worked out it was a cache.
+
+  stitch-intro.mjs names the file after a hash of its contents and writes this
+  manifest beside it. The manifest is small and may be re-fetched freely; the
+  video it points at is immutable and never needs to be.
+*/
+const MANIFEST = "/opening/intro.json";
 
 export class Opening {
   constructor({ onBegin, onFinish }) {
@@ -22,14 +32,24 @@ export class Opening {
     this.root = null;
   }
 
-  /* Is there a cinematic to play? A HEAD request rather than loading the file,
-     so a missing clip costs a few bytes instead of a download. */
+  /*
+    Is there a cinematic, and where?
+
+    Returns its URL or null. A few hundred bytes of JSON rather than a HEAD
+    against a video, and it answers both questions at once: whether there is one
+    to play, and which build of it this is.
+
+    no-store on the manifest specifically. It is the one thing here that has to
+    be current, and it is small enough that not caching it costs nothing.
+  */
   static async available() {
     try {
-      const res = await fetch(VIDEO, { method: "HEAD" });
-      return res.ok;
+      const res = await fetch(MANIFEST, { cache: "no-store" });
+      if (!res.ok) return null;
+      const { src } = await res.json();
+      return typeof src === "string" && src ? src : null;
     } catch {
-      return false;
+      return null;
     }
   }
 
@@ -82,7 +102,8 @@ export class Opening {
     this.onBegin?.();
     this.root?.classList.add("opening-playing");
 
-    if (!(await Opening.available())) {
+    const src = await Opening.available();
+    if (!src) {
       this.finish();
       return;
     }
@@ -99,7 +120,7 @@ export class Opening {
     */
     const video = document.createElement("video");
     video.className = "opening-video";
-    video.src = VIDEO;
+    video.src = src;
     video.muted = true;              // autoplay is blocked otherwise
     video.playsInline = true;
     video.preload = "auto";

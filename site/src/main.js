@@ -314,8 +314,11 @@ mountTyping();
   this page has to work for somebody opening it thirty seconds before an
   interview.
 */
-Opening.available().then((hasVideo) => {
-  if (!hasVideo || RENDERING) return;
+// Resolves to the intro's URL or null, rather than a boolean: the file is named
+// after a hash of its contents so that replacing it cannot be defeated by a
+// cache, which means nothing can hardcode the path. See opening.js.
+Opening.available().then((src) => {
+  if (!src || RENDERING) return;
   new Opening({
     onBegin: () => { globe.spinning = false; },
     onFinish: () => { globe.spinning = true; },
