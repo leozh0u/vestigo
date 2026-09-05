@@ -73,19 +73,34 @@ def choose(rows: list[dict], count: int) -> list[dict]:
     return picked[:count]
 
 
-def label(row: dict) -> str:
-    """Short enough that four of them stay on one line.
+def copy_thumbnail(subject: str) -> str | None:
+    """The photograph itself, small enough to sit in a row of four.
 
-    A model writes these values and some run long: "Mediterranean coastal
-    region (Adriatic coast)" is an honest answer and a terrible button. The
-    first clause is almost always the name.
+    The first version put the answer on the button: "Badshahi Mosque · point",
+    before anything had been clicked. That gives away the result of the demo in
+    the label of the control that starts it, which is the whole point handed
+    over for free. A photograph asks the question instead, and asking the
+    question is what the page is for.
     """
-    if row["level"] is None:
-        return "declined"
-    name = str(row["value"]).split("(")[0].split(",")[0].strip()
-    if len(name) > 22:
-        name = name[:21].rstrip() + "\u2026"
-    return f"{name} · {row['level']}"
+    from PIL import Image
+
+    source = next(iter((ROOT / "data/images").glob(f"{subject}*")), None)
+    if source is None:
+        return None
+    thumbs = DEST.parent / "photos"
+    thumbs.mkdir(parents=True, exist_ok=True)
+    name = f"{subject}.jpg"
+    with Image.open(source) as im:
+        im = im.convert("RGB")
+        # Square, cropped from the middle. A row of mixed aspect ratios reads
+        # as a folder of files; a row of squares reads as a set of choices.
+        side = min(im.size)
+        left = (im.width - side) // 2
+        top = (im.height - side) // 2
+        im = im.crop((left, top, left + side, top + side)).resize((320, 320),
+                                                                  Image.LANCZOS)
+        im.save(thumbs / name, quality=82, optimize=True)
+    return f"/photos/{name}"
 
 
 def main() -> int:
@@ -114,12 +129,13 @@ def main() -> int:
     for row in picked:
         shutil.copy2(source / row["file"], DEST / row["file"])
 
-    index = [{**row, "label": label(row)} for row in picked]
+    index = [{**row, "photo": copy_thumbnail(row["subject"])} for row in picked]
     (DEST / "index.json").write_text(json.dumps(index, indent=2) + "\n")
 
     print(f"{len(picked)} of {len(rows)} traces -> {DEST.relative_to(ROOT)}")
     for row in index:
-        print(f"  {row['label']:<40} {row['steps']:>3} steps  {row['file']}")
+        shown = row["photo"] or "no photograph on disk"
+        print(f"  {row['subject']:<24} {row['steps']:>3} steps  {shown}")
     return 0
 
 

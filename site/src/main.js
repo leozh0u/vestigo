@@ -90,8 +90,19 @@ function mountExamples(entries) {
   const holder = document.getElementById("examples");
   holder.replaceChildren(...entries.map((entry) => {
     const button = document.createElement("button");
-    button.textContent = entry.label;
+    button.className = "photo";
     button.setAttribute("aria-pressed", "false");
+    if (entry.photo) {
+      const img = document.createElement("img");
+      img.src = entry.photo;
+      // The alt text says what it is, not where it is. Naming the place would
+      // hand a screen reader the answer the page exists to work out.
+      img.alt = "A photograph of an unknown place";
+      img.loading = "lazy";
+      button.append(img);
+    } else {
+      button.textContent = entry.subject;
+    }
     button.addEventListener("click", () => {
       if (machine.state !== "idle") machine.go("idle");
       for (const b of holder.children) b.setAttribute("aria-pressed", "false");

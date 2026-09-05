@@ -101,11 +101,19 @@
 
       <footer class="bar">
         <div class="examples" id="examples"></div>
-        <form class="prompt" id="prompt">
-          <input id="context" type="text" autocomplete="off" spellcheck="false"
-                 placeholder="Choose a photograph above" />
-          <button type="submit">Locate</button>
-        </form>
+        <!--
+          No text input.
+
+          It was wired to nothing, and its placeholder read "Choose a photograph
+          above" over a row that contained no photographs, only the answers.
+          A control that does not work, labelled with an instruction that does
+          not match what is on screen, is worse than no control.
+
+          The photographs are the interface: four of them, click one, watch it
+          get located. Uploading your own needs a backend, and a backend on a
+          public page means strangers spending the API budget, so it is not
+          here yet and is not pretended at.
+        -->
       </footer>
     </main>
 
