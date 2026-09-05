@@ -30,6 +30,21 @@
 const RENDER_LIFT = 1.12;
 
 export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
+  /*
+    The intro's exposure, held between calls.
+
+    render-intro.mjs calls set() and then step() on every frame, and step()
+    recomputes the exposure from scratch: apply() writes the growth curve and
+    the lift goes on top. So whatever set() had just done was undone a line
+    later, and the shot stayed at its night exposure however the number was
+    changed.
+
+    That is the second time in this session an edit moved a measured value by
+    exactly zero, and the second time it meant the code was being overwritten
+    rather than being wrong. Both paths read the same variable now.
+  */
+  let introExposure = 1;
+
   const api = {
     ready: false,
 
@@ -61,8 +76,10 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
         * (1 - Math.pow(0.06, dt));
       globe.apply(globe.progress);
       // apply() sets exposure from the growth, so the lift has to be reapplied
-      // after it or every frame falls back to the live page's level.
-      globe.renderer.toneMappingExposure *= RENDER_LIFT;
+      // after it or every frame falls back to the live page's level — and the
+      // intro's lift with it, which is why this reads introExposure rather than
+      // assuming set() has had the last word.
+      globe.renderer.toneMappingExposure *= RENDER_LIFT * introExposure;
       globe.earth.rotation.y += dt * globe.spin;
       globe.halo.rotation.copy(globe.earth.rotation);
       globe.renderer.render(globe.scene, globe.camera);
@@ -84,7 +101,8 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
       if (sun) globe.setSun(sun[0], sun[1], sun[2]);
       // apply() has already set the exposure from the growth, which is a night
       // curve. The intro lifts it as the sun comes round.
-      globe.renderer.toneMappingExposure *= RENDER_LIFT * exposure;
+      introExposure = exposure;
+      globe.renderer.toneMappingExposure *= RENDER_LIFT * introExposure;
     },
 
     /* Whether every texture has arrived. Rendering before they have gives a

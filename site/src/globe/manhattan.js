@@ -476,6 +476,20 @@ export class Manhattan {
           looking at per metre of distance.
         */
         uFog:   { value: 900 },
+        /*
+          An extra lift for the coarse levels of detail.
+
+          Google's imagery gets darker the further out you go: the tiles served
+          at three thousand kilometres are a different, older, dimmer source
+          than the ones served over a street, and the same grade over both puts
+          the top of the descent two thirds of a stop under the bottom.
+
+          It matters because of what the top of the descent hands over from.
+          Measured at the seam: the globe's last frame is 63 and the tiles' first
+          was 40, and a join between two frames of the same place at the same
+          altitude in different exposures is a cut however well they are framed.
+        */
+        uLift:  { value: 1 },
         uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
         uWarm:  { value: new THREE.Color(0xffc07a) },
       },
@@ -485,7 +499,7 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount, uFog;
+        uniform float uNear, uFar, uAmount, uFog, uLift;
         uniform vec3 uHaze, uShade, uWarm;
         varying vec2 vUv;
 
@@ -551,6 +565,7 @@ export class Manhattan {
             without flattening anything that was already bright.
           */
           c = pow(clamp(c, 0.0, 1.0), vec3(0.78));
+          c *= uLift;
 
           /*
             Shadows blue, highlights warm.
@@ -692,8 +707,29 @@ export class Manhattan {
       metres is past anything this camera can be, so at altitude the haze does
       what it should, which is almost nothing.
     */
-    this.grade.uniforms.uFog.value =
-      Math.min(4000000, Math.max(600, 180 + above * 1.6));
+    /*
+      Twenty times the altitude, not 1.6, and capped far higher.
+
+      Aerial perspective is air between the camera and the subject, and from
+      space there is almost none: the atmosphere is a shell a hundred kilometres
+      deep and a camera three thousand kilometres up is outside it looking
+      through it edge-on, not along it.
+
+      At 1.6 the haze horizon was four thousand kilometres while the real
+      horizon was six, so 79% of everything past the middle distance washed to
+      one blue. Next to the globe's last frame — which has no haze at all, being
+      a texture on a sphere — it read as a completely different altitude. The
+      seam looked like a jump in scale and was a jump in atmosphere.
+
+      Twenty puts the haze horizon at sixty thousand kilometres from space,
+      which is effectively none, and still leaves about two kilometres of it at
+      the bottom of the descent where a city street needs it.
+    */
+    this.grade.uniforms.uFog.value = Math.min(2e8, 600 + above * 20);
+    // Full strength from about a hundred kilometres up, off by the time the
+    // camera is among the buildings, where the imagery needs no help.
+    const t = Math.min(1, Math.max(0, (above - 20000) / (600000 - 20000)));
+    this.grade.uniforms.uLift.value = 1 + 0.62 * (t * t * (3 - 2 * t));
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);

@@ -130,6 +130,28 @@ for (const t of MOMENTS) {
       with the camera at the right altitude is a shading problem, and a dark
       frame with the camera somewhere absurd is not.
     */
+    /*
+      How wide the frame actually is on the ground, by raycast.
+
+      The altitude number says one thing and the picture says another, and only
+      one of them can be right. Two rays through the left and right edges of the
+      frame, intersected with the tileset, and the distance between where they
+      land is the span — which is the number that has to match the globe's, not
+      the altitude.
+    */
+    const { THREE } = window.SCENE;
+    const span = (() => {
+      const hits = [];
+      for (const x of [-0.98, 0.98]) {
+        const r = new THREE.Raycaster();
+        r.setFromCamera(new THREE.Vector2(x, 0), cam);
+        r.far = 5e7;
+        const h = r.intersectObject(m.tiles.group, true);
+        if (h.length) hits.push(h[0].point);
+      }
+      return hits.length === 2 ? Math.round(hits[0].distanceTo(hits[1]) / 1000) : null;
+    })();
+
     const c = document.getElementById("c");
     const g = document.createElement("canvas");
     g.width = 32; g.height = 18;
@@ -144,6 +166,8 @@ for (const t of MOMENTS) {
       near: cam.near,
       far: cam.far,
       meshes: (() => { let n = 0; m.tiles.group.traverse((o) => { if (o.isMesh) n += 1; }); return n; })(),
+      spanKm: span,
+      fov: cam.fov,
       fog: m.grade ? Math.round(m.grade.uniforms.uFog.value) : null,
       sky: m.sky ? m.sky.visible : null,
     };
@@ -151,8 +175,8 @@ for (const t of MOMENTS) {
 
   await page.screenshot({ path: path.join(OUT, `t${t.toFixed(2)}.png`) });
   console.log(`  t=${t.toFixed(2)}  mean ${String(info.mean).padStart(5)}  ` +
-              `alt ${String(info.altitude).padStart(7)}m  near ${info.near}  ` +
-              `fog ${info.fog}  sky ${info.sky}  ${info.meshes} meshes`);
+              `alt ${String(info.altitude).padStart(8)}m  span ${String(info.spanKm).padStart(6)}km  ` +
+              `fov ${info.fov}  ${info.meshes} meshes`);
 }
 
 await browser.close();
