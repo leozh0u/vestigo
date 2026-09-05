@@ -91,6 +91,34 @@ html, body {
 /* No .field-line rule any more: the text is painted into a background image
    rather than written as elements. See src/ui/field.js for why. */
 
+/* The live lines. Six text nodes, which is nothing; the depth behind them is
+   painted images for the reason recorded in src/ui/field.js. */
+.field-typed { position: absolute; inset: 0; }
+.typed {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #a8d8e8;
+  /* A ground behind the text, so a line crossing the lit limb of the globe
+     stays readable instead of disappearing into it. */
+  text-shadow: 0 0 12px var(--void), 0 1px 3px var(--void);
+}
+/* A cursor, so a line that is mid-word looks like it is being written rather
+   than truncated. */
+.typed::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 0.3ch;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: caret 1.1s steps(2) infinite;
+}
+@keyframes caret { 50% { opacity: 0; } }
+
 /* Film grain. A flat dark background reads as cheap because real darkness is
    never uniform, and a few percent of noise is the difference between "dark
    theme" and something that looks lit. */

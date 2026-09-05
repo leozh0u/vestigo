@@ -14,6 +14,7 @@ import { Machine } from "./sequence/machine.js";
 import { Player } from "./sequence/player.js";
 import { renderEvidence, renderReceipt, clearEvidence } from "./ui/panels.js";
 import { mountField } from "./ui/field.js";
+import { mountTyping } from "./ui/typing.js";
 import "./style.css";
 
 const canvas = document.getElementById("stage");
@@ -177,6 +178,7 @@ document.body.style.cursor = "grab";
 // The background reads from the traces, so it says the same things the page
 // is arguing about rather than resembling them.
 mountField();
+mountTyping();
 
 /*
   The opening, if there is one to show.
