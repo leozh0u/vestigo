@@ -72,12 +72,19 @@ export class Manhattan {
     tiles.setResolutionFromRenderer(this.camera, this.renderer);
     this.scene.add(tiles.group);
 
-    // Daylight, because the tiles are photographs taken in daylight and lighting
-    // them any other way fights the pixels rather than adding to them.
+    /*
+      Full daylight, and the lights are here only because the loader expects
+      them to be. The tiles come back as MeshBasicMaterial, which is unlit by
+      definition: it shows the texture and ignores every light in the scene.
+      That is correct for photogrammetry — the photograph already contains its
+      own lighting — and it is why an earlier attempt to make this scene look
+      like evening by adding lights changed nothing at all.
+
+      The time of day is decided in the grade instead. See buildGrade below.
+    */
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.6));
-    const sun = new THREE.DirectionalLight(0xfff4e0, 1.2);
-    sun.position.set(1, 2, 1);
-    this.scene.add(sun);
+
+    this.scene.add(this.buildSky());
 
     /*
       Bring Manhattan to the origin.
@@ -125,6 +132,72 @@ export class Manhattan {
     this.camera.updateMatrixWorld();
   }
 
+  /*
+    The sky, which the tileset does not come with.
+
+    Photogrammetry is ground and buildings. Above the horizon there is nothing,
+    so the frame is pure black up there and the city sits on the edge of a
+    hole. A dome large enough to be outside anything the camera will visit,
+    drawn from the inside, with the gradient of the twenty minutes after sunset:
+    deep blue overhead falling through slate to a narrow warm band where the sun
+    has just gone.
+
+    Basic material and no depth write, so it never occludes a building and
+    never has to be lit.
+  */
+  buildSky() {
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(60000, 32, 24),
+      new THREE.ShaderMaterial({
+        uniforms: {
+          uHigh:   { value: new THREE.Color(0x0a1526) },   // overhead
+          uMid:    { value: new THREE.Color(0x1d3149) },
+          uLow:    { value: new THREE.Color(0x4a4a58) },   // haze at the horizon
+          uGlow:   { value: new THREE.Color(0xb8703f) },   // where the sun went
+          uSunDir: { value: new THREE.Vector3(-0.72, 0.05, -0.69).normalize() },
+        },
+        vertexShader: `
+          varying vec3 vDir;
+          void main() {
+            vDir = normalize(position);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: `
+          uniform vec3 uHigh, uMid, uLow, uGlow, uSunDir;
+          varying vec3 vDir;
+          void main() {
+            vec3 d = normalize(vDir);
+            // Height above the horizon, 0 at it and 1 straight up.
+            float up = clamp(d.y, 0.0, 1.0);
+            vec3 col = mix(uLow, uMid, smoothstep(0.0, 0.22, up));
+            col = mix(col, uHigh, smoothstep(0.18, 0.75, up));
+            /*
+              The afterglow, and it belongs in one place rather than all round.
+              Twenty minutes after sunset the western horizon is orange over
+              maybe sixty degrees and the eastern one is already blue. A band
+              round the whole sky is the tell of a gradient rather than a sky.
+            */
+            float toward = max(0.0, dot(d, normalize(uSunDir)));
+            // Wider across the horizon and much shallower above it. The first
+            // version used a third power against a 30-degree falloff, which
+            // put a saturated red block in one corner of the frame rather than
+            // a band along the skyline.
+            float band = pow(toward, 1.8) * (1.0 - smoothstep(0.0, 0.13, up));
+            col = mix(col, uGlow, band * 0.55);
+            // Below the horizon it goes to ground haze rather than to nothing,
+            // so the seam where the tiles end is a fog bank and not an edge.
+            col = mix(col, uLow * 0.45, smoothstep(0.0, -0.10, d.y));
+            gl_FragColor = vec4(col, 1.0);
+          }`,
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+      }),
+    );
+    sky.renderOrder = -1;
+    return sky;
+  }
+
   update() {
     if (!this.ready) return;
     this.tiles.setResolutionFromRenderer(this.camera, this.renderer);
@@ -140,11 +213,177 @@ export class Manhattan {
     return downloading === 0 && parsing === 0 ? 1 : 0;
   }
 
+  /*
+    Turning midday into the twenty minutes after sunset.
+
+    Google captures its photorealistic tiles in bright daylight and publishes
+    no other version, so the time of day has to be a grade rather than a light.
+    Every attempt to do it with lights failed for a reason worth writing down:
+    the tiles arrive as MeshBasicMaterial, which ignores lighting entirely, so
+    a scene full of carefully placed evening lights renders exactly the same as
+    an empty one.
+
+    A grade is honest about what it is. Four things, and each one is a specific
+    observation about what the eye uses to date a photograph:
+
+    1. **Exposure**, obviously, but not evenly. Highlights fall further than
+       shadows at dusk, because the sun has gone and what is left is a broad
+       dim sky: the contrast between a lit face and a shaded one collapses.
+    2. **Colour separation.** Shadows go blue and what light remains goes warm.
+       A flat overall blue tint reads as a filter; the split reads as evening.
+    3. **Aerial perspective.** Distance haze is what makes a city look like a
+       city rather than a model, and it is stronger at dusk than at noon. Done
+       from depth, so it thickens with real distance rather than with height in
+       frame — a vertical gradient gets it wrong the moment the camera tilts.
+    4. **Vignette**, gently, because a lens does that and the absence of it is
+       one of the things that makes rendered footage look rendered.
+  */
+  buildGrade() {
+    this.target = new THREE.WebGLRenderTarget(1, 1, {
+      // Depth read back as a texture, for the haze. Without it the fog has to
+      // be faked off screen position and tilts with the camera.
+      depthTexture: new THREE.DepthTexture(1, 1),
+      type: THREE.HalfFloatType,
+    });
+
+    this.grade = new THREE.ShaderMaterial({
+      uniforms: {
+        uScene: { value: this.target.texture },
+        uDepth: { value: this.target.depthTexture },
+        uNear:  { value: this.camera.near },
+        uFar:   { value: this.camera.far },
+        // How far the grade has come. 0 is the untouched daylight capture,
+        // which is what the probe renders and what makes a comparison possible.
+        uAmount: { value: 1 },
+        // The colour distance dissolves into. It has to be what the sky is
+        // doing near the horizon, or the skyline fades towards one colour in
+        // front of a different one and the join shows as a line.
+        uHaze:  { value: new THREE.Color(0x2f3d52) },
+        uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
+        uWarm:  { value: new THREE.Color(0xffc07a) },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+      fragmentShader: `
+        uniform sampler2D uScene;
+        uniform sampler2D uDepth;
+        uniform float uNear, uFar, uAmount;
+        uniform vec3 uHaze, uShade, uWarm;
+        varying vec2 vUv;
+
+        // Metres from the camera. The depth buffer stores a nonlinear value,
+        // and reading it as if it were linear puts every building at the far
+        // plane, which is the mistake that killed the first attempt at this.
+        float distanceAt(float d) {
+          float ndc = d * 2.0 - 1.0;
+          return (2.0 * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear));
+        }
+
+        void main() {
+          vec3 day = texture2D(uScene, vUv).rgb;
+          vec3 c = day;
+          float d = texture2D(uDepth, vUv).x;
+
+          /*
+            The sky is already the right time of day, so it is not graded.
+
+            It comes from buildSky, which paints dusk directly. Running it
+            through the same curve as the photography darkened it to almost
+            black and then the haze term — which reads maximum at the far plane
+            — flattened whatever survived into one grey. The first version of
+            this looked like a city at the bottom of a well.
+          */
+          if (d >= 0.9999) { gl_FragColor = vec4(day, 1.0); return; }
+
+          // Luminance, Rec. 709. Both the exposure roll-off and the colour
+          // split are decided by how bright a pixel already is.
+          float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+
+          // Highlights fall further than shadows: the sun has gone and the sky
+          // is doing all the work, so the difference between a lit face and a
+          // shaded one collapses.
+          c *= mix(0.66, 0.34, smoothstep(0.15, 0.85, l));
+
+          /*
+            Shadows blue, highlights warm.
+
+            As *tints* whose channels average one, not as multiplications by a
+            dark colour. Multiplying by uShade darkened the shadows a second
+            time on top of the exposure above, and the two compounded into
+            almost nothing. A tint moves the hue and leaves the brightness where
+            the exposure put it, which is what a grade is supposed to do.
+          */
+          vec3 cool = vec3(0.74, 0.89, 1.28);
+          vec3 warm = vec3(1.26, 1.02, 0.74);
+          c *= mix(cool, warm, smoothstep(0.10, 0.52, l));
+
+          /*
+            Aerial perspective, from real distance.
+
+            1200 m is about the depth of Manhattan seen from the East Village,
+            so the far skyline washes into the sky and the block in front of the
+            camera does not. Off screen position instead of depth this tilts
+            with the camera and stops being distance at all.
+          */
+          /*
+            900 m, and the mix goes to 0.97 rather than 0.78.
+
+            At 1200 and 0.78 the tileset's own far edge stayed visible: the
+            lowest level of detail is a flat strip and it sat along the horizon
+            as a bright line, which is the join between having data and not
+            having any. Thickening the haze until distance dissolves completely
+            hides that seam and is what the air actually does at dusk anyway.
+          */
+          float fog = 1.0 - exp(-distanceAt(d) / 900.0);
+          c = mix(c, uHaze, clamp(fog, 0.0, 1.0) * 0.97);
+
+          // A little lift, because air scatters and a true black at dusk is a
+          // hole rather than a shadow.
+          c += vec3(0.010, 0.015, 0.026);
+
+          float r = distance(vUv, vec2(0.5)) * 1.42;
+          c *= 1.0 - 0.30 * pow(clamp(r, 0.0, 1.0), 2.4);
+
+          gl_FragColor = vec4(mix(day, c, uAmount), 1.0);
+        }`,
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.grade);
+    this.quad.frustumCulled = false;
+    this.gradeScene = new THREE.Scene();
+    this.gradeScene.add(this.quad);
+    this.gradeCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  }
+
   render() {
+    if (!this.grade) this.buildGrade();
+
+    // The target has to match the canvas, and the canvas changes size. Asked
+    // for every frame rather than on a resize event, because this also runs
+    // offscreen where there is no window to fire one.
+    const size = this.renderer.getSize(new THREE.Vector2());
+    const dpr = this.renderer.getPixelRatio();
+    const w = Math.max(1, Math.round(size.x * dpr));
+    const h = Math.max(1, Math.round(size.y * dpr));
+    if (this.target.width !== w || this.target.height !== h) {
+      this.target.setSize(w, h);
+    }
+    this.grade.uniforms.uNear.value = this.camera.near;
+    this.grade.uniforms.uFar.value = this.camera.far;
+
+    this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
+    this.renderer.setRenderTarget(null);
+    this.renderer.render(this.gradeScene, this.gradeCamera);
   }
 
   dispose() {
     this.tiles?.dispose();
+    this.target?.dispose();
+    this.grade?.dispose();
+    this.quad?.geometry.dispose();
   }
 }
