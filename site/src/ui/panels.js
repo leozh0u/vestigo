@@ -35,15 +35,31 @@ const WHO = {
 };
 
 export function clearEvidence() {
+  lastKey = "";
   evidence().replaceChildren();
   const box = receipt();
   box.hidden = true;
   box.classList.remove("refused");
 }
 
+let lastKey = "";
+
 export function renderEvidence(step) {
   const text = step.summary ?? "";
   if (!text || FAILED.test(text)) return;
+
+  /*
+    Collapse consecutive near-repeats.
+
+    A gazetteer lookup that matched four addresses on the same avenue emits
+    four lines that differ only in a postcode, and on screen that is a stutter
+    rather than four findings. Keyed on the source plus the first forty
+    characters, which is enough to catch the repeat and short enough not to
+    swallow two genuinely different results from the same tool.
+  */
+  const key = `${step.source}|${text.slice(0, 40)}`;
+  if (key === lastKey) return;
+  lastKey = key;
 
   const line = document.createElement("div");
   line.className = "line";
@@ -81,7 +97,8 @@ export function renderReceipt(final) {
     const pct = Math.round((c.confidence ?? 0) * 100);
     return `<dt>${c.level}</dt>
             <dd>${escape(c.value)} · ${pct}%
-              <span class="bar-fill" style="width:${pct}%"></span>
+              <span class="bar"><span class="bar-fill"
+                    style="width:${pct}%"></span></span>
             </dd>`;
   }).join("");
 
