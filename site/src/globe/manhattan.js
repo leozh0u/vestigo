@@ -256,16 +256,35 @@ export class Manhattan {
     */
     const floor = this.groundLevel() ?? 0;
 
-    const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2);
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
     // Hermite, the same curve smoothstep uses: zero slope at both ends, so the
     // tilt begins and finishes without a corner.
     const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
 
-    // Log space. See the note above: this is the difference between a zoom and
-    // a fall that appears to stall and then snap.
+    /*
+      Log space, and eased out only.
+
+      The log is what makes it read as a zoom rather than a fall: a constant
+      ratio per second, so every second roughly halves the height all the way
+      down. The easing on top of it decides whether that ratio is actually
+      constant, and the first version got it wrong in a way that measurement
+      caught and four frames on a contact sheet did not.
+
+      It was ease-in-out. An ease-in has zero slope at zero, so over the opening
+      frames the height changed by nothing: scripts/check-intro.mjs counted 34
+      near-still frames — more than a second of a camera that is supposed to be
+      falling from orbit doing nothing — and then the middle of the curve lurched
+      at 8.4% a frame to catch up. Starting still and then rushing is precisely
+      the "stopping" this shot is not allowed to do.
+
+      A gentle ease-out instead. 3.45% a frame at the top, 2.89% in the middle,
+      0.64% at the end: it moves from the first frame, the rate varies by three
+      per cent across the whole descent, and it settles into the arrival rather
+      than hitting it. Past about 1.6 the tail decelerates to a standstill and
+      the stall comes back at the other end.
+    */
     const TOP = 600000;
-    const fall = easeInOut(t);
+    const fall = 1 - Math.pow(1 - t, 1.25);
     const height = Math.exp(
       Math.log(TOP) + (Math.log(endHeight) - Math.log(TOP)) * fall);
 
