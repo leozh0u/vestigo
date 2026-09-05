@@ -185,10 +185,28 @@ def consense(runs, *, majority: float = 0.5) -> Consensus:
             samples=tuple(views),
         )
 
-    # The finest level any sample claimed. Consensus cannot exceed it: three
-    # samples that all said "Chile" support Chile however close their points
-    # happen to sit, because none of them ever claimed more.
-    claimed = max(v.level for v in answering)
+    def ceiling(members: list[SampleView]) -> Level:
+        """The finest level a majority of these samples actually claimed.
+
+        Not the finest any one of them claimed. Two samples saying "Chile" and
+        one naming a street, with all three points inside two hundred metres,
+        must not come back as a point: that is one sample's granularity
+        promoted by the agreement of two that never asked for it, and it
+        breaks the rule this module is built on. The medoid's own words would
+        then be reported at a level they do not describe, so the answer reads
+        "Chile" labelled as a street address.
+
+        Sorted finest first, and the first level that a majority reached or
+        exceeded wins.
+        """
+        for level in sorted(Level, reverse=True):
+            if sum(1 for m in members if m.level >= level) * 2 > len(members):
+                return level
+        return Level.CONTINENT
+
+    # Consensus cannot exceed what the samples claimed: three that all said
+    # "Chile" support Chile however close their points happen to sit.
+    claimed = ceiling(answering)
 
     for level in sorted(LEVEL_RADIUS_KM, reverse=True):
         cluster = _largest_cluster(points, LEVEL_RADIUS_KM[level])
@@ -196,7 +214,8 @@ def consense(runs, *, majority: float = 0.5) -> Consensus:
         if share <= majority:
             continue
 
-        capped = Level(min(int(level), int(claimed)))
+        members = [answering[i] for i in cluster]
+        capped = Level(min(int(level), int(claimed), int(ceiling(members))))
         # The member the others gathered around, and its own words for the
         # place. Picking the most confident member instead would let one loud
         # sample name somewhere the group never agreed on.

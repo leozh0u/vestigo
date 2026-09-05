@@ -150,6 +150,12 @@ def _describe(board: Board, kind: str, ident: str) -> dict:
         con = board.constraints[ident]
         return {"source": con.kind, "summary": con.description or con.kind,
                 "weight": con.weight, "cites": list(con.evidence_ids)}
+    if kind == "refutation":
+        claim_id, _, evidence_id = ident.partition(":")
+        claim = board.claims[claim_id]
+        return {"source": "verify",
+                "summary": f"{claim.value!r} was refuted",
+                "claim_id": claim_id, "cites": [evidence_id]}
     if kind == "claim":
         claim = board.claims[ident]
         return {"source": "claim", "summary": f"{claim.value} ({claim.level.label})",
@@ -197,10 +203,24 @@ def trace(board: Board, *, step_deg: float = GRID_DEG) -> dict:
                                  origin=cand.origin, evidence_ids=cand.evidence_ids)
         elif kind == "claim":
             claim = board.claims[ident]
-            replay.add_claim(claim.level, claim.value, supports=claim.supports,
+            # Only the supports that existed when the claim was made. A claim
+            # carries its refutations too, and those cite evidence added later
+            # in the journal; replaying them here would fail on evidence the
+            # replay has not reached, and would also apply a refutation before
+            # the step that recorded it.
+            original = tuple(sp for sp in claim.supports
+                             if sp.supports and sp.evidence_id in replay.evidence)
+            replay.add_claim(claim.level, claim.value, supports=original,
                              point=claim.point, parent=claim.parent,
                              stated_confidence=claim.stated_confidence,
                              note=claim.note)
+        elif kind == "refutation":
+            claim_id, _, evidence_id = ident.partition(":")
+            against = next(
+                (sp for sp in board.claims[claim_id].supports
+                 if not sp.supports and sp.evidence_id == evidence_id), None)
+            if against is not None:
+                replay.refute(claim_id, evidence_id, against.strength)
         else:
             raise ValueError(f"unknown journal entry kind {kind!r}")
 

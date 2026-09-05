@@ -147,3 +147,25 @@ def test_the_summary_round_trips_to_json():
     assert d["level"] == "city"
     assert d["n_answered"] == 2
     assert isinstance(d["spread_km"], float)
+
+
+def test_one_sample_cannot_promote_the_group_to_its_own_granularity():
+    """Two samples say "Chile", one names a street, and all three points sit
+    inside two hundred metres. Returning a point would be one sample's
+    granularity carried by the agreement of two that never asked for it, and
+    the medoid's own words would then be reported at a level they do not
+    describe: "Chile", labelled as a street address."""
+    c = consense([run(-33.450, -70.670, Level.COUNTRY, "Chile"),
+                  run(-33.451, -70.671, Level.COUNTRY, "Chile"),
+                  run(-33.452, -70.672, Level.POINT, "123 Main St")])
+    assert c.level is Level.COUNTRY
+    assert c.value == "Chile"
+
+
+def test_a_majority_claiming_a_fine_level_does_keep_it():
+    """The rule is majority, not unanimity. Two point claims and one country
+    claim, all in agreement about where, support a point."""
+    c = consense([run(-33.450, -70.670, Level.POINT, "a house"),
+                  run(-33.451, -70.671, Level.POINT, "a house"),
+                  run(-33.452, -70.672, Level.COUNTRY, "Chile")])
+    assert c.level is Level.POINT

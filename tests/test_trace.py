@@ -174,3 +174,64 @@ def test_a_written_trace_is_json_the_site_can_load(board, tmp_path):
     assert loaded["schema"] == SCHEMA
     assert loaded["subject"] == "t.jpg"
     assert len(loaded["steps"]) == len(board.journal)
+
+
+# --------------------------------------------------------------------------
+# Replaying a board that has been verified
+# --------------------------------------------------------------------------
+
+def refuted_board():
+    from vestigo.verify import verify
+    b = Board("t.jpg")
+    e1 = b.add_evidence("first_pass", "a courthouse", resolves_to=Level.POINT)
+    b.add_candidate(LatLon(39.21, -76.07), prior=1.0, origin="first_pass",
+                    evidence_ids=(e1.id,))
+    e2 = b.add_evidence(
+        "place_lookup", "a name was looked up",
+        result={"matches": [{"lat": 41.88, "lon": -87.63, "display_name": "Chicago"}]},
+        resolves_to=Level.POINT, max_strength=0.95)
+    b.add_claim(Level.COUNTRY, "US",
+                supports=(Support(e1.id, 0.9), Support(e2.id, 0.9)))
+    b.add_claim(Level.CITY, "Chestertown", parent="c1", point=LatLon(39.21, -76.07),
+                supports=(Support(e1.id, 0.9), Support(e2.id, 0.9)))
+    verify(b)
+    return b
+
+
+def test_a_verified_board_still_replays():
+    """A claim carries its refutations, and those cite evidence added later in
+    the journal. Replaying the claim with its current supports fails on
+    evidence the replay has not reached yet."""
+    t = trace(refuted_board())
+    assert [k for k, _ in refuted_board().journal][-1] == "refutation"
+    assert t["steps"][-1]["kind"] == "refutation"
+
+
+def test_the_replay_ends_where_the_board_ended():
+    """The property that makes a trace a recording rather than a story."""
+    b = refuted_board()
+    t = trace(b)
+    assert t["final"]["answer"]["value"] == b.resolve().answer.value
+    assert t["final"]["answer"]["level"] == b.resolve().answer.level.label
+
+
+def test_the_refusal_is_visible_as_a_step():
+    """The answer drops from the city back to the country, which is the moment
+    the site exists to show."""
+    t = trace(refuted_board())
+    levels = [s["answer"]["level"] for s in t["steps"] if s["answer"]]
+    assert "city" in levels
+    assert levels[-1] == "country"
+
+
+def test_two_refutations_of_one_claim_stay_distinguishable():
+    """A journal entry naming only the claim would produce two identical
+    entries and a replay could not tell which support each one added."""
+    b = refuted_board()
+    e = b.add_evidence("verify", "a second check disagrees",
+                       resolves_to=Level.CITY, max_strength=0.5)
+    b.refute("c2", e.id, 0.5)
+    entries = [ident for kind, ident in b.journal if kind == "refutation"]
+    assert len(entries) == 2
+    assert len(set(entries)) == 2
+    assert trace(b)["final"]["answer"]["value"] == b.resolve().answer.value

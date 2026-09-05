@@ -742,7 +742,10 @@ class Board:
             note=f"{claim.note}; {note}".strip("; ") if note else claim.note,
         )
         self.claims[claim_id] = updated
-        self.journal.append(("refutation", claim_id))
+        # The entry names the evidence as well as the claim. A claim refuted by
+        # two different checks would otherwise produce two identical journal
+        # entries, and a replay could not tell which support each one added.
+        self.journal.append(("refutation", f"{claim_id}:{evidence_id}"))
         return updated
 
     def add_constraint(self, constraint: Constraint) -> Constraint:

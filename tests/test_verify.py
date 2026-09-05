@@ -92,7 +92,9 @@ def test_the_refutation_is_recorded_as_evidence_that_can_be_read():
     written = [e for e in b.evidence.values() if e.source == "verify"]
     assert len(written) == 1
     assert "refutes" in written[0].summary
-    assert ("refutation", "c2") in b.journal
+    # The journal entry names the evidence as well as the claim, so two
+    # refutations of one claim stay distinguishable on replay.
+    assert ("refutation", f"c2:{written[0].id}") in b.journal
 
 
 def test_a_refutation_reaches_no_further_than_the_claim_it_refutes():
