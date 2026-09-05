@@ -53,39 +53,120 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 3);
   slideshow.
 */
 function beat(t) {
-  // Turn: the whole shot, easing out, ending with New York facing the camera.
-  //
-  // Longitude alone is not enough. The first version set only the spin and the
-  // shot ended over the Caribbean, because New York is at 40 degrees north and
-  // nothing was tilting the globe to bring it up to the centre of frame. Both
-  // axes, or the target is on screen and in the wrong half of it.
-  const spin = easeOut(Math.min(1, t / 0.80));
+  /*
+    The spin, the world arriving, and then the dive that hands over.
+
+    This beat used to stop in orbit and cross-dissolve into a separate descent,
+    which is two shots and a fade. It does not stop any more. It keeps falling,
+    and it falls to exactly where Google's tiles pick up: straight down over New
+    York at three thousand kilometres, in daylight.
+
+    Three things have to match at that instant or the join shows. The framing,
+    which is what the dive is for. The light, which is what the sun swing is
+    for. And the sharpness, which cannot match — Blue Marble is 7.4 km a pixel
+    and the tiles are centimetres — but a soft frame dissolving into a sharp one
+    at identical framing reads as detail arriving, which is exactly what it is
+    and what happens every time anybody zooms in on a map.
+  */
+  const easeInOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+  const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
+
+  /*
+    Turn: the whole shot, easing out, ending with New York facing the camera.
+
+    Longitude alone is not enough. The first version set only the spin and the
+    shot ended over the Caribbean, because New York is at 40 degrees north and
+    nothing was tilting the globe to bring it up to the centre of frame.
+  */
+  const spin = easeOut(Math.min(1, t / 0.62));
   const target = -(NYC.lon * Math.PI) / 180 - Math.PI / 2;
   const rotationY = -0.9 + (target + Math.PI * 2 - -0.9) * spin;
-  // Damped, as in the live flight: taking a latitude literally tips the camera
-  // towards looking down the pole, which reads as a diagram rather than a place.
-  const rotationX = ((NYC.lat * Math.PI) / 180) * 0.62 * spin;
+  /*
+    The tilt has to reach the full latitude, and it used to stop at 62% of it.
 
-  // Growth: a short beat as metal, then alive.
-  //
-  // The hold was 14% of the shot and the transformation took 62%, which read
-  // as a long wait followed by a slow change. Watching it back, the metal
-  // establishes itself in about a second and everything after that is dead
-  // time. Now it starts turning almost immediately and finishes sooner,
-  // leaving the last third for the approach.
-  const growth = t < 0.05 ? 0
-    : easeInOut(Math.min(1, (t - 0.05) / 0.48));
+    That damping is right for the live flight, where taking a polar answer
+    literally puts the camera over the top of the sphere looking down an axis.
+    It is wrong here for a simple arithmetic reason: New York is at 40.7 degrees
+    north, 62% of that is 25 degrees, and 25 degrees north is Cuba. The dive
+    ended over the Caribbean and the tiles were waiting eighteen hundred
+    kilometres away.
 
-  // Approach: still at first, then closing. Ends near enough that the frame is
-  // most planet, which is where a descent can take over.
-  const near = t < 0.42 ? 0 : easeInOut((t - 0.42) / 0.58);
-  const cameraZ = 3.55 + (1.72 - 3.55) * near;
-  // Drifting up as it closes, so the move has a direction and is not a
-  // straight push down the lens.
-  const cameraY = 0.18 + 0.10 * near;
+    So it is damped early, where the globe is still a globe and a hard tilt
+    reads as a lurch, and released over the dive, where the only thing that
+    matters is that the camera arrives above the place it is aiming at.
+  */
+  const settle = smooth((t - 0.40) / 0.60);
+  const tilt = 0.62 + 0.38 * settle;
+  const rotationX = ((NYC.lat * Math.PI) / 180) * tilt * spin;
 
-  return { progress: growth, rotationY, rotationX, cameraZ, cameraY };
+  // Growth: a short beat as metal, then alive. The metal establishes itself in
+  // about a second and everything after that is dead time.
+  const growth = t < 0.05 ? 0 : easeInOut(Math.min(1, (t - 0.05) / 0.40));
+
+  /*
+    The dive, over the last third, and it is where this beat now ends.
+
+    Distances are Earth radii from the centre, because that is what the camera
+    works in: the surface is 1, so three thousand kilometres up is 1.47. The
+    fall is exponential for the same reason the descent's is — a constant ratio
+    per second is what reads as a zoom rather than as a drop.
+  */
+  const dive = smooth((t - 0.34) / 0.66);
+  const FROM = 3.55;
+  const TO = 1 + 3000 / 6371;
+  const cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);
+  // Straightens as it falls. The lift is what keeps the sphere off the bottom
+  // of the frame early on and would be a tilt by the end, so it goes to zero.
+  const cameraY = 0.18 * (1 - dive);
+
+  /*
+    The sun swings from behind the planet to behind the camera.
+
+    It starts at SUN, which is where the site's own globe keeps it: behind and
+    to the left, so the visible face is night and the cities carry the shot.
+    By the end it is over the camera's shoulder and New York is in daylight,
+    which is what the tiles are.
+
+    Late, and quickly. Held at night for the first half so the beat that matters
+    — metal becoming a lit planet — happens in the dark where it belongs, then
+    moved over the dive so dawn arrives as the camera does.
+  */
+  /*
+    The sun ends almost directly behind the camera.
+
+    Not off to one side. At 1.47 radii the visible disc is large and a sun even
+    slightly off-axis puts the terminator across it — the first version ended
+    with a black wedge over the right third of the frame, which is a night sky
+    to hand a daylight photograph. Directly behind the camera means the whole
+    visible face is lit, which is what a satellite photograph of the middle of
+    the day looks like and what the tiles are.
+  */
+  const dawn = smooth((t - 0.46) / 0.54);
+  const sun = [
+    -2.35 + (0.18 - -2.35) * dawn,
+    0.62 + (0.14 - 0.62) * dawn,
+    -1.85 + (3.20 - -1.85) * dawn,
+  ];
+
+  /*
+    And it has to be exposed for daylight by the end.
+
+    The globe's own curve takes exposure down as the world arrives, which is
+    right for a night planet on a dark page and half a stop short of a lit one.
+    Lifted over the same window as the dawn, so the two are the same event.
+  */
+  // 1.9, not 0.55. Measured: the last Earth frame came out at mean 25 and the
+  // first tiles frame at 74, which is a jump of nearly two stops across a join
+  // that is supposed to be invisible. The globe's own curve takes exposure down
+  // as the world arrives — correct for a night planet on a dark page, and half
+  // the brightness a lit one needs.
+  const exposure = 1 + 1.9 * dawn;
+
+  return { progress: growth, rotationY, rotationX, cameraZ, cameraY, sun, exposure };
 }
+
 
 async function main() {
   const frames = Math.round(SECONDS * FPS);

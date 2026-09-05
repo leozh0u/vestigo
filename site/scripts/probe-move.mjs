@@ -58,7 +58,7 @@ const harness = (w, h, place, scene) => `
         canvas: document.getElementById("c"), antialias: true });
       renderer.setPixelRatio(1);
       renderer.setSize(${w}, ${h}, false);
-      const camera = new THREE.PerspectiveCamera(38, ${w} / ${h}, 8, 40000000);
+      const camera = new THREE.PerspectiveCamera(42, ${w} / ${h}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
       // No cross-fade. Every frame here is fully settled before it is
       // photographed, so the plugin's dithered alpha is a stipple over

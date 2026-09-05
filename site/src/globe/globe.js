@@ -155,6 +155,9 @@ export class Globe {
     */
     this.safeBottom = 0;
 
+    // Held, because the intro moves it. See setSun.
+    this.sun = SUN.clone();
+
     this.scene.environment = this.buildEnvironment();
 
     // Key light from behind and left. Metal reads as metal because of the
@@ -977,6 +980,32 @@ export class Globe {
       });
       this.markers.remove(child);
     }
+  }
+
+  /*
+    Move the sun.
+
+    Fixed, the sun is what decides that this planet is at night, and the whole
+    look was built around that. But the intro has to hand over to Google's
+    photogrammetry, which is daylight and only daylight, and a night planet
+    dissolving into a lit city is a colour cut however well the framing matches.
+
+    So the sun travels. The shot opens on the night side — metal, then cities
+    coming on, which is the beat worth keeping — and as the camera dives the sun
+    swings round until the place it is diving at is in daylight. Dawn arriving
+    as you fall towards it is a real thing that looks like a choice rather than
+    a workaround, and at the moment of the handover both halves are lit the same
+    way.
+
+    Three things read the sun and all three have to move together: the shader
+    decides which pixels are dark, the key light lights the surface, and the
+    atmosphere decides which limb glows.
+  */
+  setSun(x, y, z) {
+    this.sun.set(x, y, z).normalize();
+    this.uniforms.uSun.value.copy(this.sun);
+    this.halo.material.uniforms.uSun.value.copy(this.sun);
+    this.key.position.copy(this.sun).multiplyScalar(4);
   }
 
   /*

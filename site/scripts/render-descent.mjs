@@ -83,7 +83,7 @@ const args = Object.fromEntries(
 const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round((WIDTH * 9) / 16);
 const FPS = Number(args.fps ?? 30);
-const SECONDS = Number(args.seconds ?? 11);
+const SECONDS = Number(args.seconds ?? 9);
 // Metres above the street at the end of the move. Higher than it sounds it
 // should be, and the reason is in the harness below.
 const END = Number(args.end ?? 80);
@@ -125,7 +125,7 @@ const harness = ({ width, height, place, scene }) => `
       // camera is six hundred kilometres up and the horizon is thousands of
       // kilometres away. At 80,000 the Earth was behind it and the opening
       // frames came back empty.
-      const camera = new THREE.PerspectiveCamera(38, ${width} / ${height}, 8, 40000000);
+      const camera = new THREE.PerspectiveCamera(42, ${width} / ${height}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
       // No cross-fade. Every frame here is fully settled before it is
       // photographed, so the plugin's dithered alpha is a stipple over

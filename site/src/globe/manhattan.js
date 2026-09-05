@@ -283,7 +283,22 @@ export class Manhattan {
       than hitting it. Past about 1.6 the tail decelerates to a standstill and
       the stall comes back at the other end.
     */
-    const TOP = 600000;
+    /*
+      Three thousand kilometres, not six hundred.
+
+      This is where the Earth beat hands over, and the two have to agree to the
+      metre or the join is a jump. The globe dives to 1.47 Earth radii — the
+      surface is 1, so that is 3,000 km — looking straight down at the same
+      point, and this picks the fall up from there.
+
+      Higher is also the only altitude the handover can work at. Blue Marble is
+      7.4 km a pixel: at six hundred kilometres the globe is showing about
+      fifty texture pixels across the frame, which no amount of matching makes
+      look like a photograph. At three thousand it is showing three hundred,
+      soft rather than absent, and a soft frame dissolving into a sharp one at
+      identical framing reads as detail arriving.
+    */
+    const TOP = 3000000;
     const fall = 1 - Math.pow(1 - t, 1.25);
     const height = Math.exp(
       Math.log(TOP) + (Math.log(endHeight) - Math.log(TOP)) * fall);

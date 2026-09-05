@@ -69,7 +69,7 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
     },
 
     /* Set the state directly, for scripted beats that do not come from a run. */
-    set({ progress, rotationY, rotationX, cameraZ, cameraY }) {
+    set({ progress, rotationY, rotationX, cameraZ, cameraY, sun, exposure = 1 }) {
       if (progress !== undefined) {
         globe.targetProgress = progress;
         globe.progress = progress;
@@ -79,7 +79,12 @@ export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
       if (rotationX !== undefined) globe.earth.rotation.x = rotationX;
       if (cameraZ !== undefined) globe.camera.position.z = cameraZ;
       if (cameraY !== undefined) globe.camera.position.y = cameraY;
-      globe.renderer.toneMappingExposure *= RENDER_LIFT;
+      // The intro swings the sun round as it dives, so the planet is in
+      // daylight by the time it hands over to Google's tiles. See Globe.setSun.
+      if (sun) globe.setSun(sun[0], sun[1], sun[2]);
+      // apply() has already set the exposure from the growth, which is a night
+      // curve. The intro lifts it as the sun comes round.
+      globe.renderer.toneMappingExposure *= RENDER_LIFT * exposure;
     },
 
     /* Whether every texture has arrived. Rendering before they have gives a
