@@ -169,3 +169,15 @@ def test_a_majority_claiming_a_fine_level_does_keep_it():
                   run(-33.451, -70.671, Level.POINT, "a house"),
                   run(-33.452, -70.672, Level.COUNTRY, "Chile")])
     assert c.level is Level.POINT
+
+
+def test_no_sample_answering_is_distinguishable_from_samples_disagreeing():
+    """Both come back with level None, and a report that prints one headline
+    over both credits consensus with refusals it had no part in. The counts
+    have to tell them apart."""
+    silent = consense([declined(), declined(), declined()])
+    split = consense([run(-33.4, -70.6), run(51.5, -0.1), run(35.7, 139.7)])
+    assert silent.level is None and split.level is None
+    assert silent.n_answered == 0
+    assert split.n_answered == 3
+    assert silent.spread_km == 0.0 and split.spread_km > 10_000

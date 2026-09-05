@@ -88,3 +88,41 @@ def test_its_cells_become_candidates_weighted_by_confidence():
     assert len(priors) == 3
     assert all(0.0 < p <= 1.0 for p in priors)
     assert max(priors) == pytest.approx(result.max_strength)
+
+
+def test_the_checkpoint_names_the_encoder_it_was_trained_against():
+    """A head trained on 768-dimensional vectors is useless against a
+    512-dimensional encoder, and the two lived in different files with nothing
+    connecting them. Retraining on a larger backbone left inference silently
+    mismatched: fifty-four calls failed identically inside a paid eval run and
+    the summary said only that the tool had failed."""
+    import torch
+    blob = torch.load("ml/checkpoints/geocell_head.pt", map_location="cpu",
+                      weights_only=True)
+    assert blob["encoder"]
+    assert blob["pretrained"]
+    # As open_clip would be called, not the lowercased directory slug.
+    # "vit-l-14" is not a model it will load.
+    assert blob["encoder"] != blob["encoder"].lower() or "-" not in blob["encoder"]
+
+
+def test_a_mismatched_encoder_is_named_rather_than_discovered_in_torch():
+    """The failure should say which two things disagree. Left to torch it
+    surfaces as 'mat1 and mat2 shapes cannot be multiplied (1x512 and
+    768x245)', once per image, from inside a matrix multiply."""
+    from vestigo.ml_bridge import EncoderMismatch
+    assert issubclass(EncoderMismatch, RuntimeError)
+    source = __import__("pathlib").Path("vestigo/tools/geocell.py").read_text()
+    assert "EncoderMismatch" in source
+    assert "output_dim" in source
+
+
+def test_embeddings_carry_the_exact_names_they_were_made_with():
+    """Parsing the directory name back gives a lowercased slug that fails at
+    load time rather than at save time."""
+    import json
+    import pathlib
+    for d in pathlib.Path("ml/embeddings").iterdir():
+        if (d / "vectors.npy").exists() and (d / "encoder.json").exists():
+            blob = json.loads((d / "encoder.json").read_text())
+            assert blob["model"] and blob["pretrained"]

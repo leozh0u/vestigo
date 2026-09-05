@@ -1,0 +1,3506 @@
+{
+  "ran_utc": "2026-09-05 00:35:28",
+  "preset": "cheap",
+  "samples": 3,
+  "dry": false,
+  "spent_usd": 3.372501,
+  "runs": [
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "error_km": 280.2818856612711,
+      "cost_usd": 0.16026600000000002,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 14,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "error_km": 280.2818856612711,
+      "cost_usd": 0.11042099999999999,
+      "computed_confidence": 0.4,
+      "all_levels": {
+        "continent": 0.4
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "low",
+      "lat": 50.0,
+      "lon": 10.0,
+      "error_km": 363.7265054460583,
+      "cost_usd": 0.08938499999999994,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Mediterranean coastal region (Adriatic coast)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0.198861,
+      "computed_confidence": 0.8361599999999999,
+      "all_levels": {
+        "continent": 0.6,
+        "region": 0.8361599999999999
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Dalmatia, Croatia (Adriatic coast)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0.162339,
+      "computed_confidence": 0.8868044799999999,
+      "all_levels": {
+        "continent": 0.6,
+        "region": 0.8868044799999999
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "claim": "Dalmatia, Croatia (Adriatic coast)",
+      "level": "region",
+      "confidence": "low",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "error_km": 1.785806552425848,
+      "cost_usd": 0.14408700000000002,
+      "computed_confidence": 0.712,
+      "all_levels": {
+        "continent": 0.5,
+        "region": 0.712
+      },
+      "evidence": 12,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 51.5,
+      "lon": -0.30000000000001137,
+      "error_km": 28.86197837056747,
+      "cost_usd": 0.15951900000000002,
+      "computed_confidence": 0.3815,
+      "all_levels": {
+        "continent": 0.3815
+      },
+      "evidence": 8,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-09-24 14:46:13 UTC, local clock, daylight, sun high"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "refuted",
+            "detail": "constraints admit this point at only 0.44",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "refuted",
+            "detail": "constraints admit this point at only 0.44",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "Lowland Britain / Northwest Europe (temperate deciduous woodland edge and grassland)",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 30.17366837502707,
+      "cost_usd": 0.189471,
+      "computed_confidence": 0.7984,
+      "all_levels": {
+        "continent": 0.6,
+        "country": 0.7984
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.8,
+      "lon": -0.5,
+      "error_km": 62.67510645214121,
+      "cost_usd": 0.163914,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.616,
+        "country": 0.6799999999999999
+      },
+      "evidence": 7,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 31.5885,
+      "lon": 74.3106,
+      "error_km": 0.08907432405194714,
+      "cost_usd": 0.148542,
+      "computed_confidence": 0.979,
+      "all_levels": {
+        "country": 0.88,
+        "city": 0.88,
+        "point": 0.979
+      },
+      "evidence": 19,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Badshahi Mosque' matches 1 place in \u067e\u0627\u06a9\u0633\u062a\u0627\u0646, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 9 km away, inside the 1500 km a country claim allows",
+            "distance_km": 8.9,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 0 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 0 km away, inside the 2 km a point claim allows",
+            "distance_km": 0.0,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque, Lahore",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 31.5881,
+      "lon": 74.31029999999998,
+      "error_km": 0.13913737377279517,
+      "cost_usd": 0.17805300000000002,
+      "computed_confidence": 0.99784,
+      "all_levels": {
+        "country": 0.94,
+        "city": 0.94,
+        "point": 0.99784
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Badshahi Mosque' matches 1 place in \u067e\u0627\u06a9\u0633\u062a\u0627\u0646, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 0 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.1,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 0 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.1,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 0 km away, inside the 2 km a point claim allows",
+            "distance_km": 0.1,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "claim": "Badshahi Mosque / Alamgiri Gate complex, Lahore",
+      "level": "point",
+      "confidence": "medium",
+      "lat": 31.5804,
+      "lon": 74.31029999999998,
+      "error_km": 0.9561858732763828,
+      "cost_usd": 0.258612,
+      "computed_confidence": 0.99424,
+      "all_levels": {
+        "country": 0.88,
+        "city": 0.88,
+        "point": 0.99424
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Alamgiri Gate' matches 2 places across 2 countries, best is a building spread over 1031 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Badshahi Mosque' matches 1 place in \u067e\u0627\u06a9\u0633\u062a\u0627\u0646, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 1 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.9,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 1 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.9,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u0628\u0627\u062f\u0634\u0627\u06c1\u06cc \u0645\u0633\u062c\u062f, Fort Road, \u0634\u0627\u06c1\u06cc \u0645\u062d\u0644\u06c1, \u0627\u0646\u062f\u0631\u0648\u0646 \u0634\u06c1\u0631 \u0644\u0627\u06c1\u0648\u0631, \u0644\u0627\u06c1\u0648\u0631, \u062a\u062d\u0635\u06cc\u0644 \u0644\u0627\u06c1 is 1 km away, inside the 2 km a point claim allows",
+            "distance_km": 0.9,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Avenida 9 de Julio, Buenos Aires",
+      "level": "district",
+      "confidence": "medium",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0.10527600000000001,
+      "computed_confidence": 0.87052436,
+      "all_levels": {
+        "country": 0.71689,
+        "city": 0.8612761,
+        "district": 0.87052436
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Avenida 9 de Julio' matches 16 places in Argentina, best is a road spread over 3 km, which is district-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Microcentro, San Nicol\u00e1s, Buenos Aires, Comuna 1,  is 0 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.1,
+            "weight": 0.056
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Microcentro, San Nicol\u00e1s, Buenos Aires, Comuna 1,  is 0 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.1,
+            "weight": 0.056
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Microcentro, San Nicol\u00e1s, Buenos Aires, Comuna 1,  is 0 km away, inside the 10 km a district claim allows",
+            "distance_km": 0.1,
+            "weight": 0.056
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "claim": "Buenos Aires",
+      "level": "region",
+      "confidence": "high",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "error_km": 0.00353118911151473,
+      "cost_usd": 0.19667400000000002,
+      "computed_confidence": 0.853,
+      "all_levels": {
+        "country": 0.71689,
+        "region": 0.853
+      },
+      "evidence": 17,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Avenida 9 de Julio' matches 16 places in Argentina, best is a road spread over 3 km, which is district-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Constituci\u00f3n, Buenos Aires, Comuna 1, Ciudad Aut\u00f3n is 630 km away, inside the 1500 km a country claim allows",
+            "distance_km": 629.9,
+            "weight": 0.056
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Microcentro, San Nicol\u00e1s, Buenos Aires, Comuna 1,  is 0 km away, inside the 400 km a region claim allows",
+            "distance_km": 0.1,
+            "weight": 0.056
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Avenida 9 de Julio, Microcentro, San Nicol\u00e1s, Buenos Aires, Comuna 1,  is 0 km away, inside the 10 km a district claim allows",
+            "distance_km": 0.1,
+            "weight": 0.056
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.09139199999999992,
+      "computed_confidence": 0.9874,
+      "all_levels": {
+        "country": 0.97,
+        "region": 0.9874
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Paris",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.026259000000000032,
+      "computed_confidence": 0.972,
+      "all_levels": {
+        "country": 0.96,
+        "region": 0.972
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "claim": "Eiffel Tower, Paris, along the Seine",
+      "level": "region",
+      "confidence": "high",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "error_km": 3.8510708512546286,
+      "cost_usd": 0.07335899999999995,
+      "computed_confidence": 0.995296,
+      "all_levels": {
+        "country": 0.9,
+        "region": 0.995296
+      },
+      "evidence": 9,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Cuifeng Lake (\u7fe0\u5cf0\u6e56)",
+      "level": "city",
+      "confidence": "low",
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "error_km": 25.662868112596062,
+      "cost_usd": 0.381888,
+      "computed_confidence": 0.971328,
+      "all_levels": {
+        "country": 0.9199999999999999,
+        "region": 0.7,
+        "city": 0.971328
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Cuifeng Lake'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'\u7fe0\u5cf0\u6e56' matches 1 place in \u81fa\u7063, best is a lake, which is city-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'\u7fe0\u5cf0\u6e56' matches 1 place in \u81fa\u7063, best is a lake, which is city-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 25 km away, inside the 1500 km a country claim allows",
+            "distance_km": 25.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 25 km away, inside the 400 km a region claim allows",
+            "distance_km": 25.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 25 km away, inside the 50 km a city claim allows",
+            "distance_km": 25.4,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Yilan County, Taiwan",
+      "level": "region",
+      "confidence": "low",
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "error_km": 25.662868112596062,
+      "cost_usd": 0.21126899999999993,
+      "computed_confidence": 0.5800000000000001,
+      "all_levels": {
+        "country": 0.7,
+        "region": 0.5800000000000001
+      },
+      "evidence": 13,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'\u7fe0\u5cf0\u6e56' matches 1 place in \u81fa\u7063, best is a lake, which is city-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Cuifeng Lake'"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 110 km away, inside the 1500 km a country claim allows",
+            "distance_km": 109.5,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 12 km away, inside the 400 km a region claim allows",
+            "distance_km": 12.1,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "\u7fe0\u5cf0\u6e56, \u5bd2\u6eaa\u6751, \u5927\u540c\u9109, \u5b9c\u862d\u7e23, 267, \u81fa\u7063 is 16 km away, inside the 50 km a city claim allows",
+            "distance_km": 16.0,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "claim": "Central Taiwan mountain range",
+      "level": "country",
+      "confidence": null,
+      "lat": 24.35,
+      "lon": 121.42000000000002,
+      "error_km": 26.427363957632334,
+      "cost_usd": 0.16708499999999993,
+      "computed_confidence": 0.755,
+      "all_levels": {
+        "continent": 0.5,
+        "country": 0.755
+      },
+      "evidence": 10,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent County",
+      "level": "country",
+      "confidence": null,
+      "lat": 39.7459,
+      "lon": -75.5466,
+      "error_km": 178.91940962845285,
+      "cost_usd": 0.480654,
+      "computed_confidence": 0.93,
+      "all_levels": {
+        "country": 0.93
+      },
+      "evidence": 23,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Ius est ars boni et aequi'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Kent County Courthouse Dover Delaware'"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Grand Rapids Michigan' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Rhode Island' matches 3 places in United States, best is a amenity spread over 5 km, which is city-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Chestertown Maryland' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Old Kent County Courthouse'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Chestertown' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Kent County Courthouse Delaware'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Warwick Rhode Island' matches 2 places in United States, best is a building spread over 0 km, which is point-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 74 km away, inside the 1500 km a country claim allows",
+            "distance_km": 74.5,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 74 km away, inside the 1500 km a country claim allows",
+            "distance_km": 74.5,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "Kent County Courthouse, Chestertown, Maryland",
+      "level": "point",
+      "confidence": null,
+      "lat": 39.2126,
+      "lon": -76.0658,
+      "error_km": 252.1076621868076,
+      "cost_usd": 0.210006,
+      "computed_confidence": 0.976,
+      "all_levels": {
+        "country": 0.79,
+        "region": 0.9199999999999999,
+        "city": 0.85,
+        "point": 0.976
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse Chestertown' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 0 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 0 km away, inside the 400 km a region claim allows",
+            "distance_km": 0.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 0 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c4",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, Court Street, Mile Tree Village, Chestertown,  is 0 km away, inside the 2 km a point claim allows",
+            "distance_km": 0.4,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "claim": "United States",
+      "level": "country",
+      "confidence": "high",
+      "lat": 41.1537,
+      "lon": -81.3579,
+      "error_km": 621.9036616864925,
+      "cost_usd": 0.5524829999999998,
+      "computed_confidence": 0.748,
+      "all_levels": {
+        "country": 0.748
+      },
+      "evidence": 23,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'IUS EST ARS BONI ET AEQUI'"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse, Chestertown' matches 1 place in United States, best is a amenity, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Kent County Courthouse' matches 6 places in United States, best is a amenity spread over 2720 km, which is continent-level evidence"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'Kent County, Maryland': nothing this run looked up is within 400 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'Chestertown, Maryland': nothing this run looked up is within 50 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'Kent County Courthouse, Chestertown, Maryland': nothing this run looked up is within 2 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand Rapids, Ke is 409 km away, inside the 1500 km a country claim allows",
+            "distance_km": 409.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 400 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km",
+            "distance_km": 409.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 50 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km",
+            "distance_km": 409.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c4",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 2 km of the claim; nearest is Kent County Courthouse, 180, Ottawa Avenue Northwest, Grand  at 409 km",
+            "distance_km": 409.0,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 3
+      }
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Australia",
+      "level": "country",
+      "confidence": "medium",
+      "lat": -25.5,
+      "lon": 153.05,
+      "error_km": 15002.395620057969,
+      "cost_usd": 0.180204,
+      "computed_confidence": 0.6,
+      "all_levels": {
+        "continent": 0.7,
+        "country": 0.6
+      },
+      "evidence": 2,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Great Barrier Reef islands, Queensland",
+      "level": "region",
+      "confidence": "low",
+      "lat": -21.0,
+      "lon": 149.05,
+      "error_km": 15290.831310961168,
+      "cost_usd": 0.22279500000000002,
+      "computed_confidence": 0.6496685715219807,
+      "all_levels": {
+        "continent": 0.5145856108975257,
+        "country": 0.4843158690800242,
+        "region": 0.6496685715219807
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-12-30 18:58:03 UTC, local clock, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.76",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.76",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.76",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "claim": "Australia",
+      "level": "country",
+      "confidence": "low",
+      "lat": -33.5,
+      "lon": 115.14999999999998,
+      "error_km": 18505.08131115469,
+      "cost_usd": 0.30423,
+      "computed_confidence": 0.5599999999999999,
+      "all_levels": {
+        "continent": 0.6,
+        "country": 0.5599999999999999
+      },
+      "evidence": 4,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2006-12-30 18:58:03 UTC, local clock, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "San Fernando Valley / SR-170 near Hollywood Freeway (US-101) interchange",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 34.185,
+      "lon": -118.4,
+      "error_km": 22.956651781820153,
+      "cost_usd": 0.04517099999999996,
+      "computed_confidence": 0.9888,
+      "all_levels": {
+        "country": 0.88,
+        "region": 0.9888
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "claim": "Los Angeles",
+      "level": "country",
+      "confidence": "high",
+      "lat": 34.213,
+      "lon": -118.383,
+      "error_km": 26.403008530147734,
+      "cost_usd": 0.05545800000000001,
+      "computed_confidence": 0.955,
+      "all_levels": {
+        "country": 0.955
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Italy",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.9007,
+      "lon": 12.501499999999993,
+      "error_km": 0.1649718695561415,
+      "cost_usd": 0.308265,
+      "computed_confidence": 0.5486887668220543,
+      "all_levels": {
+        "country": 0.5486887668220543
+      },
+      "evidence": 19,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2017-01-14 13:55:10 UTC, daylight, sun mid, sun to the front, bearing 279"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Rome Tourist Tickets'"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.55",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.55",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Area near a major transit hub (e.g., Termini Station vicinity)",
+      "level": "region",
+      "confidence": "low",
+      "lat": 41.9028,
+      "lon": 12.496399999999994,
+      "error_km": 0.337085540413059,
+      "cost_usd": 0.171192,
+      "computed_confidence": 0.7060000000000001,
+      "all_levels": {
+        "country": 0.904,
+        "region": 0.7060000000000001
+      },
+      "evidence": 16,
+      "constraints": 0,
+      "tools": [],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "claim": "Rome",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 41.8916,
+      "lon": 12.489000000000004,
+      "error_km": 1.4750600271725554,
+      "cost_usd": 0.2627100000000002,
+      "computed_confidence": 0.832,
+      "all_levels": {
+        "country": 0.96,
+        "region": 0.832
+      },
+      "evidence": 19,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Rome Tourist Tickets'"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "Asia",
+      "level": "continent",
+      "confidence": null,
+      "lat": 28.6,
+      "lon": 77.19999999999999,
+      "error_km": 1738.6742999461937,
+      "cost_usd": 0.35452799999999995,
+      "computed_confidence": 0.5800000000000001,
+      "all_levels": {
+        "continent": 0.5800000000000001
+      },
+      "evidence": 16,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "signage uses han script, leaving 6 countries"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2022-08-29 13:26:17 UTC, night"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "claim": "China",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 28.6139,
+      "lon": 77.209,
+      "error_km": 1740.1979225824264,
+      "cost_usd": 0.18911100000000014,
+      "computed_confidence": 0.648,
+      "all_levels": {
+        "continent": 0.7,
+        "country": 0.648
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2022-08-29 13:26:17 UTC, night"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "signage uses han script, leaving 6 countries"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "claim": "Woodstock, Cape Town",
+      "level": "region",
+      "confidence": "medium",
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "error_km": 3.6279451611930305,
+      "cost_usd": 0.183438,
+      "computed_confidence": 0.874,
+      "all_levels": {
+        "country": 0.85,
+        "region": 0.874
+      },
+      "evidence": 17,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "country_metas",
+          "summary": "traffic keeps left; the centre line is yellow, leaving 7 countries"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-07-14 09:31:29 UTC, daylight"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'NUDE FOODS' matches 2 places across 2 countries, best is a shop spread over 15054 km, which is continent-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Nude Foods, Newlands Avenue, Cape Town Ward 59, Cape Town, City of Cap is 8 km away, inside the 1500 km a country claim allows",
+            "distance_km": 7.8,
+            "weight": 0.474
+          },
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Nude Foods, Newlands Avenue, Cape Town Ward 59, Cape Town, City of Cap is 6 km away, inside the 1500 km a country claim allows",
+            "distance_km": 5.9,
+            "weight": 0.474
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Nude Foods, Newlands Avenue, Cape Town Ward 59, Cape Town, City of Cap is 5 km away, inside the 400 km a region claim allows",
+            "distance_km": 4.7,
+            "weight": 0.474
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "claim": "Uhuru Highway area, Nairobi",
+      "level": "district",
+      "confidence": "medium",
+      "lat": -1.2833,
+      "lon": 36.8167,
+      "error_km": 0.956393979566644,
+      "cost_usd": 0.31520099999999984,
+      "computed_confidence": 0.8808576,
+      "all_levels": {
+        "country": 0.88532544,
+        "city": 0.7952239999999999,
+        "district": 0.8808576
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Kenyatta International Convention Centre'"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'KICC Nairobi' matches 2 places in Kenya, best is a amenity spread over 0 km, which is point-level evidence"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'Uhuru Highway Nairobi' matches 13 places in Kenya, best is a road spread over 2 km, which is district-level evidence"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Uhuru Highway, City Square sublocation, Starehe location, CBD division is 0 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.1,
+            "weight": 0.069
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Uhuru Highway, City Square sublocation, Starehe location, CBD division is 0 km away, inside the 50 km a city claim allows",
+            "distance_km": 0.1,
+            "weight": 0.069
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Uhuru Highway, City Square sublocation, Starehe location, CBD division is 0 km away, inside the 10 km a district claim allows",
+            "distance_km": 0.1,
+            "weight": 0.069
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "claim": "Nairobi",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.2833,
+      "lon": 36.8167,
+      "error_km": 0.956393979566644,
+      "cost_usd": 0.35135700000000014,
+      "computed_confidence": 0.5680000000000001,
+      "all_levels": {
+        "continent": 0.6399999999999999,
+        "country": 0.44999999999999996,
+        "region": 0.5680000000000001
+      },
+      "evidence": 18,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-12-08 08:19:23 UTC, daylight"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "the centre line is white"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": "low",
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0.20135100000000006,
+      "computed_confidence": 0.616,
+      "all_levels": {
+        "country": 0.88,
+        "region": 0.616
+      },
+      "evidence": 19,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "country_metas",
+          "summary": "traffic keeps right; the centre line is white"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": null,
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "error_km": 0.2365057679908497,
+      "cost_usd": 0.1661220000000001,
+      "computed_confidence": 0.628632,
+      "all_levels": {
+        "country": 0.875808,
+        "region": 0.628632
+      },
+      "evidence": 18,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-12-14 09:05:47 UTC, daylight, sun low"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "'NORK' matches 7 places across 4 countries, best is a suburb spread over 9728 km, which is continent-level evidence"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'Warsaw': nothing this run looked up is within 400 km of the claim; nearest is Nork, L\u00fcnten, Vreden, Kreis Borken, Nordrhein-Westfalen, Deu at 963 km"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Nork, L\u00fcnten, Vreden, Kreis Borken, Nordrhein-Westfalen, Deutschland is 963 km away, inside the 1500 km a country claim allows",
+            "distance_km": 962.7,
+            "weight": 0.127
+          },
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 400 km of the claim; nearest is Nork, L\u00fcnten, Vreden, Kreis Borken, Nordrhein-Westfalen, Deu at 963 km",
+            "distance_km": 962.7,
+            "weight": 0.127
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 1
+      }
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "claim": "Warsaw",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.232,
+      "lon": 21.00999999999999,
+      "error_km": 0.48551903449080996,
+      "cost_usd": 0.16125599999999995,
+      "computed_confidence": 0.8976,
+      "all_levels": {
+        "country": 0.92,
+        "region": 0.8976
+      },
+      "evidence": 17,
+      "constraints": 5,
+      "tools": [
+        {
+          "tool": "country_metas",
+          "summary": "traffic keeps right; the centre line is white"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2019-12-14 09:05:47 UTC, daylight, sun low, sun to the left, bearing 161"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 40.42,
+      "lon": -3.7024999999999864,
+      "error_km": 0.27454027973677786,
+      "cost_usd": 0.308775,
+      "computed_confidence": 0.89024,
+      "all_levels": {
+        "continent": 0.81052,
+        "country": 0.89024
+      },
+      "evidence": 16,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'PIKOLINOS' matches at least 20 places across 7 countries, best is a shop spread over 2487 km, which is continent-level evidence"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-09-16 06:07:13 UTC, daylight"
+        },
+        {
+          "tool": "place_lookup",
+          "summary": "no place in OpenStreetMap matches 'Dranguinos'"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Pikolinos, 17, Calle de Fuencarral, Chueca, Justicia, Centro, Madrid,  is 0 km away, inside the 5000 km a continent claim allows",
+            "distance_km": 0.2,
+            "weight": 0.053
+          },
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "Pikolinos, 17, Calle de Fuencarral, Chueca, Justicia, Centro, Madrid,  is 0 km away, inside the 1500 km a country claim allows",
+            "distance_km": 0.2,
+            "weight": 0.053
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "high",
+      "lat": 39.4699,
+      "lon": -0.3762999999999863,
+      "error_km": 302.78641767654045,
+      "cost_usd": 0.15863099999999997,
+      "computed_confidence": 0.8971,
+      "all_levels": {
+        "country": 0.8971
+      },
+      "evidence": 13,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-09-16 06:07:13 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "Seoul",
+      "level": "city",
+      "confidence": null,
+      "lat": 37.5013,
+      "lon": 127.02429999999998,
+      "error_km": 8.408187380610858,
+      "cost_usd": 0.09525000000000006,
+      "computed_confidence": 0.94,
+      "all_levels": {
+        "country": 0.99,
+        "city": 0.94
+      },
+      "evidence": 21,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'HiKR GROUND' matches 1 place in \ub300\ud55c\ubbfc\uad6d, best is a tourism, which is point-level evidence"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-03-28 00:49:06 UTC, daylight"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'HiKR Ground, Korea Tourism Organization HQ, Gangnam-gu, Seoul': nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 8 km"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 8 km away, inside the 1500 km a country claim allows",
+            "distance_km": 8.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 8 km away, inside the 50 km a city claim allows",
+            "distance_km": 8.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 8 km",
+            "distance_km": 8.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 1
+      }
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "Seoul",
+      "level": "city",
+      "confidence": "high",
+      "lat": 37.5006,
+      "lon": 127.03640000000001,
+      "error_km": 9.001040373099508,
+      "cost_usd": 0.15504000000000007,
+      "computed_confidence": 0.94,
+      "all_levels": {
+        "country": 0.97,
+        "city": 0.94
+      },
+      "evidence": 18,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'HiKR Ground' matches 1 place in \ub300\ud55c\ubbfc\uad6d, best is a tourism, which is point-level evidence"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2025-03-28 00:49:06 UTC, daylight"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'HiKR Ground, Yeoksam Station, Gangnam-gu, Seoul': nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 9 km"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 9 km away, inside the 1500 km a country claim allows",
+            "distance_km": 9.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 9 km away, inside the 50 km a city claim allows",
+            "distance_km": 9.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 9 km",
+            "distance_km": 9.0,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 1
+      }
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "claim": "South Korea",
+      "level": "country",
+      "confidence": "high",
+      "lat": 37.5125,
+      "lon": 127.10250000000002,
+      "error_km": 12.360000235177084,
+      "cost_usd": 0.19989599999999985,
+      "computed_confidence": 0.94,
+      "all_levels": {
+        "country": 0.94
+      },
+      "evidence": 15,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "place_lookup",
+          "summary": "'HiKR Ground' matches 1 place in \ub300\ud55c\ubbfc\uad6d, best is a tourism, which is point-level evidence"
+        },
+        {
+          "tool": "verify",
+          "summary": "place_lookup refutes 'HiKR Ground, near KINTEX, Ilsan, Goyang, South Korea': nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 12 km"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 12 km away, inside the 1500 km a country claim allows",
+            "distance_km": 12.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c2",
+            "source": "place_lookup",
+            "verdict": "confirmed",
+            "detail": "HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d is 12 km away, inside the 1500 km a country claim allows",
+            "distance_km": 12.4,
+            "weight": 0.8
+          },
+          {
+            "claim_id": "c3",
+            "source": "place_lookup",
+            "verdict": "refuted",
+            "detail": "nothing this run looked up is within 2 km of the claim; nearest is HiKR GROUND, \uccad\uacc4\ucc9c\ub85c, \uc0bc\uac01\ub3d9, \uba85\ub3d9, \uc911\uad6c, \uc11c\uc6b8\ud2b9\ubcc4\uc2dc, 04521, \ub300\ud55c\ubbfc\uad6d at 12 km",
+            "distance_km": 12.4,
+            "weight": 0.8
+          }
+        ],
+        "refutations_applied": 1
+      }
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Castilian meseta (central Spain)",
+      "level": "country",
+      "confidence": "low",
+      "lat": 41.3,
+      "lon": -3.8000000000000114,
+      "error_km": 60.174381139187844,
+      "cost_usd": 0.21933599999999975,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "continent": 0.65,
+        "country": 0.72
+      },
+      "evidence": 12,
+      "constraints": 3,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "the centre line is white"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": "low",
+      "lat": 41.3,
+      "lon": -3.6999999999999886,
+      "error_km": 68.23001844532543,
+      "cost_usd": 0.23648099999999994,
+      "computed_confidence": 0.7951999999999999,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.7951999999999999
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "claim": "Spain",
+      "level": "country",
+      "confidence": null,
+      "lat": 41.2,
+      "lon": -3.5,
+      "error_km": 87.44884849990726,
+      "cost_usd": 0.26970300000000025,
+      "computed_confidence": 0.804,
+      "all_levels": {
+        "continent": 0.79,
+        "country": 0.804
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-05-03 12:55:00 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "claim": "Interior S\u00e3o Paulo state, Brazil",
+      "level": "region",
+      "confidence": "medium",
+      "lat": -22.9,
+      "lon": -47.0,
+      "error_km": 165.45307887521844,
+      "cost_usd": 0.31228199999999995,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "country": 0.872,
+        "region": 0.776
+      },
+      "evidence": 15,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2026-05-24 15:29:08 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "claim": "Interior S\u00e3o Paulo or Minas Gerais state, Brazil",
+      "level": "region",
+      "confidence": "low",
+      "lat": -22.9,
+      "lon": -47.0,
+      "error_km": 165.45307887521844,
+      "cost_usd": 0.1865730000000001,
+      "computed_confidence": 0.7143999999999999,
+      "all_levels": {
+        "country": 0.97246,
+        "region": 0.7143999999999999
+      },
+      "evidence": 15,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2026-05-24 15:29:08 UTC, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Central/Eastern Europe (likely Poland)",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.0,
+      "lon": 19.5,
+      "error_km": 113.12432351644033,
+      "cost_usd": 0.339966,
+      "computed_confidence": 0.874,
+      "all_levels": {
+        "continent": 0.744,
+        "region": 0.874
+      },
+      "evidence": 14,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-19 11:50:23 UTC, daylight"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "the centre line is white"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Central/Eastern Europe",
+      "level": "region",
+      "confidence": "medium",
+      "lat": 52.1,
+      "lon": 19.0,
+      "error_km": 128.1046173521088,
+      "cost_usd": 0.20984399999999992,
+      "computed_confidence": 0.776,
+      "all_levels": {
+        "continent": 0.712,
+        "country": 0.5,
+        "region": 0.776
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "the centre line is white"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-19 11:50:23 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "claim": "Europe",
+      "level": "continent",
+      "confidence": "medium",
+      "lat": 52.0,
+      "lon": 19.0,
+      "error_km": 135.52000434764184,
+      "cost_usd": 0.19078799999999996,
+      "computed_confidence": 0.72,
+      "all_levels": {
+        "continent": 0.72
+      },
+      "evidence": 12,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-19 11:50:23 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "claim": "Germany",
+      "level": "country",
+      "confidence": "medium",
+      "lat": 52.5,
+      "lon": 13.0,
+      "error_km": 247.4966702731641,
+      "cost_usd": 0.1461929999999998,
+      "computed_confidence": 0.8464,
+      "all_levels": {
+        "continent": 0.804,
+        "country": 0.8464
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2020-06-06 12:19:33 UTC, daylight, sun high"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "claim": "South America",
+      "level": "continent",
+      "confidence": null,
+      "lat": -34.6,
+      "lon": -71.2,
+      "error_km": 53.295886011489934,
+      "cost_usd": 0.165705,
+      "computed_confidence": 0.388,
+      "all_levels": {
+        "continent": 0.388
+      },
+      "evidence": 14,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "country_metas",
+          "summary": "traffic keeps right; the centre line is white"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "claim": "South America",
+      "level": "continent",
+      "confidence": null,
+      "lat": -34.65,
+      "lon": -71.1,
+      "error_km": 53.86808225826242,
+      "cost_usd": 0.17592000000000008,
+      "computed_confidence": 0.388,
+      "all_levels": {
+        "continent": 0.388
+      },
+      "evidence": 16,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "the centre line is white"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2022-09-05 11:20:37 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c3",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 0.50",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.8000000000000114,
+      "error_km": 148.86125545205633,
+      "cost_usd": 0.11359800000000009,
+      "computed_confidence": 0.595,
+      "all_levels": {
+        "continent": 0.744,
+        "country": 0.595
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-21 16:13:09 UTC, daylight, sun mid"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "England",
+      "level": "country",
+      "confidence": "low",
+      "lat": 51.5,
+      "lon": -0.6999999999999886,
+      "error_km": 154.43355828127827,
+      "cost_usd": 0.18484200000000017,
+      "computed_confidence": 0.6,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.6
+      },
+      "evidence": 11,
+      "constraints": 0,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "claim": "United Kingdom",
+      "level": "country",
+      "confidence": null,
+      "lat": 51.5,
+      "lon": -0.5,
+      "error_km": 165.86797260437112,
+      "cost_usd": 0.2055959999999999,
+      "computed_confidence": 0.7552000000000001,
+      "all_levels": {
+        "continent": 0.6799999999999999,
+        "country": 0.7552000000000001
+      },
+      "evidence": 15,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2017-08-21 16:13:09 UTC, daylight, sun mid"
+        },
+        {
+          "tool": "country_metas",
+          "summary": "nothing in the image was reported that narrows the country"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "East Africa",
+      "level": "country",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 37.0,
+      "error_km": 7188.020685264833,
+      "cost_usd": 0.159516,
+      "computed_confidence": 0.6799999999999999,
+      "all_levels": {
+        "continent": 0.72,
+        "country": 0.6799999999999999
+      },
+      "evidence": 13,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight, sun high"
+        },
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "Africa",
+      "level": "continent",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 35.0,
+      "error_km": 7400.566052223895,
+      "cost_usd": 0.2548379999999999,
+      "computed_confidence": 0.7696000000000001,
+      "all_levels": {
+        "continent": 0.7696000000000001
+      },
+      "evidence": 10,
+      "constraints": 1,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "claim": "East Africa",
+      "level": "region",
+      "confidence": "low",
+      "lat": -1.5,
+      "lon": 35.0,
+      "error_km": 7400.566052223895,
+      "cost_usd": 0.16871100000000006,
+      "computed_confidence": 0.8432,
+      "all_levels": {
+        "continent": 0.804,
+        "region": 0.8432
+      },
+      "evidence": 12,
+      "constraints": 2,
+      "tools": [
+        {
+          "tool": "geocell_classifier",
+          "summary": "geocell_classifier failed: mat1 and mat2 shapes cannot be multiplied (1x512 and 768x245)"
+        },
+        {
+          "tool": "solar_position",
+          "summary": "2024-03-10 11:14:52 UTC, daylight, sun high"
+        }
+      ],
+      "rejected": [],
+      "verification": {
+        "checks": [
+          {
+            "claim_id": "c1",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          },
+          {
+            "claim_id": "c2",
+            "source": "constraints",
+            "verdict": "confirmed",
+            "detail": "constraints admit this point at 1.00",
+            "distance_km": null,
+            "weight": 0.0
+          }
+        ],
+        "refutations_applied": 0
+      }
+    }
+  ],
+  "consensus": [
+    {
+      "id": "im2gps_0fc6f7a8d1",
+      "source": "im2gps",
+      "level": "region",
+      "value": "Mediterranean coastal region (Adriatic coast)",
+      "lat": 42.6507,
+      "lon": 18.094400000000007,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 1.785806552425848
+    },
+    {
+      "id": "im2gps_2d187a1317",
+      "source": "im2gps",
+      "level": "continent",
+      "value": "Lowland Britain / Northwest Europe (temperate deciduous woodland edge and grassland)",
+      "lat": 51.5,
+      "lon": -0.5,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 36.1,
+      "demoted_from": "country",
+      "note": "samples claimed country but agree only to continent, 36 km apart at the widest",
+      "error_km": 30.17366837502707
+    },
+    {
+      "id": "im2gps_771cffef86",
+      "source": "im2gps",
+      "level": "region",
+      "value": "Avenida 9 de Julio, Buenos Aires",
+      "lat": -34.6037,
+      "lon": -58.38159999999999,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 0.00353118911151473
+    },
+    {
+      "id": "im2gps_694f4bfbd7",
+      "source": "im2gps",
+      "level": "point",
+      "value": "Badshahi Mosque, Lahore",
+      "lat": 31.5881,
+      "lon": 74.31029999999998,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 0.9,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 0.13913737377279517
+    },
+    {
+      "id": "im2gps_d6223a52f3",
+      "source": "im2gps",
+      "level": "country",
+      "value": "Australia",
+      "lat": -25.5,
+      "lon": 153.05,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 3752.2,
+      "demoted_from": null,
+      "note": "2 of 3 samples agree",
+      "error_km": 15002.395620057969
+    },
+    {
+      "id": "im2gps_8b6f42811a",
+      "source": "im2gps",
+      "level": "region",
+      "value": "Paris",
+      "lat": 48.8584,
+      "lon": 2.2944999999999993,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 3.8510708512546286
+    },
+    {
+      "id": "im2gps_db82bcd70c",
+      "source": "im2gps",
+      "level": "country",
+      "value": "Los Angeles",
+      "lat": 34.213,
+      "lon": -118.383,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 3.5,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 26.403008530147734
+    },
+    {
+      "id": "im2gps_04881af57a",
+      "source": "im2gps",
+      "level": "continent",
+      "value": "Europe",
+      "lat": 50.0755,
+      "lon": 14.43780000000001,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 317.0,
+      "demoted_from": null,
+      "note": "2 of 3 samples agree",
+      "error_km": 280.2818856612711
+    },
+    {
+      "id": "im2gps_a33bc4c242",
+      "source": "im2gps",
+      "level": "country",
+      "value": "Kent County Courthouse, Chestertown, Maryland",
+      "lat": 39.2126,
+      "lon": -76.0658,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 515.9,
+      "demoted_from": null,
+      "note": "2 of 3 samples agree",
+      "error_km": 252.1076621868076
+    },
+    {
+      "id": "im2gps_9b27118e24",
+      "source": "im2gps",
+      "level": "region",
+      "value": "Cuifeng Lake (\u7fe0\u5cf0\u6e56)",
+      "lat": 24.383,
+      "lon": 121.39999999999998,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 4.2,
+      "demoted_from": null,
+      "note": "2 of 3 samples agree",
+      "error_km": 25.662868112596062
+    },
+    {
+      "id": "mapillary_7301b58289",
+      "source": "mapillary_urban",
+      "level": "region",
+      "value": "Warsaw",
+      "lat": 52.2297,
+      "lon": 21.012200000000007,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 0.3,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 0.2365057679908497
+    },
+    {
+      "id": "mapillary_51b406aaea",
+      "source": "mapillary_urban",
+      "level": "region",
+      "value": "Woodstock, Cape Town",
+      "lat": -33.9285,
+      "lon": 18.463599999999985,
+      "agreement": 1.0,
+      "n_answered": 1,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "one sample answered, so there is nothing to check it against",
+      "error_km": 3.6279451611930305
+    },
+    {
+      "id": "mapillary_3afe051f4f",
+      "source": "mapillary_urban",
+      "level": "continent",
+      "value": "China",
+      "lat": 28.6139,
+      "lon": 77.209,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 1.8,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 1740.1979225824264
+    },
+    {
+      "id": "mapillary_4524de2ded",
+      "source": "mapillary_urban",
+      "level": null,
+      "value": "",
+      "lat": null,
+      "lon": null,
+      "agreement": 0.0,
+      "n_answered": 0,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "no sample produced an answer",
+      "error_km": null
+    },
+    {
+      "id": "mapillary_385508af73",
+      "source": "mapillary_urban",
+      "level": null,
+      "value": "",
+      "lat": null,
+      "lon": null,
+      "agreement": 0.0,
+      "n_answered": 0,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "no sample produced an answer",
+      "error_km": null
+    },
+    {
+      "id": "mapillary_d267ae5246",
+      "source": "mapillary_urban",
+      "level": "city",
+      "value": "Seoul",
+      "lat": 37.5013,
+      "lon": 127.02429999999998,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 7.0,
+      "demoted_from": null,
+      "note": "2 of 3 samples agree",
+      "error_km": 8.408187380610858
+    },
+    {
+      "id": "mapillary_867c10a9aa",
+      "source": "mapillary_urban",
+      "level": "country",
+      "value": "Spain",
+      "lat": 40.42,
+      "lon": -3.7024999999999864,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 302.6,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 0.27454027973677786
+    },
+    {
+      "id": "mapillary_36bca76fb5",
+      "source": "mapillary_urban",
+      "level": "country",
+      "value": "Italy",
+      "lat": 41.9007,
+      "lon": 12.501499999999993,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 1.4,
+      "demoted_from": "region",
+      "note": "samples claimed region but agree only to country, 1 km apart at the widest",
+      "error_km": 0.1649718695561415
+    },
+    {
+      "id": "rural_2dafd2f200",
+      "source": "mapillary_rural",
+      "level": "region",
+      "value": "Interior S\u00e3o Paulo state, Brazil",
+      "lat": -22.9,
+      "lon": -47.0,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 165.45307887521844
+    },
+    {
+      "id": "mapillary_71a9117d55",
+      "source": "mapillary_urban",
+      "level": "region",
+      "value": "Uhuru Highway area, Nairobi",
+      "lat": -1.2833,
+      "lon": 36.8167,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 0.956393979566644
+    },
+    {
+      "id": "rural_3e5efad504",
+      "source": "mapillary_rural",
+      "level": "continent",
+      "value": "Central/Eastern Europe",
+      "lat": 52.1,
+      "lon": 19.0,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 36.0,
+      "demoted_from": "region",
+      "note": "samples claimed region but agree only to continent, 36 km apart at the widest",
+      "error_km": 128.1046173521088
+    },
+    {
+      "id": "rural_1e85f5921d",
+      "source": "mapillary_rural",
+      "level": "country",
+      "value": "Spain",
+      "lat": 41.3,
+      "lon": -3.6999999999999886,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 27.4,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 68.23001844532543
+    },
+    {
+      "id": "rural_cb06bab2f5",
+      "source": "mapillary_rural",
+      "level": "continent",
+      "value": "Africa",
+      "lat": -1.5,
+      "lon": 35.0,
+      "agreement": 0.6667,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 222.3,
+      "demoted_from": "country",
+      "note": "samples claimed country but agree only to continent, 222 km apart at the widest",
+      "error_km": 7400.566052223895
+    },
+    {
+      "id": "rural_97a65d8135",
+      "source": "mapillary_rural",
+      "level": "country",
+      "value": "England",
+      "lat": 51.5,
+      "lon": -0.6999999999999886,
+      "agreement": 1.0,
+      "n_answered": 3,
+      "n_total": 3,
+      "spread_km": 20.8,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 154.43355828127827
+    },
+    {
+      "id": "rural_42816b32de",
+      "source": "mapillary_rural",
+      "level": "country",
+      "value": "Germany",
+      "lat": 52.5,
+      "lon": 13.0,
+      "agreement": 1.0,
+      "n_answered": 1,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "one sample answered, so there is nothing to check it against",
+      "error_km": 247.4966702731641
+    },
+    {
+      "id": "rural_58bb638a1b",
+      "source": "mapillary_rural",
+      "level": "continent",
+      "value": "South America",
+      "lat": -34.6,
+      "lon": -71.2,
+      "agreement": 1.0,
+      "n_answered": 2,
+      "n_total": 3,
+      "spread_km": 10.7,
+      "demoted_from": null,
+      "note": "",
+      "error_km": 53.295886011489934
+    },
+    {
+      "id": "rural_7ee09e498b",
+      "source": "mapillary_rural",
+      "level": null,
+      "value": "",
+      "lat": null,
+      "lon": null,
+      "agreement": 0.0,
+      "n_answered": 0,
+      "n_total": 3,
+      "spread_km": 0.0,
+      "demoted_from": null,
+      "note": "no sample produced an answer",
+      "error_km": null
+    }
+  ]
+}

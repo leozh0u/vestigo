@@ -409,12 +409,22 @@ def main() -> int:
                   "  median and a dangerous tail, and the tail is the only column where\n"
                   "  three samples can buy something one call cannot.")
 
-        if refused:
-            print(f"\n  {len(refused)} images where the samples agreed on nothing and no\n"
-                  f"  answer was stated. Each of those had samples that would each have\n"
-                  f"  been stated alone, with a confidence.")
-            for c in refused[:5]:
+        # Two different things, and the first version printed one headline over
+        # both. An image where three samples scattered across a hemisphere is a
+        # result; an image where no sample answered at all is the agent
+        # declining, which consensus had no part in. Reporting them together
+        # credited consensus with refusals it did not make.
+        silent = [c for c in refused if c["n_answered"] == 0]
+        disagreed = [c for c in refused if c["n_answered"] > 0]
+        if disagreed:
+            print(f"\n  {len(disagreed)} images where the samples answered and agreed on\n"
+                  f"  nothing, so no answer was stated. Each had samples that would\n"
+                  f"  have been stated alone, with a confidence.")
+            for c in disagreed[:5]:
                 print(f"    {c['id']:<24} spread {c['spread_km']:>8.0f} km")
+        if silent:
+            print(f"\n  {len(silent)} images where no sample answered at all. Nothing to\n"
+                  f"  agree or disagree about, and not consensus doing any work.")
 
     print("\n" + "=" * 78)
     print("CALIBRATION")

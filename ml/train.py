@@ -44,6 +44,26 @@ from ml.geocells import assign_cell, build, haversine, save as save_cells  # noq
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 EMB = ROOT / "ml/embeddings"
 
+DEFAULT_ENCODER, DEFAULT_PRETRAINED = "ViT-B-32", "laion2b_s34b_b79k"
+
+
+def encoder_of(emb: pathlib.Path) -> dict:
+    """Which encoder wrote these vectors, as open_clip would be called.
+
+    From `encoder.json`, written beside the vectors, not from the directory
+    name. The name is a lowercased slug and "vit-l-14" is not a model open_clip
+    will load, so parsing it back produces a string that fails at load time
+    rather than at save time.
+
+    Embeddings written before that file existed fall back to the default, which
+    is what they were made with.
+    """
+    marker = emb / "encoder.json"
+    if marker.exists():
+        blob = json.loads(marker.read_text())
+        return {"model": blob["model"], "pretrained": blob["pretrained"]}
+    return {"model": DEFAULT_ENCODER, "pretrained": DEFAULT_PRETRAINED}
+
 # Which encoder's vectors to train on. Embeddings from different backbones have
 # different widths and are not interchangeable, so they live in their own
 # directories and this picks one. A bare ml/embeddings is honoured for the runs
@@ -300,8 +320,18 @@ def main() -> int:
               f"{stated - observed:>+8.0%}")
 
     OUT.mkdir(parents=True, exist_ok=True)
+    # The encoder goes in the checkpoint. A head trained on 768-dimensional
+    # vectors is useless against a 512-dimensional encoder, and the two live in
+    # different files that nothing connected: retraining on a larger backbone
+    # left inference silently mismatched, and every call failed on a shape
+    # error inside a $3.37 eval run before anyone noticed. Whoever loads the
+    # head can now load the right encoder, or say why it cannot.
+    encoder = encoder_of(emb)
     torch.save({"state_dict": model.state_dict(), "temperature": temperature,
-                "n_cells": len(cells), "dim": X.shape[1]}, OUT / "geocell_head.pt")
+                "n_cells": len(cells), "dim": X.shape[1],
+                "encoder": encoder["model"],
+                "pretrained": encoder["pretrained"],
+                "embeddings": emb.name}, OUT / "geocell_head.pt")
     save_cells(cells, OUT / "cells.json")
     (OUT / "metrics.json").write_text(json.dumps({
         "images": int(len(X)), "cells": len(cells), "mode": args.mode,

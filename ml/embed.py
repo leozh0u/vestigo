@@ -118,6 +118,18 @@ def main() -> int:
         done = {k: i for i, k in enumerate(json.loads(key_path.read_text()))}
         print(f"{len(done)} already embedded")
 
+    # The exact strings open_clip was called with, beside the vectors they
+    # produced. The directory name is a lowercased slug and "vit-l-14" is not a
+    # model open_clip will load, so parsing the name back yields a string that
+    # fails at load time rather than at save time.
+    #
+    # Written before the work rather than after it, because a rerun that finds
+    # nothing to do still has to leave the marker: that is exactly the case
+    # where an already-complete directory would otherwise never get one.
+    (out / "encoder.json").write_text(json.dumps({
+        "model": args.model, "pretrained": args.pretrained,
+    }, indent=2) + "\n")
+
     todo = [r for r in index if r["file"] not in done]
     if not todo:
         print("nothing to do")

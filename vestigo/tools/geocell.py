@@ -62,8 +62,26 @@ def _load():
     head.load_state_dict(blob["state_dict"])
     head.eval()
 
-    from ..ml_bridge import load_encoder          # keeps torch out of import time
-    _Loaded.encoder, _Loaded.preprocess = load_encoder()
+    # The encoder the head was trained against, named in the checkpoint. Older
+    # checkpoints do not carry it and fall back to the bridge's default.
+    from ..ml_bridge import EncoderMismatch, load_encoder   # torch out of import time
+    encoder, preprocess = load_encoder(blob.get("encoder"), blob.get("pretrained"))
+
+    # Checked before the first image rather than discovered on it. A head
+    # trained on 768-dimensional vectors against a 512-dimensional encoder
+    # fails with "mat1 and mat2 shapes cannot be multiplied", once per image,
+    # from inside torch, and the tool result says only that it failed. That
+    # cost a whole eval run before anyone read the summaries.
+    width = getattr(encoder.visual, "output_dim", None)
+    if width is not None and width != blob["dim"]:
+        raise EncoderMismatch(
+            f"the head expects {blob['dim']}-dimensional vectors and "
+            f"{blob.get('encoder', 'the default encoder')} produces {width}. "
+            f"Re-run ml/train.py against the embeddings this encoder wrote, "
+            f"or embed with the encoder the head was trained on."
+        )
+
+    _Loaded.encoder, _Loaded.preprocess = encoder, preprocess
     _Loaded.model = head
     _Loaded.temperature = float(blob.get("temperature", 1.0))
     _Loaded.cells = json.loads(CELLS.read_text())
