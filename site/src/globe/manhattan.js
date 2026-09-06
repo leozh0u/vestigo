@@ -331,7 +331,33 @@ export class Manhattan {
       is asking for anyway.
     */
     const stats = this.tiles.stats ?? {};
-    const settled = !stats.downloading && !stats.parsing;
+    /*
+      Settled is not enough. It has to be settled *and* close.
+
+      The tileset settles at every altitude — it finishes fetching whatever the
+      current error target asks for and then reports nothing in flight, three
+      thousand kilometres up as much as thirty metres up. Caching on that alone
+      locks in a ground level measured against whatever coarse geometry happened
+      to be loaded at the top of the descent, and a coarse tile is a flat
+      triangle across a curved surface, so it sits below the real ground by an
+      amount that depends only on how big it is.
+
+      Rejecting the wild readings was not the fix, only half of it. A chord sag
+      of seventeen kilometres is obvious and now gets thrown out; a sag of three
+      hundred metres passes every plausibility test there is and is just as
+      wrong. It put the whole ending three hundred metres in the air, which is
+      why a shot that was supposed to stop level with a fifth-floor window
+      finished on the Manhattan skyline instead — and why the previous ending,
+      nominally eighty metres up, was reading as a few hundred.
+
+      So the answer is only kept once the camera is inside five kilometres,
+      where the tiles under it are fine enough for the measurement to mean
+      something. Above that it is re-measured each call and used as an estimate,
+      which is all it is needed for: at three thousand kilometres, being a few
+      hundred metres out about where the ground is changes nothing in frame.
+    */
+    const settled = !stats.downloading && !stats.parsing
+      && this.camera.position.y < 5000;
     if (this.ground !== null && this.groundSettled) return this.ground;
     /*
       From well above anything in the tileset, straight down through the origin,
