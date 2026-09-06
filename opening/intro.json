@@ -1,6 +1,6 @@
 {
-  "src": "/opening/intro-cbc3b02c74.mp4",
-  "seconds": 20.9,
+  "src": "/opening/intro-89826e4d83.mp4",
+  "seconds": 14.3,
   "open": {
     "rotY": -0.9,
     "rotX": 0,
@@ -11,8 +11,8 @@
   "screen": {
     "x": 0.5,
     "y": 0.5,
-    "w": 0.6131,
-    "h": 0.6855
+    "w": 0.62,
+    "h": 0.7132
   },
   "ui": {
     "rotY": 0.68217,
