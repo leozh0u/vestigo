@@ -352,7 +352,26 @@ Opening.available().then((src) => {
   if (!src || RENDERING) return;
   new Opening({
     onBegin: () => { globe.spinning = false; },
-    onFinish: () => { globe.spinning = true; },
+    /*
+      Match the page to the picture of it, then hold still through the move.
+
+      The clip finishes by growing a screenshot of this page until it fills the
+      frame. If the planet is turning underneath, the dissolve is between a
+      still and a moving image and the join is obvious however well the two are
+      aligned. Set to where it was when the screenshot was taken, and started
+      again only once the transition is over.
+    */
+    onHandoff: (ui) => {
+      if (!ui) return;
+      globe.spinning = false;
+      globe.metal.rotation.y = ui.rotY;
+      globe.metal.rotation.x = ui.rotX;
+      globe.camera.position.z = ui.distance;
+    },
+    onFinish: () => {
+      // After the growth, not during it. The CSS transition is 1100ms.
+      setTimeout(() => { globe.spinning = true; }, 1150);
+    },
   }).mount();
 });
 

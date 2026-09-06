@@ -219,10 +219,22 @@ function publish(seconds) {
     screen = JSON.parse(fs.readFileSync("media/descent-end.json", "utf8"));
   } catch { /* an older render, or one beat only: the page falls back to a fade */ }
 
+  /*
+    And what the globe was doing in the screenshot on that screen.
+
+    The page sets its own globe to this before the growth begins, so the still
+    it is dissolving out of and the live page it is dissolving into are the same
+    picture. Written by capture-ui.mjs.
+  */
+  let ui = null;
+  try {
+    ui = JSON.parse(fs.readFileSync("media/ui-state.json", "utf8"));
+  } catch { /* older capture: the planet will simply be somewhere else */ }
+
   fs.writeFileSync(path.join(DIR, "intro.json"),
                    `${JSON.stringify({ src: `/opening/${path.basename(hashed)}`,
                                        seconds: Number(seconds.toFixed(2)),
-                                       screen }, null, 2)}\n`);
+                                       screen, ui }, null, 2)}\n`);
   console.log(`wrote ${hashed}  (${seconds.toFixed(1)}s)`);
 }
 

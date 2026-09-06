@@ -26,9 +26,10 @@
 const MANIFEST = "/opening/intro.json";
 
 export class Opening {
-  constructor({ onBegin, onFinish }) {
+  constructor({ onBegin, onFinish, onHandoff } = {}) {
     this.onBegin = onBegin;
     this.onFinish = onFinish;
+    this.onHandoff = onHandoff;
     this.root = null;
   }
 
@@ -46,11 +47,12 @@ export class Opening {
     try {
       const res = await fetch(MANIFEST, { cache: "no-store" });
       if (!res.ok) return null;
-      const { src, screen } = await res.json();
+      const { src, screen, ui } = await res.json();
       if (typeof src !== "string" || !src) return null;
-      // The laptop screen's rectangle in the last frame, for the handoff. Older
-      // manifests do not have it and the page falls back to a plain fade.
-      return { src, screen: screen ?? null };
+      // The laptop screen's rectangle in the last frame, and what the globe was
+      // doing in the screenshot on it. Older manifests have neither and the
+      // page falls back to a plain fade.
+      return { src, screen: screen ?? null, ui: ui ?? null };
     } catch {
       return null;
     }
@@ -110,8 +112,9 @@ export class Opening {
       this.finish();
       return;
     }
-    const { src, screen } = found;
+    const { src, screen, ui } = found;
     this.screen = screen;
+    this.ui = ui;
 
     /*
       The handoff.
@@ -190,6 +193,20 @@ export class Opening {
       anything on screen, or the handoff lands off-centre on every window that
       is not exactly sixteen by nine.
     */
+    /*
+      Put the page where the picture of it was, before revealing it.
+
+      The clip ends by growing a screenshot of this page until it fills the
+      frame, and the page underneath is live — its planet is turning. Two
+      images identical in every respect except that one of them is moving do not
+      cross-dissolve; they show exactly where the join is, which is what made
+      this read as an edit rather than as an arrival.
+
+      So the globe is set to the state it was in when the screenshot was taken,
+      and left still until the transition is over. See capture-ui.mjs.
+    */
+    this.onHandoff?.(this.ui);
+
     const video = this.root?.querySelector(".opening-video");
     const box = video?.getBoundingClientRect();
     /*

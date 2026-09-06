@@ -150,7 +150,10 @@ const harness = ({ width, height, place, scene, ui }) => `
       MANHATTAN.lat = ${place.lat};
       MANHATTAN.lon = ${place.lon};
       const renderer = new THREE.WebGLRenderer({
-        canvas: document.getElementById("c"), antialias: true });
+        canvas: document.getElementById("c"), antialias: true,
+        // readPixels below runs after the frame is drawn; without this the
+        // browser is free to have thrown the buffer away by then.
+        preserveDrawingBuffer: true });
       renderer.setPixelRatio(1);
       renderer.setSize(${width}, ${height}, false);
       // For the room at the end. The tiles are unlit and cannot cast or
@@ -204,9 +207,22 @@ const harness = ({ width, height, place, scene, ui }) => `
       const out = document.getElementById("out").getContext("2d", { willReadFrequently: true });
       const sum = new Float32Array(W * H * 4);
       const image = out.createImageData(W, H);
-      const grab = document.createElement("canvas");
-      grab.width = W; grab.height = H;
-      const grabCtx = grab.getContext("2d", { willReadFrequently: true });
+      /*
+        Every buffer allocated once, and read straight off the GL context.
+
+        The first version drew the WebGL canvas into a second canvas and called
+        getImageData per sub-frame. getImageData allocates a new eight-megabyte
+        ImageData every time it is called, so six of them a frame over four
+        hundred and fifty frames is several gigabytes of garbage — the page ran
+        out of memory around frame 150 and the render died with the scene object
+        simply gone.
+
+        readPixels writes into a buffer you hand it, so the whole run allocates
+        these three and nothing else. It reads bottom-up, which is why the copy
+        out at the end walks the rows backwards.
+      */
+      const gl = renderer.getContext();
+      const buf = new Uint8Array(W * H * 4);
 
       window.__shoot = (t, end, samples, shutter) => {
         sum.fill(0);
@@ -216,16 +232,21 @@ const harness = ({ width, height, place, scene, ui }) => `
           const offset = samples === 1 ? 0 : ((k + 0.5) / samples - 0.5) * shutter;
           if (end === null) m.place(t + offset); else m.place(t + offset, end);
           m.render();
-          grabCtx.drawImage(document.getElementById("c"), 0, 0);
-          const px = grabCtx.getImageData(0, 0, W, H).data;
-          for (let i = 0; i < sum.length; i++) sum[i] += px[i];
+          gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+          for (let i = 0; i < sum.length; i++) sum[i] += buf[i];
         }
         const data = image.data;
-        for (let i = 0; i < sum.length; i += 4) {
-          data[i] = sum[i] / samples;
-          data[i + 1] = sum[i + 1] / samples;
-          data[i + 2] = sum[i + 2] / samples;
-          data[i + 3] = 255;
+        const inv = 1 / samples;
+        for (let y = 0; y < H; y++) {
+          // GL's origin is the bottom left and the canvas's is the top left.
+          const from = (H - 1 - y) * W * 4;
+          const to = y * W * 4;
+          for (let x = 0; x < W * 4; x += 4) {
+            data[to + x] = sum[from + x] * inv;
+            data[to + x + 1] = sum[from + x + 1] * inv;
+            data[to + x + 2] = sum[from + x + 2] * inv;
+            data[to + x + 3] = 255;
+          }
         }
         out.putImageData(image, 0, 0);
       };

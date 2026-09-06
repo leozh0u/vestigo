@@ -61,6 +61,35 @@ await new Promise((r) => setTimeout(r, 14000));
 
 await fs.mkdir("media", { recursive: true });
 await page.screenshot({ path: OUT });
+
+/*
+  What the globe was doing when the picture was taken.
+
+  The clip ends by growing this screenshot until it is the page, and the page
+  underneath is live: its planet is turning. Two images that are the same in
+  every respect except that one of them is moving do not cross-dissolve, they
+  reveal the join — which is what made the handoff read as an edit rather than
+  as an arrival.
+
+  So the state is written down here and set on the live globe just before the
+  growth starts. The two are then the same frame, and the planet begins turning
+  again once the transition is over rather than during it.
+*/
+const state = await page.evaluate(() => {
+  const g = window.__globe;
+  if (!g) return null;
+  return {
+    rotY: +g.metal.rotation.y.toFixed(5),
+    rotX: +g.metal.rotation.x.toFixed(5),
+    distance: +g.camera.position.z.toFixed(4),
+  };
+});
+if (state) {
+  await fs.writeFile("media/ui-state.json", `${JSON.stringify(state, null, 2)}\n`);
+  console.log("  globe at", state);
+} else {
+  console.log("  no globe on the page — the handoff will fall back to a fade");
+}
 const stat = await fs.stat(OUT);
 console.log(`wrote ${OUT}  ${W}x${H}  ${(stat.size / 1e3).toFixed(0)} kB`);
 await browser.close();
