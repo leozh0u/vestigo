@@ -114,10 +114,11 @@ const OUT = args.out ?? "media/descent.mp4";
 */
 const PLACE = { lat: 40.72466, lon: -73.98096 };
 
-const harness = ({ width, height, place, scene }) => `
+const harness = ({ width, height, place, scene, ui }) => `
 <!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
 <canvas id="c" width="${width}" height="${height}"
         style="display:block;width:${width}px;height:${height}px"></canvas>
+<script>window.__UI_IMAGE = ${JSON.stringify(ui)};<\/script>
 <script>${scene}<\/script>
 <script>
   window.state = { stage: "starting" };
@@ -136,6 +137,10 @@ const harness = ({ width, height, place, scene }) => `
       // frames came back empty.
       const camera = new THREE.PerspectiveCamera(42, ${width} / ${height}, 8, 40000000);
       const m = new Manhattan(renderer, camera);
+      // The interface, for the laptop screen the shot ends on. Inlined rather
+      // than fetched: the harness has no server of its own and this has to be
+      // on the GPU before the frame that needs it.
+      m.screenImage = window.__UI_IMAGE || null;
       // No cross-fade. Every frame here is fully settled before it is
       // photographed, so the plugin's dithered alpha is a stipple over
       // the whole city and nothing else. See Manhattan.load.
@@ -154,7 +159,23 @@ async function main() {
   const dir = await fs.mkdtemp(path.join(process.cwd(), ".descent-"));
   console.log(`${frames} frames at ${WIDTH}x${HEIGHT}, ${FPS}fps -> ${OUT}`);
 
-  const browser = await puppeteer.launch({
+  /*
+  The interface, as a data URI, for the laptop screen the shot ends on.
+
+  Inlined rather than served: the harness replaces the document to drop the
+  module graph, and a relative path from there is a race against the frame that
+  needs it. Missing is not fatal — the screen falls back to dark and the render
+  still runs — because losing thirty minutes of tiles to a missing screenshot
+  would be a poor trade.
+*/
+const ui = await fs.readFile("media/ui.png")
+  .then((b) => `data:image/png;base64,${b.toString("base64")}`)
+  .catch(() => {
+    console.log("  no media/ui.png — run scripts/capture-ui.mjs; screen will be dark");
+    return null;
+  });
+
+const browser = await puppeteer.launch({
     headless: true,
     args: ["--use-gl=angle", "--use-angle=metal", "--enable-gpu",
            "--enable-unsafe-swiftshader", "--hide-scrollbars"],
@@ -187,7 +208,7 @@ async function main() {
     await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" })
       .catch(() => {});
     await page.setContent(
-      harness({ width: WIDTH, height: HEIGHT, place: PLACE, scene }),
+      harness({ width: WIDTH, height: HEIGHT, place: PLACE, scene, ui }),
       { waitUntil: "domcontentloaded" });
     // window.state is undefined until the script runs, and `undefined?.stage`
     // is also not "starting", so the obvious condition passes instantly and the

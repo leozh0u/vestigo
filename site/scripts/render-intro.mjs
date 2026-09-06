@@ -182,7 +182,10 @@ function beat(t) {
     // Seconds past the handover, which is exactly how far into the descent the
     // tiles are at this frame. Earth radii from the centre, so the surface is 1.
     const into = (t - HAND) * SECONDS;
-    cameraZ = 1 + fallHeight(into / HANDOVER.seconds) / 6371000;
+    // Over the fall's own length, not the shot's: the last two seconds of the
+    // descent are a push at a window, not a fall, and the globe is matching the
+    // fall.
+    cameraZ = 1 + fallHeight(into / HANDOVER.fallSeconds) / 6371000;
   }
   // Straightens as it falls. The lift is what keeps the sphere off the bottom
   // of the frame early on and would be a tilt by the end, so it goes to zero.

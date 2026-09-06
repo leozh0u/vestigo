@@ -7,6 +7,6 @@
 */
 import * as THREE from "three";
 import { Manhattan, MANHATTAN } from "../src/globe/manhattan.js";
-import { buildRoom } from "../src/globe/room.js";
+import { buildFacade, WINDOW, PROUD } from "../src/globe/room.js";
 
-export { THREE, Manhattan, MANHATTAN, buildRoom };
+export { THREE, Manhattan, MANHATTAN, buildFacade, WINDOW, PROUD };

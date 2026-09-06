@@ -35,7 +35,7 @@ export const HANDOVER = {
   // Eighty metres above the street. Lower than that and the photogrammetry
   // melts: brick drips and windows become smears. Demonstrated across eighteen
   // candidate endings before settling here.
-  end: 80,
+  end: 16,
   /*
     Length of the descent, seconds.
 
@@ -51,7 +51,18 @@ export const HANDOVER = {
     seventeen. There is simply more time to cross them, because the fall is
     logarithmic and stretching the shot stretches the bottom of it most.
   */
-  seconds: 12,
+  seconds: 15,
+  /*
+    How much of that is the fall, seconds.
+
+    The last two seconds are not a fall, they are a push: the camera is already
+    level with a fifth-floor window and flies at it. Keeping the fall's own
+    length fixed at twelve while the shot grows to fourteen means the rate it
+    hands over at is unchanged, so the globe's dive does not have to be retuned
+    a third time — that rate is set by how fast the fall starts, and the fall is
+    the same fall.
+  */
+  fallSeconds: 12,
   // Overlap at the seam. Short, because it is no longer hiding anything.
   fade: 0.10,
 };

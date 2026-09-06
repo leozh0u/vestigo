@@ -43,6 +43,7 @@ import { TilesRenderer, WGS84_ELLIPSOID } from "3d-tiles-renderer";
 import { GoogleCloudAuthPlugin, TilesFadePlugin } from "3d-tiles-renderer/plugins";
 import { HANDOVER, fallHeight } from "./handover.js";
 import { PLATE_LUT } from "./plate-lut.js";
+import { buildFacade, PROUD } from "./room.js";
 
 // Lower Manhattan, looking north up the island. Chosen because the skyline
 // reads as New York from almost any angle here, which a residential street
@@ -84,11 +85,36 @@ const SOFT = 5 / 1920;
   what this block is made of.
 */
 const END = {
-  x: -49,
-  z: 14,
-  height: 17,          // metres above the street
-  bearing: 105,        // degrees, towards the front the shot finishes on
-  distance: 27.7,      // metres to it
+  /*
+    Where the shot finishes, measured by scripts/probe-opening.mjs and written
+    down rather than recomputed.
+
+    The window goes on the flattest brick the survey could find at fifth-floor
+    height — 67 mm of roughness across a two-metre patch, against several
+    hundred elsewhere on the same wall — so the patch sits down on the scan
+    instead of hovering over a bulge. Not on one of the dark rectangles in the
+    imagery: those are painted on, and a built window over a painted one is two
+    windows in the same place.
+
+    x and z are absolute in the tileset's frame, which does not move. The height
+    is metres above the street, because the street is the thing this shot is
+    written relative to and it is measured every run.
+  */
+  x: -23.67,
+  z: 6.07,
+  height: 16.0,
+  // The wall's outward normal, from the average of sixty-odd near-vertical face
+  // normals, flattened to plumb.
+  normal: [-0.5953, 0, 0.8035],
+  // The brick, sampled off the scanned wall around the window with the darkest
+  // fifth thrown away — the painted-on windows are part of that wall and
+  // averaging them in makes the patch too dark.
+  brick: "#b37359",
+  // Metres from the window plane: where the push begins, and where it ends.
+  // Negative because it ends inside — the camera goes through the window and
+  // settles at the desk, where a person would sit.
+  standoff: 14,
+  arrive: -1.13,
 };
 
 /*
@@ -358,8 +384,17 @@ export class Manhattan {
       which is all it is needed for: at three thousand kilometres, being a few
       hundred metres out about where the ground is changes nothing in frame.
     */
+    /*
+      Five hundred metres, not five thousand.
+
+      At five kilometres the tiles under the camera are still coarse enough that
+      the answer moved between runs: four separate probes of the same block
+      reported the street at -18.1, -23.6, -25.8 and -29.5 metres, and the whole
+      ending is written relative to it. Eleven metres of disagreement is half a
+      window. At five hundred the fine levels are loaded and the reading repeats.
+    */
     const settled = !stats.downloading && !stats.parsing
-      && this.camera.position.y < 5000;
+      && this.camera.position.y < 500;
     if (this.ground !== null && this.groundSettled) return this.ground;
     /*
       From well above anything in the tileset, straight down through the origin,
@@ -403,8 +438,26 @@ export class Manhattan {
     const hits = ray.intersectObject(this.tiles.group, true);
     const ground = hits.find((h) => Math.abs(h.point.y) < PLAUSIBLE);
     if (!ground) return null;
-    this.ground = ground.point.y;
-    this.groundSettled = settled;
+
+    /*
+      And it has to say the same thing twice before it is believed.
+
+      Plausible is a weak test. A reading of 241 m passes it and is still
+      nonsense over Manhattan — it is a roof, or a coarse tile that happened to
+      be the topmost thing along the ray at that moment. What separates a real
+      measurement from a passing one is that the real one does not move: the
+      street is where it is, and once the fine tiles are under the camera two
+      consecutive readings agree to the centimetre.
+
+      Half a metre of tolerance, which is far tighter than the eleven metres of
+      disagreement this was producing and far looser than the noise between two
+      settled frames.
+    */
+    const y = ground.point.y;
+    const agrees = this.lastGround !== undefined && Math.abs(y - this.lastGround) < 0.5;
+    this.lastGround = y;
+    this.ground = y;
+    this.groundSettled = settled && agrees;
     return this.ground;
   }
 
@@ -458,7 +511,7 @@ export class Manhattan {
   place(t, endHeight = END.height) {
     /*
       Heights are metres above the street, not above the origin. See
-      groundLevel: over Manhattan the ellipsoid surface is about twenty-six
+      groundLevel: over Manhattan the ellipsoid surface is about twenty-four
       metres above the road, and taking the origin for the ground put every
       framing eight floors too high.
     */
@@ -466,95 +519,255 @@ export class Manhattan {
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
     const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
 
-    // The curve lives in handover.js, because the globe's last frames run it
-    // too. Two copies of it drifted apart once and the symptom was the seam.
-    const height = fallHeight(t, endHeight);
+    /*
+      The shot is a fall and then a push, and they do not overlap.
+
+      The fall keeps its own twelve seconds, ending level with a fifth-floor
+      window; the two seconds after it are a horizontal flight at that window.
+      Splitting them is what lets the camera turn only once it is *there*, which
+      is the thing a descent onto a place has to do and which the old ending —
+      turning at two hundred metres and arriving at a panorama — did not.
+
+      Keeping the fall's length fixed while the shot grew also means the rate it
+      hands over to at the top is unchanged, so the globe's dive did not have to
+      be retuned again.
+    */
+    const HOLD = HANDOVER.fallSeconds / HANDOVER.seconds;
+    const fallT = clamp01(t / HOLD);
+    const height = fallHeight(fallT, endHeight);
+
+    const normal = new THREE.Vector3(...END.normal).normalize();
+    // The window's plane is the front face of the patch, which stands proud of
+    // the scanned wall. Everything below is measured from that plane.
+    const plane = new THREE.Vector3(END.x, floor + END.height, END.z)
+      .addScaledVector(normal, PROUD);
 
     /*
-      Straight down, the whole way.
+      The facade goes in as soon as the ground is known, and not before.
 
-      It used to fall towards the origin and then swing back and out to about a
-      street's width over the last forty-five per cent, which finished on a wide
-      view over the East Village with the skyline behind it. Handsome, and not
-      an arrival: the camera turns while it is still two hundred metres up, so
-      by the time it is at window height it is already pointing at a panorama
-      rather than at a building.
-
-      A descent from orbit onto a place looks like a descent onto a place. It
-      falls onto the spot it is going to stop at, in a straight line, and does
-      not turn until it is there.
+      It is placed relative to the street rather than at an absolute height, so
+      the patch and the camera derive from the same measurement and cannot drift
+      apart if the ground reads differently. Until the tiles under the camera
+      are fine enough for that reading to be trusted there is nothing to place
+      it against, and there is also nothing close enough to see it.
     */
-    this.camera.position.set(END.x, floor + height, END.z);
+    if (!this.facade && this.groundSettled) {
+      this.facade = buildFacade({
+        centre: new THREE.Vector3(END.x, floor + END.height, END.z),
+        normal, colour: END.brick,
+        // Set by the render script from media/ui.png. See capture-ui.mjs.
+        screenImage: this.screenImage ?? null,
+      });
+      /*
+        Its own scene, drawn after the city with the depth buffer cleared
+        between them.
 
-    // The front the shot ends on, as a direction in this frame.
-    const a = END.bearing * THREE.MathUtils.DEG2RAD;
-    const front = new THREE.Vector3(Math.sin(a), 0, Math.cos(a));
+        The patch stands 1.3 m proud of the wall it is on, which is enough to
+        clear that wall's own bumps and nothing like enough to clear the
+        building on the other side of the gap: measured on the approach, at ten
+        metres out the frame was entirely somebody else's brick and the patch
+        was not in it at all. Standing it further out is not an answer — the
+        obstruction is eleven metres away, and a patch eleven metres off a wall
+        is a slab hanging in the air.
+
+        Depth is the wrong tool here. What this wants is a second pass: the city
+        first, then the depth cleared, then the patch, which puts it in front of
+        everything while keeping its own internal depth so the reveal still sits
+        behind the frame and the recess behind that. The fade then works as a
+        plain cross-dissolve over whatever the scan happens to show.
+      */
+      this.facadeScene = new THREE.Scene();
+      this.facadeScene.add(this.facade);
+    }
+
+    /*
+      Through the window and on to the desk, decelerating into it.
+
+      Not log-spaced, which is right for a fall and impossible here: the fall
+      never reaches the ground, and this ends on the far side of the thing it is
+      approaching, so the distance passes through zero and a logarithm has
+      nothing to say about it.
+
+      Eased out instead. Physical speed falls away towards the end, which is
+      what keeps *apparent* speed roughly even — the closer the camera is to
+      something, the faster the same metre per second looks. It should arrive
+      rather than stop, and the frame before the interface takes over should
+      already be still.
+    */
+    const push = clamp01((t - HOLD) / (1 - HOLD));
+    const glide = 1 - Math.pow(1 - push, 2.1);
+    const distance = END.standoff + (END.arrive - END.standoff) * glide;
+
+    // Straight down onto the standoff for the whole fall, then in along the
+    // wall's normal. The height is the fall's until the fall is over, and the
+    // window's after, and at the moment they change hands they are the same.
+    /*
+      And it drops half a metre on the way in, because the sash is up.
+
+      The way through a sash window is the lower half of it: the upper sash is
+      still glazed and the rail between them sits across the middle. Flying at
+      the window's centre flies at the rail, which is painted trim and the
+      brightest thing on the whole facade — measured, the last frame came back
+      at 62 when the two before it were at 28.
+
+      So the camera settles into the middle of the open gap as it arrives, which
+      is also what going in through a window looks like.
+    */
+    /*
+      And it drops as it goes in, because the sash is up and the desk is below.
+
+      The way through a sash window is its lower half: the upper sash is still
+      glazed and the rail sits across the middle. Flying at the window's centre
+      flies at the rail, which is painted trim and the brightest thing on the
+      facade — measured, the last frame came back at 62 when the two before it
+      were at 28.
+
+      One curve does both jobs. On the same easing as the push, the drop reaches
+      0.49 m at the moment the camera crosses the window plane, which is the
+      middle of the open gap, and 0.55 m by the desk, which is where somebody
+      sitting at it would have their eyes.
+    */
+    const above = push > 0
+      ? floor + END.height - 0.55 * glide
+      : floor + height;
+    this.camera.position.copy(plane)
+      .addScaledVector(normal, push > 0 ? distance : END.standoff)
+      .setY(above);
 
     /*
       Two rotations, and they have to happen in this order.
 
       The first is roll, while the camera is still pointing straight down. It
-      begins with north at the top of frame, because that is what the globe
-      hands over, and ends with the front the shot is going to face at the
-      *bottom* of frame. That is the only orientation from which pitching up is
-      roll-free: a camera that pitches with its target already at the bottom of
-      frame simply raises it to the middle, and one that does not has to twist
-      as well.
-
-      Spread across the middle of the fall, where the ground is still a map and
-      a slow rotation reads as the camera finding its bearings.
+      starts with north at the top of frame, because that is what the globe
+      hands over, and ends with the wall's own direction there. That is the only
+      orientation a pitch is roll-free from: a camera whose target is already on
+      the frame's axis merely raises it to the middle, and one whose target is
+      not has to twist as well.
     */
-    const turn = smooth((t - 0.30) / 0.45);
+    const turn = smooth((t - 0.26) / 0.34);
     const heading = this.north
-      ? this.north.clone().lerp(front, turn).normalize()
-      : front.clone();
+      ? this.north.clone().lerp(normal.clone().negate(), turn).normalize()
+      : normal.clone().negate();
 
     /*
-      The second is pitch, and it waits until the camera is nearly down.
-
-      The old version began it at fifty-five per cent and took the rest of the
-      shot. In log-space that is most of the descent by distance: the camera was
-      still a couple of hundred metres up and already looking at the horizon,
-      which is why the ending read as a fly-over rather than as arriving at a
-      window. Here it starts at eighty per cent, which is the last thirty metres
-      of altitude and the last second and a half.
+      The second is pitch, and it finishes exactly when the fall does — so the
+      camera comes level with the window at the moment it stops descending, and
+      the push begins from a level shot. Not before: at fifty-five per cent of a
+      logarithmic fall the camera is still two hundred metres up, which is what
+      made the old ending read as a fly-over.
     */
-    const tilt = smooth((t - 0.80) / 0.20);
+    const tilt = smooth((t - HOLD * 0.78) / (HOLD * 0.22));
     const pitch = -Math.PI / 2 * (1 - tilt);
 
     /*
       Up, derived from the pitch rather than interpolated towards it.
 
-      This was a straight lerp from the horizontal heading to world up, and at
-      exactly half way through the turn it put the up vector *antiparallel* to
-      the direction the camera was looking. lookAt takes the cross product of
-      those two, and a cross product of opposite vectors is zero, so at that one
-      frame the orientation came from whatever the library does when its
-      arithmetic collapses.
-
-      One frame, dead centre of the turn. Measured: every frame through the
-      swing pitches by 1.87 degrees and that one pitches by 2.09, with the next
-      making up the difference at 1.66. The picture jumps by three times its
-      neighbours and then carries on correctly, which is why re-shooting it
-      produced the identical result twice, why lengthening the shot did not move
-      it — the midpoint is still the midpoint — and why tightening the level of
-      detail did not either. It was read as a tile swap for a while on the
-      strength of being near buildings.
-
-      Up is perpendicular to the view direction by construction here: the same
-      two vectors, ninety degrees apart in the same plane. It cannot collapse,
-      and the pitch cannot roll.
+      This was a straight lerp from the horizontal heading to world up, and half
+      way through the turn that put the up vector exactly antiparallel to the
+      view direction. lookAt takes the cross product of those two, and the cross
+      product of opposite vectors is zero, so at that one frame the orientation
+      came from whatever the library does when its arithmetic collapses: every
+      frame through the swing pitched 1.87 degrees and that one pitched 2.09,
+      with the next making up the difference. Perpendicular by construction here
+      — the same two vectors, ninety degrees apart in the same plane.
     */
-    const up = heading.clone().multiplyScalar(-Math.sin(pitch))
-      .addScaledVector(new THREE.Vector3(0, 1, 0), Math.cos(pitch));
-    this.camera.up.copy(up).normalize();
+    this.camera.up.copy(heading).multiplyScalar(-Math.sin(pitch))
+      .addScaledVector(new THREE.Vector3(0, 1, 0), Math.cos(pitch))
+      .normalize();
 
-    // Aim by angle rather than by moving a target point around, so the swing is
-    // even. Straight down at tilt zero, level with the front at tilt one.
-    const dir = new THREE.Vector3(
-      Math.sin(a) * Math.cos(pitch), Math.sin(pitch), Math.cos(a) * Math.cos(pitch));
-    this.camera.lookAt(
-      this.camera.position.clone().addScaledVector(dir, END.distance));
+    const dir = heading.clone().multiplyScalar(Math.cos(pitch))
+      .addScaledVector(new THREE.Vector3(0, 1, 0), Math.sin(pitch));
+    /*
+      Aim straight in until the room, then settle onto the screen.
+
+      Held level for the first half of the push so the window stays square in
+      frame while the camera flies at it — a shot that starts tilting towards
+      its subject before it is through the opening looks like it is avoiding the
+      frame. The last half brings the screen to the middle.
+    */
+    /*
+      Settled over the last two fifths of the push in *time*, not in distance.
+
+      Keyed to distance it happened almost at once: the push eases out, so
+      three quarters of the metres are behind it by the half way mark and a
+      settle keyed to that was complete before the camera reached the window.
+      Time is what the eye is watching.
+    */
+    const settle = smooth(clamp01((push - 0.6) / 0.4));
+    if (this.facade && settle > 0) {
+      /*
+        Square on to the screen by the end, not just pointed at it.
+
+        The lid leans back about ten degrees, so a camera that arrives along the
+        wall's normal sees the screen as a trapezium — and the handoff scales
+        that rectangle up to fill the frame, which only works if it is a
+        rectangle. Easing the position onto the screen's own axis over the last
+        half of the push costs nothing in the move and leaves the last frame
+        square.
+      */
+      const screen = this.facade.userData.screenWorld();
+      const facing = this.facade.userData.screenNormal();
+      const squareOn = screen.clone().addScaledVector(facing, 0.38);
+      this.camera.position.lerp(squareOn, settle);
+      const ahead = this.camera.position.clone().addScaledVector(dir, 4);
+      this.camera.lookAt(ahead.lerp(screen, settle));
+    } else {
+      this.camera.lookAt(this.camera.position.clone().addScaledVector(dir, 4));
+    }
+
+    /*
+      What the camera is flying at, so render() can put the near plane in front
+      of it. A fiftieth of the altitude is right all the way down a descent and
+      catastrophic in the last half second of this one, where the window is a
+      quarter of a metre away and the altitude is sixteen metres.
+    */
+    /*
+      The city stops being drawn once the patch covers the frame.
+
+      The patch stands 1.3 m proud of the scanned wall, and the scan is bumpy by
+      two or three metres over this facade — so scanned geometry pokes through
+      it, and the approach came back as a screen full of melted brick with the
+      patch nowhere in it. Standing the patch further out only trades that for a
+      slab floating in front of a building.
+
+      There is nothing to reconcile, because there is nothing to see. At
+      fourteen metres the frame is 19 m wide and 11 m tall and the patch is 30
+      by 22: it already covers everything, and every metre closer it covers more.
+      Hiding the tiles under it changes no pixel and removes the whole class of
+      problem.
+    */
+    /*
+      The patch dissolves in over the photographed brick, and the city stops
+      being drawn once it is opaque.
+
+      Swapping outright at the moment the patch covers the frame was the first
+      version, and it changes the character of the picture in one frame: melted
+      photographic brick becomes clean even brick, which reads as a cut even
+      though nothing moved. Faded in, the two are the same wall in the same
+      colour — the sampled one — and what the eye sees is detail arriving, which
+      is what has been happening for the whole descent anyway.
+
+      Opaque by six metres. The margin matters: at fourteen metres the frame is
+      nineteen across and the patch is thirty, so there is nothing behind it to
+      lose once it is opaque.
+    */
+    // From twelve metres to seven, not from fourteen to six: at the top of the
+    // push the patch was fourteen per cent opaque over melted brick, which is
+    // eight translucent windows hanging in front of a building. It should start
+    // at nothing and be done before the target window is the only thing in
+    // frame.
+    const cover = clamp01((12 - distance) / 5);
+    if (this.facade) {
+      const shown = push > 0 ? smooth(cover) : 0;
+      for (const m of this.facade.userData.fading) m.opacity = shown;
+      this.facade.visible = shown > 0.002;
+    }
+
+
+    // Near from what the camera is about to be close to — the window on the way
+    // in, then the screen, which it finishes 0.6 m from. The altitude-based
+    // floor of five metres would clip both out of existence.
+    this.nearHint = push > 0 ? Math.max(0.015, Math.abs(distance) * 0.05) : null;
     this.camera.updateMatrixWorld();
   }
 
@@ -956,7 +1169,20 @@ export class Manhattan {
             — flattened whatever survived into one grey. The first version of
             this looked like a city at the bottom of a well.
           */
-          if (d >= 0.9999) { gl_FragColor = vec4(day, 1.0); return; }
+          /*
+            Sky by distance, not by a raw depth value.
+
+            A raw depth of 0.9999 is only "the far plane" when near and far are
+            the ones this was written against. Flying into a window needs a near
+            plane of a few centimetres, and against a hundred-kilometre far plane
+            that pushes ordinary geometry past it — every building in the middle
+            distance would take the sky path and come out ungraded.
+
+            Half the far plane is the sky dome and nothing else: the dome sits at
+            sixty kilometres, the city ends a couple of kilometres out, and
+            anything that rendered nothing at all comes back at exactly far.
+          */
+          if (distanceAt(d) > uFar * 0.5) { gl_FragColor = vec4(day, 1.0); return; }
 
           // Luminance, Rec. 709. Both the exposure roll-off and the colour
           // split are decided by how bright a pixel already is.
@@ -1158,7 +1384,17 @@ export class Manhattan {
       where the camera is eighty metres up and still needs to see a skyline
       twenty kilometres away.
     */
-    const near = Math.max(5, above * 0.02);
+    /*
+      Near from whichever is closer: the ground, or whatever the camera is
+      flying at.
+
+      A fiftieth of the altitude is right all the way down a descent and wrong
+      in the last two seconds of this one, where the camera ends a quarter of a
+      metre from a window and the floor of five metres would clip it out of
+      existence. place() leaves the distance to what it is approaching in
+      nearHint when there is one.
+    */
+    const near = Math.max(0.03, Math.min(above * 0.02, this.nearHint ?? Infinity));
     const far = Math.max(100000, above * 20);
     if (this.camera.near !== near || this.camera.far !== far) {
       this.camera.near = near;
@@ -1302,6 +1538,14 @@ export class Manhattan {
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
+    // The patch, over the city, with its own depth. See where facadeScene is
+    // built, in place().
+    if (this.facadeScene && this.facade?.visible) {
+      this.renderer.autoClear = false;
+      this.renderer.clearDepth();
+      this.renderer.render(this.facadeScene, this.camera);
+      this.renderer.autoClear = true;
+    }
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.gradeScene, this.gradeCamera);
   }
