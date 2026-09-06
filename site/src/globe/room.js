@@ -228,15 +228,18 @@ export function buildFacade({ centre, normal, colour = "#8d4a37", screenImage = 
     camera was twenty-six metres out, and it was: at that distance its edges are
     well inside frame and the eye has both the patch and the scan to compare.
     The answer is not a bigger patch on its own, which only moves the edges, but
-    arriving faster: the push starts at fourteen metres, and at fourteen metres
-    a thirty by twenty-two patch is half again as wide as the frame in both
-    directions. From there on the edges are further outside it every metre.
+    a patch big enough that its edges are never in frame at all while it is
+    fading. At eighteen metres out the frame is twenty-five across and fourteen
+    high; forty-four by thirty-two clears that with room to spare, and every
+    metre closer clears it by more. The size is set by where the fade starts, not
+    by the building — the patch is drawn over the city in a second pass, so what
+    it overhangs does not matter, only whether the eye can see where it stops.
 
     That margin is also what lets the city stop being drawn during the push. See
     where the tiles are hidden, in place().
   */
   const patch = wallWithHole({
-    width: 30, height: 22, material: brickMat,
+    width: 44, height: 32, material: brickMat,
     hole: { x: 0, y: 0, w: WINDOW.w, h: WINDOW.h },
   });
   patch.position.z = PROUD;

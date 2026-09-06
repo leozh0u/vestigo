@@ -751,12 +751,23 @@ export class Manhattan {
       nineteen across and the patch is thirty, so there is nothing behind it to
       lose once it is opaque.
     */
-    // From twelve metres to seven, not from fourteen to six: at the top of the
-    // push the patch was fourteen per cent opaque over melted brick, which is
-    // eight translucent windows hanging in front of a building. It should start
-    // at nothing and be done before the target window is the only thing in
-    // frame.
-    const cover = clamp01((12 - distance) / 5);
+    /*
+      From eighteen metres to ten.
+
+      Two constraints pulling opposite ways. Starting too early shows eight
+      translucent windows hanging in front of a building, because the patch is
+      part-opaque over brick that does not line up with it — the first version
+      began at fourteen metres and was already fourteen per cent on. Starting
+      too late leaves the shot on melted scan for a second longer than it needs
+      to be, and that is now the worst-looking moment in the whole intro: the
+      contact sheet has one frame of dripping brick in it and it is the frame
+      before this takes over.
+
+      Eighteen is as early as the patch can cover the frame, so the fade can
+      start there and be done at ten, and there is nothing part-opaque over
+      anything that is still in shot.
+    */
+    const cover = clamp01((18 - distance) / 8);
     if (this.facade) {
       const shown = push > 0 ? smooth(cover) : 0;
       for (const m of this.facade.userData.fading) m.opacity = shown;
