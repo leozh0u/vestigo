@@ -546,6 +546,32 @@ export class Manhattan {
           altitude in different exposures is a cut however well they are framed.
         */
         uLift:  { value: 1 },
+        /*
+          How hard to bend the tiles towards the plate the globe hands over.
+
+          One at the top of the descent, nothing by the time the camera is
+          inside the atmosphere. What it corrects is not an error in Google's
+          data, it is a difference in what the two sources *are*. The globe is
+          NASA's Blue Marble on a sphere, where open ocean is a near-neutral
+          navy: measured over the Atlantic at the seam, r 32 g 33 b 42, which is
+          a saturation of ten. Google's coarse levels serve a flat bathymetry
+          plate instead, and the same water there is 12, 24, 76 — a saturation
+          of sixty-four, six times as much, and a blue channel nearly doubled.
+
+          Two frames of the same coastline at the same altitude in the same
+          light, one of them slate and the other cobalt. Once the roll was fixed
+          and the geography lined up, that was the whole of what was left to see
+          at the join, and no length of dissolve hides a hue step; it just gives
+          the eye longer to watch it happen.
+
+          It also happens that the flat blue is the less convincing of the two.
+          Real orbital photography of open ocean is dark and almost colourless
+          at this scale. So this is not damage done to Google's imagery for the
+          sake of a match, it is a correction that the top of the descent wanted
+          anyway, and it is gone by the time there is any real ground to look
+          at.
+        */
+        uPlate: { value: 0 },
         uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
         uWarm:  { value: new THREE.Color(0xffc07a) },
       },
@@ -555,7 +581,7 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount, uFog, uLift;
+        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate;
         uniform vec3 uHaze, uShade, uWarm;
         varying vec2 vUv;
 
@@ -657,6 +683,28 @@ export class Manhattan {
             having any. Thickening the haze until distance dissolves completely
             hides that seam and is what the air actually does at dusk anyway.
           */
+          /*
+            Meet the globe. See uPlate.
+
+            Split by whether blue is the dominant channel, which over an
+            ocean-and-continent frame is very close to splitting water from
+            land, and needs no mask, no coastline and nothing that could be
+            wrong about where it is.
+
+            Water loses most of its saturation and gains back the brightness
+            that taking it away costs, to the ratio measured off the globe's
+            last frame. Land goes the other way: the coarse tiles arrive blue
+            from haze that at this altitude is not there, so blue comes down and
+            the frame warms towards the green the plate hands over.
+          */
+          if (uPlate > 0.0) {
+            float blue = clamp((c.b - max(c.r, c.g)) * 8.0, 0.0, 1.0);
+            float wl = dot(c, vec3(0.2126, 0.7152, 0.0722));
+            vec3 water = mix(vec3(wl), c, 0.22) * vec3(1.43, 1.35, 1.15);
+            vec3 land  = c * vec3(1.18, 1.13, 0.68);
+            c = mix(c, mix(land, water, blue), uPlate * 0.85);
+          }
+
           float fog = 1.0 - exp(-distanceAt(d) / uFog);
           c = mix(c, uHaze, clamp(fog, 0.0, 1.0) * 0.97);
 
@@ -786,6 +834,35 @@ export class Manhattan {
     // camera is among the buildings, where the imagery needs no help.
     const t = Math.min(1, Math.max(0, (above - 20000) / (600000 - 20000)));
     this.grade.uniforms.uLift.value = 1 + 0.62 * (t * t * (3 - 2 * t));
+    /*
+      Full at the handover, gone before the ground means anything.
+
+      Wide on purpose. The fall is logarithmic, so 1,500 km to 200 km goes by in
+      a little over a second, and a colour correction that switched off inside
+      that would be a second seam put in to hide the first one. Spread across
+      the whole band it reads as the air thickening, which at those altitudes is
+      what is actually happening.
+    */
+    /*
+      Faded in log space, because the fall is logarithmic.
+
+      Linearly from 1,500 km to 200 km it was gone almost immediately: the
+      camera passes 400 km about a second after the handover, and measured there
+      the correction was down to nine per cent while the raw imagery had got
+      *more* saturated, not less. So the ocean went muted, then vivid, inside a
+      second — a colour move put in to hide a seam, creating a second one a beat
+      later.
+
+      A constant ratio per second is what the descent does, so the fade has to
+      be a constant fraction per halving of altitude too. Full at three thousand
+      kilometres, about two thirds at four hundred, a fifth at a hundred, and
+      nothing by thirty, which is where the imagery starts being photographs of
+      places rather than a plate.
+    */
+    const LOW = 30000;
+    const p = Math.min(1, Math.max(0,
+      Math.log(Math.max(above, LOW) / LOW) / Math.log(3000000 / LOW)));
+    this.grade.uniforms.uPlate.value = p * p * (3 - 2 * p);
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
