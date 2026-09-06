@@ -39,7 +39,7 @@ export const HANDOVER = {
   // Length of the descent, seconds. render-descent.mjs renders 270 frames at 30.
   seconds: 9,
   // Overlap at the seam. Short, because it is no longer hiding anything.
-  fade: 0.25,
+  fade: 0.10,
 };
 
 /*

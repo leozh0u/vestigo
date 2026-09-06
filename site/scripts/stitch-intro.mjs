@@ -21,6 +21,7 @@ import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { HANDOVER } from "../src/globe/handover.js";
 
 const DIR = "public/opening";
 /*
@@ -78,7 +79,7 @@ const OUT = path.join(DIR, "intro.mp4");
 
   Seven frames rather than thirteen, at the fastest part of the move.
 */
-const FADE = 0.25;            // seconds of overlap at each seam
+const FADE = HANDOVER.fade;            // seconds of overlap at each seam
 
 const run = (cmd, args) => new Promise((res, rej) => {
   const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
