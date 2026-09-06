@@ -353,6 +353,28 @@ Opening.available().then((src) => {
   new Opening({
     onBegin: () => { globe.spinning = false; },
     /*
+      Give the globe back the room it was keeping for the photographs.
+
+      It sits high on the page so the strip along the bottom does not cover it.
+      The clip opens on a sphere in the middle of the frame, so as the strip
+      slides out the globe comes down to meet it — and the fade at the end of
+      that has two nearly identical pictures to work with rather than a planet
+      in two different places.
+
+      Animated rather than set, because the whole point is that nothing jumps.
+    */
+    onEnter: () => {
+      const from = globe.safeBottom;
+      const started = performance.now();
+      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+      const step = (now) => {
+        const u = Math.min(1, (now - started) / 820);
+        globe.setSafeBottom(from * (1 - ease(u)));
+        if (u < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    },
+    /*
       Match the page to the picture of it, then hold still through the move.
 
       The clip finishes by growing a screenshot of this page until it fills the

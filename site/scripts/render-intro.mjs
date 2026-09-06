@@ -164,7 +164,21 @@ function beat(t) {
     nothing left to do but change which renderer is drawing it.
   */
   const HAND = 1 - HANDOVER.fade / SECONDS;
-  const start = 0.30;
+  /*
+    The dive starts sooner, and the beat is a second shorter.
+
+    The whole descent covers about twelve e-folds of altitude, and this beat has
+    only 1.7 of them — but it was taking a third of the intro to cross them,
+    which is why the fall from space read as slow next to the fall through the
+    city that follows it. The ball turning into a planet is what the opening
+    seconds are for; once that has happened there is nothing to wait for.
+
+    0.22 with the beat at six seconds leaves the dive itself about as long in
+    real seconds as it was at seven, and takes the second out of the part before
+    it. The rate it hands over at is unchanged, which is the number that has to
+    stay put.
+  */
+  const start = 0.22;
   /*
     1.12, not 1.5.
 

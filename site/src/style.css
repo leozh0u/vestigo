@@ -821,6 +821,48 @@ html, body {
 .opening-done { opacity: 0; pointer-events: none; }
 
 /*
+  Pressing ENTER: the page becomes the clip's first frame.
+
+  The clip opens on a sphere, centred, on black. The page is already showing one
+  at about that size, with a strip of photographs along the bottom and two
+  panels beside it. So rather than covering the page with a video, the page
+  clears down to what the video starts on and the video is faded up over it — by
+  which point there is almost nothing left for the fade to hide.
+
+  The strip goes downwards and out, which is also the direction the camera is
+  about to travel, so it reads as the page getting out of the way rather than as
+  elements being switched off.
+*/
+.entering .examples {
+  transform: translateY(115%);
+  opacity: 0;
+  transition: transform 820ms cubic-bezier(0.4, 0, 0.2, 1), opacity 620ms ease;
+  pointer-events: none;
+}
+.entering .machinery,
+.entering .receipt,
+.entering .wordmark,
+.entering .field {
+  opacity: 0;
+  transition: opacity 560ms ease;
+  pointer-events: none;
+}
+.entering .opening-inner {
+  opacity: 0;
+  transform: translateY(-0.6rem);
+  transition: opacity 380ms ease, transform 560ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+/* The overlay's own backdrop goes with it, or the clip plays behind a wash. */
+.entering .opening { background: transparent; transition: background 700ms ease; }
+
+.opening-video {
+  opacity: 0;
+  transition: opacity 780ms ease;
+}
+.opening-video-in { opacity: 1; }
+
+/*
   The handoff: the laptop screen grows until it is the page.
 
   A longer, slower fade than the plain one, because the two images are the same

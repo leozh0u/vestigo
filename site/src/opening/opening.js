@@ -26,10 +26,11 @@
 const MANIFEST = "/opening/intro.json";
 
 export class Opening {
-  constructor({ onBegin, onFinish, onHandoff } = {}) {
+  constructor({ onBegin, onFinish, onHandoff, onEnter } = {}) {
     this.onBegin = onBegin;
     this.onFinish = onFinish;
     this.onHandoff = onHandoff;
+    this.onEnter = onEnter;
     this.root = null;
   }
 
@@ -105,6 +106,24 @@ export class Opening {
 
   async begin() {
     this.onBegin?.();
+    /*
+      Hand over to the clip rather than cutting to it.
+
+      Pressing ENTER used to replace the page with a video in one frame, which
+      is the harshest transition in the whole thing and sits right at the front
+      of it. What the clip opens on is a metal sphere, centred, on black — and
+      the page is already showing a planet at the same size, a strip of
+      photographs along the bottom and two panels. So the page becomes that
+      opening frame: the strip slides down out of shot, the panels go, and the
+      globe drops to the middle as the room it was making for the photographs
+      is given back.
+
+      The video is faded up over the top of that. By the time it is opaque the
+      thing underneath is nearly the same picture, so there is very little for
+      the fade to have to hide.
+    */
+    document.documentElement.classList.add("entering");
+    this.onEnter?.();
     this.root?.classList.add("opening-playing");
 
     const found = await Opening.available();
@@ -137,6 +156,12 @@ export class Opening {
     video.playsInline = true;
     video.preload = "auto";
     this.root.append(video);
+    // Faded up over the page settling into the clip's first frame, rather than
+    // appearing on top of it. Two frames of delay so the element is laid out
+    // before the class that transitions it is added.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      video.classList.add("opening-video-in");
+    }));
 
     // A skip that is visible from the first frame. Somebody who has seen this
     // once and came back to show a colleague should not have to sit through it.
@@ -178,6 +203,7 @@ export class Opening {
   finish() {
     if (this.finished) return;       // ended and skipped can both arrive
     this.finished = true;
+    document.documentElement.classList.remove("entering");
 
     /*
       Grow the screen into the page.

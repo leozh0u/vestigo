@@ -787,6 +787,8 @@ export class Manhattan {
     // Near from what the camera is about to be close to — the window on the way
     // in, then the screen, which it finishes 0.6 m from. The altitude-based
     // floor of five metres would clip both out of existence.
+    // How far into the final push the shot is, for the lens. See render().
+    this.pushing = smooth(push);
     this.nearHint = push > 0 ? Math.max(0.015, Math.abs(distance) * 0.05) : null;
     this.camera.updateMatrixWorld();
   }
@@ -1190,6 +1192,25 @@ export class Manhattan {
           weather is the oldest fix there is for this shot.
         */
         uCloud: { value: 0 },
+        /*
+          Depth of field, for the last two seconds.
+
+          The shot finishes thirty-eight centimetres from a laptop screen. A
+          real lens there has almost no depth of field at all — the wall behind
+          the desk would be thoroughly soft and the near edge of the desk would
+          be soft too — and everything in this room being equally sharp is a
+          large part of why it reads as a diagram. It is the cue that says
+          "camera" more cheaply than any amount of geometry.
+
+          Off for the whole descent and raised over the push, because a city
+          seen from three thousand kilometres has no near and far worth
+          separating, and blurring it would only throw away the imagery.
+
+          uFocus is where the lens is focused, in metres; uAperture is how
+          quickly things fall out of it.
+        */
+        uFocus: { value: 1 },
+        uAperture: { value: 0 },
         uPlate: { value: 0 },
         /*
           How far out of focus the coarse tiles are, in pixels, and why a zoom
@@ -1274,6 +1295,7 @@ export class Manhattan {
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
         uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch, uShow, uCloud;
+        uniform float uFocus, uAperture;
         uniform sampler2D uLut;
         uniform vec2 uTexel;
         uniform vec3 uHaze, uShade, uWarm;
@@ -1297,15 +1319,15 @@ export class Manhattan {
           number failing to move, and a fourth is not wanted. Forty-nine taps
           cannot fail quietly, and this runs offline where the cost is nothing.
         */
-        vec3 soft(vec2 uv) {
-          if (uSoft < 0.01) return texture2D(uScene, uv).rgb;
+        vec3 soft(vec2 uv, float radius) {
+          if (radius < 0.01) return texture2D(uScene, uv).rgb;
           vec3 sum = vec3(0.0);
           float wsum = 0.0;
           for (int y = -3; y <= 3; y++) {
             for (int x = -3; x <= 3; x++) {
               vec2 d = vec2(float(x), float(y));
               float w = exp(-dot(d, d) * 0.22);
-              sum += texture2D(uScene, uv + d * (uSoft / 3.0) * uTexel).rgb * w;
+              sum += texture2D(uScene, uv + d * (radius / 3.0) * uTexel).rgb * w;
               wsum += w;
             }
           }
@@ -1313,9 +1335,24 @@ export class Manhattan {
         }
 
         void main() {
-          vec3 day = soft(vUv);
-          vec3 c = day;
           float d = texture2D(uDepth, vUv).x;
+          /*
+            One blur, from two reasons.
+
+            The defocus that matches the handover is a flat amount over the
+            whole frame; depth of field is a per-pixel amount from how far the
+            pixel is from where the lens is focused. They never both matter at
+            once — one is for three thousand kilometres up and the other for the
+            last two seconds — so taking the larger costs one comparison and
+            saves sampling the frame twice.
+          */
+          float blur = uSoft;
+          if (uAperture > 0.0) {
+            float metres = distanceAt(d);
+            blur = max(blur, min(26.0, abs(metres - uFocus) / max(uFocus, 0.05) * uAperture));
+          }
+          vec3 day = soft(vUv, blur);
+          vec3 c = day;
 
           /*
             The sky is already the right time of day, so it is not graded.
@@ -1705,8 +1742,24 @@ export class Manhattan {
       of the descent — the one the dissolve is pairing with the globe — read a
       plate that was not there yet and blurred itself at full strength.
     */
+    /*
+      Down to a hundred and twenty kilometres, not three hundred.
+
+      The plate is NASA's imagery and what it fades into is Google's, and the
+      two are photographs of the same ground by different satellites in
+      different years — the land changes texture and colour a little as one
+      gives way to the other, however well the tone is matched, because what
+      differs is the picture and not the grade.
+
+      Nothing removes that. What helps is where it happens and how long it
+      takes. At three hundred kilometres Google's imagery is still coarse, so
+      the swap was between two quite different pictures over about two seconds.
+      At a hundred and twenty it is finer, the two are closer to begin with, and
+      the crossover is spread across more of the fall — so the change is slower
+      and smaller at every moment of it.
+    */
     const q = Math.min(1, Math.max(0,
-      Math.log(Math.max(above, 300000) / 300000) / Math.log(3000000 / 300000)));
+      Math.log(Math.max(above, 120000) / 120000) / Math.log(3000000 / 120000)));
     if (this.plate) {
       this.plate.material.opacity = q * q * (3 - 2 * q);
       // Off rather than invisible, once it is contributing nothing. It covers
@@ -1733,6 +1786,23 @@ export class Manhattan {
       through the middle of the descent as the tiles come through underneath;
       gone by the time there is a city.
     */
+    /*
+      The lens focuses on whatever the shot is arriving at, and opens as it gets
+      there.
+
+      Nothing for the fall, where there is no near and far to separate; raised
+      across the push so that by the time the camera is at the desk the room
+      behind it has gone soft the way a room behind a laptop does.
+    */
+    if (this.facade && this.pushing > 0) {
+      const screen = this.facade.userData.screenWorld();
+      this.grade.uniforms.uFocus.value =
+        Math.max(0.25, this.camera.position.distanceTo(screen));
+      this.grade.uniforms.uAperture.value = 5.5 * this.pushing;
+    } else {
+      this.grade.uniforms.uAperture.value = 0;
+    }
+
     const showing = 1 - (this.plate ? this.plate.material.opacity : 0);
     this.grade.uniforms.uShow.value = showing;
     this.grade.uniforms.uSoft.value =
