@@ -175,6 +175,8 @@ export class Manhattan {
     // After the plugin, not before: GoogleCloudAuthPlugin sets this itself when
     // it is registered, so anything set earlier is silently replaced.
     if (errorTarget !== null) tiles.errorTarget = errorTarget;
+    // Kept, because render() tightens it further near the ground. See there.
+    this.errorTarget = errorTarget;
 
     tiles.setCamera(this.camera);
     tiles.setResolutionFromRenderer(this.camera, this.renderer);
@@ -503,9 +505,9 @@ export class Manhattan {
       a slow rotation reads as the camera finding its bearings.
     */
     const turn = smooth((t - 0.30) / 0.45);
-    const nadirUp = this.north
-      ? this.north.clone().lerp(front.clone().negate(), turn).normalize()
-      : front.clone().negate();
+    const heading = this.north
+      ? this.north.clone().lerp(front, turn).normalize()
+      : front.clone();
 
     /*
       The second is pitch, and it waits until the camera is nearly down.
@@ -518,11 +520,37 @@ export class Manhattan {
       of altitude and the last second and a half.
     */
     const tilt = smooth((t - 0.80) / 0.20);
-    this.camera.up.copy(nadirUp).lerp(new THREE.Vector3(0, 1, 0), tilt).normalize();
+    const pitch = -Math.PI / 2 * (1 - tilt);
+
+    /*
+      Up, derived from the pitch rather than interpolated towards it.
+
+      This was a straight lerp from the horizontal heading to world up, and at
+      exactly half way through the turn it put the up vector *antiparallel* to
+      the direction the camera was looking. lookAt takes the cross product of
+      those two, and a cross product of opposite vectors is zero, so at that one
+      frame the orientation came from whatever the library does when its
+      arithmetic collapses.
+
+      One frame, dead centre of the turn. Measured: every frame through the
+      swing pitches by 1.87 degrees and that one pitches by 2.09, with the next
+      making up the difference at 1.66. The picture jumps by three times its
+      neighbours and then carries on correctly, which is why re-shooting it
+      produced the identical result twice, why lengthening the shot did not move
+      it — the midpoint is still the midpoint — and why tightening the level of
+      detail did not either. It was read as a tile swap for a while on the
+      strength of being near buildings.
+
+      Up is perpendicular to the view direction by construction here: the same
+      two vectors, ninety degrees apart in the same plane. It cannot collapse,
+      and the pitch cannot roll.
+    */
+    const up = heading.clone().multiplyScalar(-Math.sin(pitch))
+      .addScaledVector(new THREE.Vector3(0, 1, 0), Math.cos(pitch));
+    this.camera.up.copy(up).normalize();
 
     // Aim by angle rather than by moving a target point around, so the swing is
     // even. Straight down at tilt zero, level with the front at tilt one.
-    const pitch = -Math.PI / 2 * (1 - tilt);
     const dir = new THREE.Vector3(
       Math.sin(a) * Math.cos(pitch), Math.sin(pitch), Math.cos(a) * Math.cos(pitch));
     this.camera.lookAt(
@@ -1088,6 +1116,25 @@ export class Manhattan {
       simply switched off once the camera is higher than it is, and switched
       back on during the descent, at which point it is the sky again.
     */
+    /*
+      Tighter still in the last hundred metres.
+
+      A level of detail swapping three thousand kilometres up moves the picture
+      by very little, because everything is far away. The same swap twenty
+      metres from a tenement moves a wall. Measured on the finished descent, one
+      frame near the end changed by sixty-five against a run of twenty either
+      side, and re-shooting it produced the same sixty-five twice, so it is a
+      real swap and not a frame caught mid-load.
+
+      Four everywhere and two in close, which is roughly the last second and a
+      half. Only for renders: the value is null for a visitor, where Google's
+      own twenty is right and the bandwidth is somebody's phone.
+    */
+    if (this.errorTarget && this.tiles) {
+      this.tiles.errorTarget = above < 500
+        ? Math.min(2, this.errorTarget) : this.errorTarget;
+    }
+
     if (this.sky) this.sky.visible = above < 55000;
 
     /*

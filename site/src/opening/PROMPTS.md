@@ -1,131 +1,138 @@
-# The intro, and what makes each part of it
+# The intro, and what is left to make
 
-Four beats. Two are rendered from this repository and need nothing; one has to
-be generated; the last is CSS.
-
-Nothing here is a preference. The division came out of measuring what each tool
-can actually do, and the measurements are in `PROGRESS.md`.
-
----
-
-## Beat 1 — the Earth (6s) · rendered, done
-
-`node scripts/render-intro.mjs --seconds 6 --fps 30`
-
-Machined metal turning into a night Earth: continents rise, basins sink, water
-fills them, and the cities come on. Ends closing on the eastern seaboard of the
-United States, which is where the descent picks up.
-
-Comes out of the site's own scene, driven frame by frame rather than by the
-clock, so it is smooth by construction rather than by hoping.
+Three beats. Two are rendered from this repository and are finished; one has to
+be generated. Nothing below is a preference — the division came out of measuring
+what each tool can and cannot do, and every number here was measured rather than
+chosen.
 
 ---
 
-## Beat 2 — the descent (7s) · rendered, needs a look
+## Beat 1 — the Earth (7s) · rendered, done
 
-`node scripts/render-descent.mjs --seconds 7 --fps 30`
+    node scripts/render-intro.mjs --seconds 7 --fps 30
 
-Google's Photorealistic 3D Tiles: the real East Village, real captured
-geometry, graded to the twenty minutes after sunset because Google publishes no
-other time of day. From 3,400 m down to about 80, ending on a corridor of
-facades with the skyline behind them.
+A machined metal sphere turning, which becomes a night Earth: continents rise,
+basins sink, water fills them, the cities come on. Then the sun swings round to
+daylight as the camera dives, and it hands over three thousand kilometres above
+New York looking straight down.
 
-**It stops above the roofline, and that is the finding.** Eighteen candidate
-endings were rendered across six blocks at 9, 14 and 20 metres to see where the
-photogrammetry gives out. At 14 m — level with a fourth-floor window, which is
-where the shot was supposed to land — the brick drips, the windows are smears,
-and there is no readable fire escape on any block. It is flown imagery: facades
-are reconstructed from oblique passes and there is a height below which there is
-nothing to reconstruct them from.
+Daylight at the handover is a compromise and worth naming. The globe on the site
+stays night, which is the better picture, but Google publishes no imagery except
+midday and the two halves have to be lit the same way at the join. So the sun
+moves during the dive. The trade is one beat of the intro against a seam.
 
-So the last hundred feet are not photography's to do.
+## Beat 2 — the descent (12s) · rendered, done
 
-Costs one Google session per render. Enterprise SKUs include a thousand a
-month, so this is free and so are a hundred more of it.
+    node scripts/render-descent.mjs
+
+Google's Photorealistic 3D Tiles — real captured geometry — from three thousand
+kilometres down to seventeen metres, ending level with a fifth-floor window on a
+red brick tenement on East 6th near Avenue B, twenty-eight metres out from it.
+
+The whole fall is one camera through one dataset, because the tileset is global.
+There is nothing joined in the middle of it.
+
+Costs one Google session per render. Enterprise SKUs include a thousand events a
+month, so this is free and so are a few hundred more of it.
 
 ---
 
-## Beat 3 — the walk-up and the room (5s) · generated
+## Beat 3 — through the window (about 5s) · generated, not started
 
-The one beat no code here can make. There is no photogrammetry of the inside of
-an apartment and, at street level, not much of the outside of one either.
+The one beat no code here can make, and the reason is measured rather than
+assumed.
 
-Generate as **two stills** and animate between them, rather than as a clip.
-Every model worth using takes a start frame and an end frame, so supplying both
-means the seams are pinned to images that can be checked rather than to
-whatever the model decided the middle looked like.
+Eighteen candidate endings were rendered across six blocks to find where the
+photogrammetry gives out, and then the block around the ending was searched
+properly: a grid of standing positions at seventeen metres, keeping only those
+with nine metres clear around them, then the nearest building front from each.
 
-### 3a — the walk-up, from across the street
+**Below about thirty metres of stand-off there is nothing to work with.** At
+seventeen metres up and twelve metres out, the scan has no windows in it at all
+— the wall comes back as a smooth pale blob, because the imagery is flown and
+there was never a clean line of sight down a narrow street. From about thirty
+metres the tenements return: window reveals, fire escapes, courses in the brick.
 
-> Pre-war New York tenement walk-up seen from across a narrow street at blue
-> hour, twenty minutes after sunset. Six storeys of dark red brick, black iron
-> fire escape zigzagging down the facade, air conditioning units in two of the
-> windows. One window on the fourth floor is lit warm from inside, sash raised
-> a few inches, everything else dark. Deep blue sky with a thin orange band low
-> behind the roofline. Wet asphalt below holding one streetlight reflection.
-> Photorealistic, shot on 35mm, slight lens compression, no people, no text, no
-> signage.
+That is exactly where the descent now stops, and it is why the last few metres
+are not photography's to do.
 
-**Has to hold:** the lit window in the upper third, and no other light source
-competing with it. That window is where the camera goes next.
+### What to condition on
 
-### 3b — the room, from the window
+    ffmpeg -sseof -0.05 -i media/descent.mp4 -frames:v 1 media/last-frame.png
 
-> Interior of a small student apartment in New York at night, seen from just
-> inside a sash window. A wooden desk against the wall under the window with an
-> open laptop on it, screen completely dark and switched off, facing the
-> camera, occupying the central third of the frame. Beside it a steel water
-> bottle with stickers on it, a stack of textbooks, a mug, loose paper, a
-> desk lamp switched on and pointing at the wall. Above the desk a Rice
-> University banner in blue and grey pinned to exposed brick, a periodic table
-> poster, two film posters, a string of small warm fairy lights along the top of
-> the wall, index cards and photographs stuck up unevenly. An unmade bed edge in
-> shadow at the left. Warm lamp light from the right, cool blue street light
-> falling through the window behind the camera. Dust in the air, shallow depth
-> of field, film grain, anamorphic. Photorealistic. No people, no text on the
-> laptop screen, nothing legible on the posters.
+That frame is the first frame of the generated clip, and it is not negotiable.
+Conditioning on a description instead of on the actual frame is how a join ends
+up at a different temperature, a different sharpness and a different time of
+day, all at once, in a shot whose entire point is that it has no cuts.
 
-**Three things this shot does not work without:**
+### The move
+
+One continuous push from where the descent stops: forward across the gap,
+towards one window on the fifth floor, through the raised sash, and into the
+room, settling on a desk with a laptop on it. No cut, no change of lens, no
+change of speed at the window.
+
+### The room
+
+> Interior of a small student apartment in New York, seen from just inside a
+> raised sash window in daylight. A wooden desk against the wall under the
+> window with an open laptop on it, screen completely dark and switched off,
+> facing the camera, occupying the central third of the frame. Beside it a steel
+> water bottle covered in stickers, a stack of textbooks, a mug, loose paper, a
+> desk lamp. Above the desk a Rice University banner in blue and grey pinned to
+> exposed brick, a periodic table poster, two film posters, index cards and
+> photographs stuck up unevenly. An unmade bed edge in shadow at the left. Dust
+> in the air, shallow depth of field, film grain. Photorealistic. No people, no
+> text on the laptop screen, nothing legible on the posters.
+
+**Three things it does not work without:**
 
 1. **The laptop screen dark and empty.** Anything on it fights the interface
-   that fades up over it. Say it twice in the prompt if the model puts a
-   wallpaper on it anyway.
+   that fades up over it. Say it twice if the model puts a wallpaper on it
+   anyway.
 2. **Centred and roughly level**, filling 55 to 70% of the frame width. The
    interface appears inside that rectangle.
 3. **Nothing legible.** A model asked for posters will invent lettering, and
-   invented lettering is the single clearest tell in a generated frame. The
-   Rice banner is the one exception and should be colour and shape rather than
-   a wordmark.
+   invented lettering is the single clearest tell in a generated frame. The Rice
+   banner is the exception and should read as colour and shape, not as a
+   wordmark.
 
 Detail is what makes an interior read as somebody's rather than as a set. The
-water bottle, the loose paper and the unevenly stuck index cards are doing more
-work than the furniture.
+water bottle, the loose paper and the unevenly stuck index cards do more work
+than the furniture does.
+
+### After it comes back
+
+It goes through the same grade as the footage before it is joined, or it will
+sit at a different temperature and sharpness and the join will be the most
+obvious thing in the intro. Match it the way the handover was matched: measure
+the last real frame and the first generated one, and correct until they agree.
+`scripts/match-plate.mjs` is the pattern — histogram matching between two frames
+of the same thing, fitted rather than eyeballed, composed over two passes.
 
 ---
 
 ## Beat 4 — the handoff · CSS, done
 
 Already in `opening.js`. The interface fades up inside the laptop bezel and the
-bezel scales up and off the edges, so nothing ever has to line up: the UI
-appears inside a rectangle this code controls.
-
-A straight cut would need a pixel-perfect match against a generated frame,
-which is hard to produce and obvious when it is close but wrong.
+bezel scales up and off the edges, so nothing has to line up: the UI appears
+inside a rectangle this code controls. A straight cut would need a pixel-perfect
+match against a generated frame, which is hard to produce and obvious when it is
+close but wrong.
 
 ---
 
 ## Stitching
 
-Save the generated clip as `clip3.mp4` in `site/media/`, then:
+Drop the generated clip at `site/media/room.mp4`, then:
 
     cd site && node scripts/stitch-intro.mjs
+    node scripts/check-intro.mjs public/opening/intro-*.mp4
 
-That joins the beats with short cross-dissolves and writes
-`public/opening/intro.mp4`, which is what the page plays.
-
-The dissolves are the point. Each seam sits where one thing fills the frame —
-cloud, then a building face, then a window — so there is nothing on screen for
-the eye to compare across the join.
+`stitch-intro` joins whatever exists, hashes the output by content and writes the
+manifest the page reads. `check-intro` is the gate: it looks for empty frames,
+single-frame discontinuities, a stalled camera, and a run much slower than the
+runs either side of it. All four exist because all four shipped at some point.
 
 ---
 
@@ -133,11 +140,11 @@ the eye to compare across the join.
 
 | | length | made by | done |
 |---|---|---|---|
-| Earth | 6s | this repo | yes |
-| descent | 7s | Google's tiles, this repo | rendering |
-| walk-up and room | 5s | generated, 2 stills | prompts above |
+| Earth | 7s | this repo | yes |
+| descent | 12s | Google's tiles, this repo | yes |
+| through the window | ~5s | generated | prompts above |
 | handoff | — | CSS | yes |
 
-Eighteen seconds is long for something a visitor did not ask for, so the skip
-is on screen from the first frame and the whole thing is optional: if
-`intro.mp4` is missing the page starts on the globe and says nothing about it.
+Nineteen seconds is long for something nobody asked for, so the skip is on
+screen from the first frame and the whole thing is optional: if the manifest is
+missing, the page starts on the globe and says nothing about it.
