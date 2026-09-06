@@ -66,7 +66,19 @@ const ORDER = [
   "media/room.mp4",      // generated; see src/opening/PROMPTS.md
 ];
 const OUT = path.join(DIR, "intro.mp4");
-const FADE = 0.45;            // seconds of overlap at each seam
+/*
+  Shorter than it was, because the reasons it was long have been fixed.
+
+  0.45 was chosen when the two beats disagreed about everything and the
+  dissolve was doing the work of hiding it. It is not hiding anything now:
+  the geography lines up, the light matches and the colour is within two levels
+  a channel across the join. What a long dissolve buys in that situation is
+  only more frames of double image, because the two beats are zooming at
+  slightly different rates and every overlapped frame shows both.
+
+  Seven frames rather than thirteen, at the fastest part of the move.
+*/
+const FADE = 0.25;            // seconds of overlap at each seam
 
 const run = (cmd, args) => new Promise((res, rej) => {
   const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });

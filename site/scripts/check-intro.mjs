@@ -40,6 +40,28 @@
   nearly identical the move has stopped, which in a zoom that is supposed to be
   one continuous fall is as wrong as a jump.
 
+  **A sag**, which is the stall's quiet version and is the one that shipped.
+
+  The globe used to reach the handover on a smoothstep, and smoothstep has zero
+  slope at both ends, so the dive arrived at three thousand kilometres having
+  almost stopped. Frame to frame across the join: 2.9, falling to 0.75, then the
+  tiles picking it up at 4.0 and holding. A five-fold step with the slowest
+  frame of the whole intro immediately before it, which is read as a cut,
+  because decelerating to nothing and then leaping back to speed is what a cut
+  between two shots looks like.
+
+  None of the three checks above saw it. It is not a jump: every individual step
+  sits close to the two either side, and the JUMP test compares against exactly
+  that. It is not a stall: 0.75 against a median of 4 is a fifth of the shot's
+  speed, nowhere near the sixteenth that counts as stopped. And it is not
+  darkness. Three tests, all passing, on the single worst frame in the file.
+
+  So: a run of frames much slower than the runs on *both* sides of it. Both
+  sides matters. A shot that starts slowly and speeds up is a shot that starts
+  slowly, and there are legitimate quiet passages here — the sphere turning
+  before the dive begins is one. A dip with faster motion before it and faster
+  motion after it is not a passage, it is a hole.
+
   Exits non-zero if anything fails, so it can gate a publish.
 */
 import { spawn } from "node:child_process";
@@ -62,6 +84,15 @@ const JUMP = 3.2;
 const NEAR = 6;
 // Below this fraction of the median, the picture has stopped moving.
 const STALL = 0.06;
+// A run this much slower than the runs on both sides of it is a sag. The one
+// that shipped measured 0.36 and 0.22 of its neighbours; the fixed version
+// measures 0.93 and 0.97, so there is a lot of room between the two.
+const SAG = 0.45;
+// Frames in a run, and how far out the runs it is compared against sit. Half a
+// second either way at 30fps, which is long enough that a genuine change of
+// pace does not look like a hole.
+const RUN = 7;
+const AWAY = 22;
 
 const run = (cmd, args) => new Promise((res, rej) => {
   const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -150,6 +181,36 @@ try {
   const stalls = deltas.map((d, i) => [i + 1, d])
     .filter(([, d]) => d < median * STALL);
 
+  /*
+    Sags. See the note at the top.
+
+    Compared against the slower of the two sides, not the average of both, so
+    a dip only counts when the shot is genuinely faster before it *and* after
+    it. Reported once per sag rather than once per frame: a hole half a second
+    wide is one fault, and printing it fifteen times buries everything else.
+  */
+  const mean = (from, to) => {
+    let sum = 0;
+    let n = 0;
+    for (let k = Math.max(0, from); k < Math.min(deltas.length, to); k++) {
+      sum += deltas[k];
+      n += 1;
+    }
+    return n ? sum / n : 0;
+  };
+  const sags = [];
+  for (let i = AWAY + RUN; i < deltas.length - AWAY - RUN; i++) {
+    const here = mean(i - RUN, i + RUN + 1);
+    const before = mean(i - AWAY - RUN, i - AWAY + RUN);
+    const after = mean(i + AWAY - RUN, i + AWAY + RUN);
+    const against = Math.min(before, after);
+    if (against > 0.5 && here < against * SAG) {
+      const last = sags[sags.length - 1];
+      if (last && i - last[0] < RUN * 2) continue;
+      sags.push([i, here, against]);
+    }
+  }
+
   console.log(`${FILE}`);
   console.log(`  ${count} frames, ${seconds.toFixed(2)}s at ${fps}fps, ` +
               `${stream.width}x${stream.height}, ` +
@@ -181,6 +242,14 @@ try {
     console.log(`  STALLS: ${stalls.length} steps under ${STALL}x the median, ` +
                 `first at ${at(stalls[0][0])}`);
   } else console.log("  never stops moving");
+
+  if (sags.length) {
+    bad += 1;
+    console.log(`  SAGS: ${sags.length} run(s) under ${SAG}x the motion either side`);
+    for (const [i, here, against] of sags.slice(0, 5)) {
+      console.log(`    ${at(i)}  ${here.toFixed(1)} against ${against.toFixed(1)} either side`);
+    }
+  } else console.log(`  no sags (${SAG}x either side)`);
 
   process.exit(bad ? 1 : 0);
 } finally {

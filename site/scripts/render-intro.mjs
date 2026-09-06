@@ -113,7 +113,34 @@ function beat(t) {
     fall is exponential for the same reason the descent's is — a constant ratio
     per second is what reads as a zoom rather than as a drop.
   */
-  const dive = smooth((t - 0.34) / 0.66);
+  /*
+    Later, shorter, and accelerating into the handover rather than easing out of
+    the shot.
+
+    smoothstep has zero slope at both ends, so the dive arrived at three
+    thousand kilometres having slowed almost to a stop. Measured on the stitched
+    file, frame to frame: the globe falls away from 2.9 to 0.75 over the second
+    before the seam, and the tiles pick it up at 4.0 and hold there. A five-fold
+    step, with the slowest frame of the whole intro sitting immediately before
+    it.
+
+    That is the seam. Not the dissolve, not the colour, not the framing — all of
+    which were wrong too and are fixed. A continuous fall that decelerates to
+    nothing and then leaps back to speed is read as two shots joined, because
+    that is what a cut between two shots does. Nothing about a longer or shorter
+    blend changes it.
+
+    So the dive covers the same distance in less time and eases *in* only. x to
+    the 2.2 has no slope at the start, where the planet is still forming and the
+    spin is carrying the frame, and 2.2 times the average rate at the end, which
+    is where it has to meet the tiles. It arrives at speed and hands over at
+    speed.
+
+    The distances are unchanged. Earth radii from the centre: the surface is 1,
+    so three thousand kilometres up is 1.47, which is where the descent begins.
+  */
+  const start = 0.30;
+  const dive = Math.pow(clamp01((t - start) / (1 - start)), 1.5);
   const FROM = 3.55;
   const TO = 1 + 3000 / 6371;
   const cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);
