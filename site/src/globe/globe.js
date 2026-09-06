@@ -155,6 +155,24 @@ export class Globe {
     */
     this.safeBottom = 0;
 
+    /*
+      Two overrides the opening needs and nothing else touches.
+
+      The intro's first frame is not the page's idle frame. It was rendered at
+      sixteen by nine with the camera raised a little and the exposure lifted
+      for full-bleed video, and the page sits at neither. Pressing ENTER used to
+      fade one into the other and you could see both spheres at once, because
+      they were two different pictures of the same object.
+
+      So the page can be moved onto the clip's exact opening pose before the
+      fade starts. `lift` is a world-unit camera raise applied on top of the
+      safe-area shift, and `exposureLift` is a multiplier over whatever curve
+      apply() decided. Both are 1:1 with what render-mode.js does to the same
+      scene, which is what makes the two frames match rather than nearly match.
+    */
+    this.lift = 0;
+    this.exposureLift = 1;
+
     // Held, because the intro moves it. See setSun.
     this.sun = SUN.clone();
 
@@ -903,7 +921,7 @@ export class Globe {
       band out of it. The night end is unchanged at 0.86: see the note below on
       why a studio exposure over a night side lifts the ocean to grey.
     */
-    this.renderer.toneMappingExposure = 1.05 - 0.19 * eased;
+    this.renderer.toneMappingExposure = (1.05 - 0.19 * eased) * this.exposureLift;
     // It wakes up as it works out where it is. Not while something else is
     // holding the rate: see `held` above.
     if (!this.held) this.spin = 0.045 + 0.03 * eased;
@@ -1083,9 +1101,60 @@ export class Globe {
     this.resize();
   }
 
+  /*
+    Put the camera and the sphere into one named state, in a single pass.
+
+    The opening animates six things at once towards the clip's opening frame,
+    and most of them either go through resize() or are undone by it: the camera
+    height is computed there from the safe area and the lift, and it needs the
+    distance to already be right because a pixel is worth a different number of
+    world units at every distance. Setting them one at a time runs resize six
+    times a frame, each time with three of the six not yet applied.
+
+    Assumes the caller has stopped the idle spin, which resize() takes as its
+    cue to put the camera back at the idle distance.
+  */
+  pose({ rotY, rotX, distance, lift, safeBottom, exposure }) {
+    /*
+      Nothing non-finite gets written, and this is not defensive padding.
+
+      A window that has never been laid out — a background tab, a hidden pane —
+      reports zero for its width and its height, and an aspect ratio of zero
+      over zero is NaN. Every number computed from it is then NaN, and a camera
+      position of NaN does not throw or warn: three.js builds a matrix of NaN,
+      the projection collapses, and the canvas goes black with nothing anywhere
+      saying why. Worse, it is permanent, because the only code that would
+      overwrite the distance runs when the globe is spinning and the globe is
+      not spinning during the opening.
+
+      Caught here rather than at each caller, because it is the same mistake
+      every time and this is the one door all of them come through.
+    */
+    const ok = (v) => v !== undefined && Number.isFinite(v);
+    if (ok(rotY)) this.metal.rotation.y = rotY;
+    if (ok(rotX)) this.metal.rotation.x = rotX;
+    if (ok(distance)) this.camera.position.z = distance;
+    if (ok(lift)) this.lift = lift;
+    if (ok(safeBottom)) this.safeBottom = safeBottom;
+    // Applied on the next apply(), which the frame loop runs anyway. Writing
+    // toneMappingExposure here instead would last exactly one frame.
+    if (ok(exposure)) this.exposureLift = exposure;
+    this.resize();
+  }
+
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
+    /*
+      A window with no size yet has nothing to be sized to.
+
+      Both of these are zero in a tab that has never been laid out, and the
+      aspect ratio is then NaN, which propagates into the camera and stays
+      there. Returning leaves the last good numbers in place; the browser sends
+      another resize the moment the tab is shown, and that one has real numbers
+      in it.
+    */
+    if (!(w > 0 && h > 0)) return;
     this.camera.aspect = w / h;
 
     /*
@@ -1113,7 +1182,7 @@ export class Globe {
     */
     const halfWorld = halfFov * this.camera.position.z;
     const perPixel = h > 0 ? (halfWorld / (h / 2)) : 0;
-    this.camera.position.y = -(this.safeBottom / 2) * perPixel;
+    this.camera.position.y = -(this.safeBottom / 2) * perPixel + this.lift;
 
     // Only when nothing is flying. A resize mid-flight — which on a phone
     // means the address bar sliding away — must not teleport the camera out

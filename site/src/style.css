@@ -856,9 +856,19 @@ html, body {
 /* The overlay's own backdrop goes with it, or the clip plays behind a wash. */
 .entering .opening { background: transparent; transition: background 700ms ease; }
 
+/*
+  Short, because by the time it runs there is nothing left to hide.
+
+  It was 780ms when the fade was covering a mismatch: the page's sphere and the
+  clip's were at different rotations, sizes and exposures, and a long blend was
+  the only thing standing between the visitor and both of them at once. The page
+  now settles onto the clip's exact opening frame before this starts, so this is
+  only smoothing the last levels of difference between a video decoder and a
+  WebGL canvas. Kept in step with FADE in opening.js.
+*/
 .opening-video {
   opacity: 0;
-  transition: opacity 780ms ease;
+  transition: opacity 380ms ease;
 }
 .opening-video-in { opacity: 1; }
 

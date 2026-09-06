@@ -27,7 +27,10 @@
   white, so the one thing the shot is about disappears. A multiplier keeps
   whatever curve apply() decided and only lifts it.
 */
-const RENDER_LIFT = 1.12;
+// Exported because the opening has to reproduce it. The page fades this clip up
+// over its own globe, and a globe twelve per cent darker than the frame arriving
+// on top of it is a brightness step in the middle of the fade.
+export const RENDER_LIFT = 1.12;
 
 export function installRenderMode({ globe, flight, machine, loadTrace, play }) {
   /*

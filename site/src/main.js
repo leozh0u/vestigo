@@ -348,28 +348,128 @@ mountTyping();
 // Resolves to the intro's URL or null, rather than a boolean: the file is named
 // after a hash of its contents so that replacing it cannot be defeated by a
 // cache, which means nothing can hardcode the path. See opening.js.
+/*
+  The nearest angle equal to `target`, going from `current`.
+
+  Rotations here accumulate: the globe has been turning since the page loaded
+  and its y is some number of whole turns plus a bit. Interpolating that
+  straight to the clip's -0.9 unwinds every one of those turns in under a
+  second, which is not a settle, it is a spin-down. Only the remainder matters,
+  so this brings the target to within half a turn of where the sphere already
+  is.
+*/
+/*
+  How much closer the page's camera has to be than the render's was.
+
+  The clip was rendered at sixteen by nine and is shown object-fit cover: it is
+  scaled by whichever of the two ratios is larger and the overflow is cropped.
+  On a window narrower than sixteen by nine the crop takes the sides, the
+  sphere keeps the height it was rendered at, and the page belongs at the
+  render's own distance. On a wider one the whole frame is blown up to reach
+  the width and the sphere comes out larger, so the page's camera has to come
+  forward by exactly the ratio that did it.
+
+  Falls back to 1 when the window has no size, which is a tab that has never
+  been laid out. Without that the ratio is zero over zero and the distance
+  computed from it is NaN, which reaches the camera and stays there.
+*/
+const coverScale = () => {
+  const aspect = window.innerWidth / window.innerHeight;
+  return Number.isFinite(aspect) && aspect > 0
+    ? Math.min(1, (16 / 9) / aspect)
+    : 1;
+};
+
+const turnTo = (current, target) => {
+  const TAU = Math.PI * 2;
+  let d = (target - current) % TAU;
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return current + d;
+};
+
 Opening.available().then((src) => {
   if (!src || RENDERING) return;
   new Opening({
     onBegin: () => { globe.spinning = false; },
     /*
-      Give the globe back the room it was keeping for the photographs.
+      Become the clip's first frame, rather than fading towards it.
 
-      It sits high on the page so the strip along the bottom does not cover it.
-      The clip opens on a sphere in the middle of the frame, so as the strip
-      slides out the globe comes down to meet it — and the fade at the end of
-      that has two nearly identical pictures to work with rather than a planet
-      in two different places.
+      The clip opens on a metal sphere at a known rotation, a known distance and
+      a known exposure, in a sixteen-by-nine frame. The page shows the same
+      sphere, turning, at a different rotation and a different size, sitting
+      high so the strip of photographs along the bottom does not cover it, and
+      lit for a browser window rather than for full-bleed video.
 
-      Animated rather than set, because the whole point is that nothing jumps.
+      Fading one into the other showed both. So the page moves onto the clip's
+      pose first and the fade only happens once it has arrived.
+
+      Every number here is measured, not typed. beat(0) in render-intro.mjs is
+      the clip's first frame by definition; stitch-intro.mjs asks it and writes
+      the answer into the manifest, so re-rendering the Earth beat with a
+      different opening rotation moves this with it and nothing has to be kept
+      in step by hand.
     */
-    onEnter: () => {
-      const from = globe.safeBottom;
+    onEnter: (open, ms) => {
       const started = performance.now();
       const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+      const from = {
+        safeBottom: globe.safeBottom,
+        rotY: globe.metal.rotation.y,
+        rotX: globe.metal.rotation.x,
+        distance: globe.camera.position.z,
+        lift: globe.lift,
+        exposure: globe.exposureLift,
+      };
+
+      /*
+        The clip's distance is in its own frame, and the page is not that frame.
+
+        The video is displayed object-fit cover: it is scaled by whichever of
+        the two ratios is larger and the overflow is cropped. On a window
+        narrower than sixteen by nine the crop takes the sides and the sphere
+        keeps the height it was rendered at, so the page's camera belongs at the
+        render's own distance. On a wider one the crop takes the top and bottom,
+        the whole frame is blown up to reach the width, and the sphere comes out
+        larger than it was rendered — so the page's camera has to come forward
+        by exactly the ratio that did it.
+
+        This is not globe.idleDistance. That distance backs the camera off on a
+        narrow window so the planet fits inside the frame, which is right for a
+        page and wrong here: the video does not do it, so matching the video
+        means not doing it either.
+
+        The camera height needs no such correction. Working it through, the
+        distance correction and the pixels-per-world-unit correction are the
+        same factor and cancel, so the render's lift is the page's lift.
+      */
+      const to = open ? {
+        safeBottom: 0,
+        rotY: turnTo(from.rotY, open.rotY),
+        rotX: open.rotX,
+        distance: open.distance * coverScale(),
+        lift: open.lift,
+        exposure: open.exposure,
+      } : { ...from, safeBottom: 0 };
+
+      // Metal, whatever it was. It is metal already at this point in the page's
+      // life, and setting it costs nothing if so — but a clip that opens on
+      // chrome must not be faded up over a lit planet.
+      globe.setProgress(0);
+      globe.progress = 0;
+
       const step = (now) => {
-        const u = Math.min(1, (now - started) / 820);
-        globe.setSafeBottom(from * (1 - ease(u)));
+        const u = Math.min(1, (now - started) / (ms ?? 820));
+        const k = ease(u);
+        const at = (a, b) => a + (b - a) * k;
+        globe.pose({
+          safeBottom: at(from.safeBottom, to.safeBottom),
+          rotY: at(from.rotY, to.rotY),
+          rotX: at(from.rotX, to.rotX),
+          distance: at(from.distance, to.distance),
+          lift: at(from.lift, to.lift),
+          exposure: at(from.exposure, to.exposure),
+        });
         if (u < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
@@ -386,11 +486,33 @@ Opening.available().then((src) => {
     onHandoff: (ui) => {
       if (!ui) return;
       globe.spinning = false;
-      globe.metal.rotation.y = ui.rotY;
-      globe.metal.rotation.x = ui.rotX;
-      globe.camera.position.z = ui.distance;
+      // Back to the page's own exposure and framing at the same time. The
+      // screenshot at the end of the clip was taken of this page, not of the
+      // render, so the video lift that made the opening match must not survive
+      // into the closing one.
+      globe.pose({
+        rotY: ui.rotY,
+        rotX: ui.rotX,
+        distance: ui.distance,
+        lift: 0,
+        exposure: 1,
+      });
     },
     onFinish: () => {
+      /*
+        Give the strip its room back.
+
+        Entering drove the safe area to zero so the sphere could come down to
+        the middle of the frame, and nothing was putting it back. The observer
+        that normally sets it watches the bar's box, and the bar leaves by a
+        transform — which does not change its box, so no event ever fires and
+        the planet stayed sitting a hundred and seventy pixels too low behind
+        the photographs for the rest of the visit.
+
+        offsetHeight rather than a bounding rect, because a rect is measured
+        after the transform and the bar is still on its way back in.
+      */
+      if (bar) globe.pose({ safeBottom: bar.offsetHeight });
       // After the growth, not during it. The CSS transition is 1100ms.
       setTimeout(() => { globe.spinning = true; }, 1150);
     },

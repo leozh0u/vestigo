@@ -53,7 +53,20 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 3);
   so no two things start and stop together. Beats that line up read as a
   slideshow.
 */
-function beat(t) {
+/*
+  Exported, because the page needs the very first value of it.
+
+  Pressing ENTER fades this clip up over the live page, and for that to be
+  invisible the page has to already be showing the clip's opening frame. That
+  frame is beat(0), so rather than copying the numbers into the site and having
+  them drift, stitch-intro.mjs calls this and writes the result into the
+  manifest alongside the screen rectangle it already carries.
+
+  `seconds` is a parameter rather than the module constant so a caller that did
+  not render the file can still ask about it. Nothing in beat(0) depends on it,
+  but a later frame would.
+*/
+export function beat(t, seconds = SECONDS) {
   /*
     The spin, the world arriving, and then the dive that hands over.
 
@@ -163,7 +176,7 @@ function beat(t) {
     paired frame is then the same place at the same size and the dissolve has
     nothing left to do but change which renderer is drawing it.
   */
-  const HAND = 1 - HANDOVER.fade / SECONDS;
+  const HAND = 1 - HANDOVER.fade / seconds;
   /*
     The dive starts sooner, and the beat is a second shorter.
 
@@ -195,7 +208,7 @@ function beat(t) {
   if (t > HAND) {
     // Seconds past the handover, which is exactly how far into the descent the
     // tiles are at this frame. Earth radii from the centre, so the surface is 1.
-    const into = (t - HAND) * SECONDS;
+    const into = (t - HAND) * seconds;
     // Over the fall's own length, not the shot's: the last two seconds of the
     // descent are a push at a window, not a fall, and the globe is matching the
     // fall.
@@ -327,4 +340,8 @@ function encode(dir, out, fps) {
   });
 }
 
-main().catch((e) => { console.error(e.message); process.exit(1); });
+// Only when run, not when imported. stitch-intro.mjs imports beat() above and
+// must not start a twelve-minute render by doing so.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((e) => { console.error(e.message); process.exit(1); });
+}

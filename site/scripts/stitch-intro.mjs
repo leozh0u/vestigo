@@ -22,6 +22,8 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { HANDOVER } from "../src/globe/handover.js";
+import { beat } from "./render-intro.mjs";
+import { RENDER_LIFT } from "../src/render-mode.js";
 
 const DIR = "public/opening";
 /*
@@ -130,7 +132,9 @@ if (present.length === 1) {
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "27", "-preset", "slow",
     "-movflags", "+faststart", OUT,
   ]);
-  publish(await duration(OUT));
+  // One beat, so the whole file is that beat: its length is the cut's length.
+  const only = await duration(OUT);
+  publish(only, present[0] === "media/earth.mp4" ? only : 0);
   process.exit(0);
 }
 
@@ -194,7 +198,14 @@ await run("ffmpeg", [
   JSON file that is allowed to be re-fetched, pointing at a video that never
   needs to be.
 */
-function publish(seconds) {
+/*
+  `earthSeconds` is how long the Earth beat is, which the opening pose needs:
+  beat() is a function of the fraction through that beat, so asking it for
+  frame zero means telling it how long the beat was. Zero when the Earth beat
+  is not in the cut at all, in which case the pose is left out entirely and the
+  page falls back to a plain fade.
+*/
+function publish(seconds, earthSeconds) {
   const digest = crypto.createHash("sha256")
     .update(fs.readFileSync(OUT)).digest("hex").slice(0, 10);
   const hashed = path.join(DIR, `intro-${digest}.mp4`);
@@ -231,11 +242,39 @@ function publish(seconds) {
     ui = JSON.parse(fs.readFileSync("media/ui-state.json", "utf8"));
   } catch { /* older capture: the planet will simply be somewhere else */ }
 
+  /*
+    And the pose the clip opens on, so the page can already be in it.
+
+    Pressing ENTER fades this file up over the live globe. Those were two
+    different pictures of the same sphere — a different rotation, a different
+    camera height, a different exposure, one of them turning — so the fade
+    showed both at once, which reads worse than a straight cut because a cut at
+    least only shows one wrong thing.
+
+    beat(0) is the clip's first frame by definition, so it is asked rather than
+    copied. The exposure carries render-mode's video lift, because that is
+    applied to every frame of the file and the page has no reason to know it
+    otherwise. The distance is in the render's own sixteen-by-nine frame; the
+    page corrects it for its own window, where the video is object-fit cover.
+  */
+  let open = null;
+  if (earthSeconds > 0) {
+    const first = beat(0, earthSeconds);
+    open = {
+      rotY: Number(first.rotationY.toFixed(5)),
+      rotX: Number(first.rotationX.toFixed(5)),
+      distance: Number(first.cameraZ.toFixed(4)),
+      lift: Number(first.cameraY.toFixed(4)),
+      exposure: Number((RENDER_LIFT * first.exposure).toFixed(4)),
+    };
+  }
+
   fs.writeFileSync(path.join(DIR, "intro.json"),
                    `${JSON.stringify({ src: `/opening/${path.basename(hashed)}`,
                                        seconds: Number(seconds.toFixed(2)),
-                                       screen, ui }, null, 2)}\n`);
+                                       open, screen, ui }, null, 2)}\n`);
   console.log(`wrote ${hashed}  (${seconds.toFixed(1)}s)`);
 }
 
-publish(elapsed);
+publish(elapsed,
+        present[0] === "media/earth.mp4" ? lengths[0] : 0);

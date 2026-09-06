@@ -25,6 +25,25 @@
 */
 const MANIFEST = "/opening/intro.json";
 
+/*
+  How long the page takes to become the clip's first frame, and how long the
+  clip then takes to replace it.
+
+  The settle matches the strip's slide in style.css. They are the same movement
+  seen from two sides — the photographs leaving and the planet taking the room
+  back — and a difference between them would show as the globe arriving before
+  or after the space it is arriving into.
+
+  The fade is short because by the time it runs there is nothing to hide. It was
+  780ms when it was covering a mismatch. Kept above zero rather than removed: a
+  video element and a WebGL canvas do not agree to the last level on gamma, and
+  a few frames of blend is enough for that never to be visible.
+*/
+const SETTLE = 820;
+const FADE = 380;
+
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+
 export class Opening {
   constructor({ onBegin, onFinish, onHandoff, onEnter } = {}) {
     this.onBegin = onBegin;
@@ -48,12 +67,16 @@ export class Opening {
     try {
       const res = await fetch(MANIFEST, { cache: "no-store" });
       if (!res.ok) return null;
-      const { src, screen, ui } = await res.json();
+      const { src, open, screen, ui } = await res.json();
       if (typeof src !== "string" || !src) return null;
-      // The laptop screen's rectangle in the last frame, and what the globe was
-      // doing in the screenshot on it. Older manifests have neither and the
-      // page falls back to a plain fade.
-      return { src, screen: screen ?? null, ui: ui ?? null };
+      /*
+        The pose the clip opens on, the laptop screen's rectangle in its last
+        frame, and what the globe was doing in the screenshot on that screen.
+        Both ends of the clip, measured by the renders rather than typed here.
+        An older manifest has none of them and the page falls back to a fade at
+        each end, which is what this used to do everywhere.
+      */
+      return { src, open: open ?? null, screen: screen ?? null, ui: ui ?? null };
     } catch {
       return null;
     }
@@ -107,47 +130,46 @@ export class Opening {
   async begin() {
     this.onBegin?.();
     /*
-      Hand over to the clip rather than cutting to it.
+      Arrive at the clip's first frame, then start the clip.
 
-      Pressing ENTER used to replace the page with a video in one frame, which
-      is the harshest transition in the whole thing and sits right at the front
-      of it. What the clip opens on is a metal sphere, centred, on black — and
-      the page is already showing a planet at the same size, a strip of
-      photographs along the bottom and two panels. So the page becomes that
-      opening frame: the strip slides down out of shot, the panels go, and the
-      globe drops to the middle as the room it was making for the photographs
-      is given back.
+      Pressing ENTER used to add a class, fade a video up and press play, all in
+      the same frame. Three things then happened at once: the page cleared, the
+      video's sphere started turning, and the fade ran across the middle of
+      both. You could see two spheres at different rotations, different sizes
+      and different brightnesses, one of them moving. That reads worse than a
+      hard cut, because a cut at least only ever shows one wrong thing.
 
-      The video is faded up over the top of that. By the time it is opaque the
-      thing underneath is nearly the same picture, so there is very little for
-      the fade to have to hide.
+      So it is in order now. The page settles onto the pose the clip opens on —
+      measured by the render, carried in the manifest, applied by main.js. The
+      video is loaded in parallel and held on its first frame. Only when the
+      page has arrived and that frame is decoded does the fade run, and only
+      when the fade is over does anything move.
+
+      By then the two images are the same image, so the fade has nothing to do
+      and the motion starts from a still frame that was already on screen.
     */
-    document.documentElement.classList.add("entering");
-    this.onEnter?.();
-    this.root?.classList.add("opening-playing");
-
     const found = await Opening.available();
     if (!found) {
       this.finish();
       return;
     }
-    const { src, screen, ui } = found;
+    const { src, open, screen, ui } = found;
     this.screen = screen;
     this.ui = ui;
 
+    document.documentElement.classList.add("entering");
+    this.onEnter?.(open, SETTLE);
+    this.root?.classList.add("opening-playing");
+
     /*
-      The handoff.
+      The handoff at the far end.
 
-      The clip ends on a laptop that already has this page on its screen. So the
+      The clip ends on a laptop that already has this page on its screen, so the
       last move is not a fade from a video to an interface, it is the screen
-      growing until it is the interface: the video is scaled about the centre of
-      that rectangle until the rectangle fills the viewport, and by the time it
-      does, what is under it is the same page at the same size.
-
-      The rectangle is measured, not typed. render-descent projects the screen's
-      four corners through the camera that took the last frame and stitch-intro
-      carries the result in the manifest, so re-rendering the shot moves the
-      handoff with it.
+      growing until it is the interface. The rectangle is measured, not typed:
+      render-descent projects the screen's four corners through the camera that
+      took the last frame and stitch-intro carries the result in the manifest,
+      so re-rendering the shot moves the handoff with it.
     */
     const video = document.createElement("video");
     video.className = "opening-video";
@@ -156,12 +178,6 @@ export class Opening {
     video.playsInline = true;
     video.preload = "auto";
     this.root.append(video);
-    // Faded up over the page settling into the clip's first frame, rather than
-    // appearing on top of it. Two frames of delay so the element is laid out
-    // before the class that transitions it is added.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      video.classList.add("opening-video-in");
-    }));
 
     // A skip that is visible from the first frame. Somebody who has seen this
     // once and came back to show a colleague should not have to sit through it.
@@ -171,6 +187,32 @@ export class Opening {
     // A clip that fails mid-play should not strand the visitor on a black
     // rectangle, so any error lands on the same exit as a normal end.
     video.addEventListener("error", () => this.finish());
+
+    /*
+      Both halves have to be ready, and they are ready at different times.
+
+      The settle is a fixed length and the decode is not: on a warm cache the
+      first frame is there before the click finishes, and on a cold one over a
+      slow connection it is seconds away. Fading up a video element that has not
+      decoded anything shows black, which is the one thing the whole arrangement
+      exists to avoid.
+
+      readyState 2 is HAVE_CURRENT_DATA — there is a frame for the current
+      position. That is exactly the guarantee needed and no more; waiting for
+      the whole file would hold a still page for no reason.
+    */
+    const decoded = video.readyState >= 2
+      ? Promise.resolve()
+      : new Promise((done) => {
+          video.addEventListener("loadeddata", done, { once: true });
+          video.addEventListener("error", done, { once: true });
+        });
+    await Promise.all([decoded, wait(SETTLE)]);
+    if (this.finished) return;       // skipped while we were waiting
+
+    video.classList.add("opening-video-in");
+    await wait(FADE);
+    if (this.finished) return;
 
     /*
       A refused play is not always a refusal.
