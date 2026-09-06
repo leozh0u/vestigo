@@ -170,8 +170,44 @@ export class Drag {
     }
     const globe = this.globe;
     const idle = globe.idleDistance;
+
+    /*
+      Zoom towards the answer, not towards the middle of the picture.
+
+      A dolly along z holds whatever is on the camera's axis still, and that is
+      the centre of the frame — which is not where the answer is. The globe sits
+      a little high so the photographs along the bottom do not cover it, and the
+      marker is wherever on the planet the place happens to be, so zooming in
+      walked the thing being looked at out towards the edge and eventually off.
+
+      So: note where the marker is before the move and put it back after. The
+      camera looks down its own axis at the origin, so shifting it sideways
+      shifts the picture by the same amount in the opposite direction, and how
+      much a unit of camera is worth in screen fractions depends on the distance
+      — which is exactly what just changed. Working in screen fractions on both
+      sides of the move keeps that out of it.
+
+      Nothing to hold on to — no answer yet, or the place is round the back —
+      and it falls through to the plain dolly, which is the right behaviour when
+      there is no subject.
+    */
+    const before = globe.markerOnScreen?.();
     const next = globe.camera.position.z * (1 + this.zoomVelocity);
     globe.camera.position.z = Math.max(idle * NEAREST, Math.min(idle * FURTHEST, next));
+
+    if (before) {
+      globe.camera.updateMatrixWorld();
+      globe.camera.updateProjectionMatrix();
+      const after = globe.markerOnScreen();
+      if (after) {
+        // Half-width of the frame at the marker's depth, in world units, which
+        // is what one whole screen fraction is worth to the camera.
+        const half = Math.tan((globe.camera.fov * Math.PI) / 360)
+          * globe.camera.position.z;
+        globe.camera.position.x += (after.x - before.x) * half * globe.camera.aspect;
+        globe.camera.position.y += (after.y - before.y) * half;
+      }
+    }
     this.zoomVelocity *= ZOOM_DAMPING;
   }
 

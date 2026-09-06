@@ -79,6 +79,34 @@ export function renderEvidence(step) {
   while (holder.children.length > KEEP) holder.firstChild.remove();
 }
 
+/*
+  The photograph the run is about, pinned where the answer is.
+
+  The strip that photographs are chosen from never stops moving, which is right
+  — it is the thing that makes the page look alive, and stopping it the moment
+  somebody clicks kills that with the first thing anyone does. But a strip that
+  keeps moving also carries the chosen photograph away, and then the answer is
+  about a picture that is no longer on screen.
+
+  So the choice is lifted out of the strip rather than the strip being stopped.
+  It appears next to the claim, at the size a thumbnail wants to be, and stays
+  there while the run works and after it has finished — which is the whole
+  question a visitor has: that photograph, and this is where it thinks it was.
+*/
+let chosen = null;
+
+export function setChosen(entry) {
+  chosen = entry?.photo ? entry : null;
+}
+
+function chosenMarkup() {
+  if (!chosen) return "";
+  // The alt text says what it is and not where: naming the place would hand a
+  // screen reader the answer the page exists to work out.
+  return `<img class="receipt-photo" src="${escape(chosen.photo)}"
+               alt="The photograph being placed">`;
+}
+
 export function renderReceipt(final) {
   const box = receipt();
   const answer = final?.answer;
@@ -115,6 +143,7 @@ export function renderReceipt(final) {
       : `<dt>why</dt><dd>Nothing reached the board.</dd>`;
 
     box.innerHTML = `
+      ${chosenMarkup()}
       <div class="level">no answer stated</div>
       <div class="value">Considered, and not enough.</div>
       <dl>${closest}</dl>`;
@@ -136,6 +165,7 @@ export function renderReceipt(final) {
 
   box.classList.remove("refused");
   box.innerHTML = `
+    ${chosenMarkup()}
     <div class="level">${answer.level} · stated ${answer.stated ?? "—"}</div>
     <div class="value">${escape(answer.value)}</div>
     <dl>${rows}</dl>`;

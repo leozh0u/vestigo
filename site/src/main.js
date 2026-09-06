@@ -12,7 +12,7 @@ import { Flight } from "./globe/camera.js";
 import { Drag } from "./globe/drag.js";
 import { Machine } from "./sequence/machine.js";
 import { Player } from "./sequence/player.js";
-import { renderEvidence, renderReceipt, clearEvidence } from "./ui/panels.js";
+import { renderEvidence, renderReceipt, clearEvidence, setChosen } from "./ui/panels.js";
 import { Machinery } from "./ui/machinery.js";
 import { mountField } from "./ui/field.js";
 import { mountTyping } from "./ui/typing.js";
@@ -61,6 +61,9 @@ async function loadIndex() {
 async function run(entry) {
   player?.cancel();
   flight.cancel();
+  // The photograph this run is about, pinned to the answer for as long as the
+  // answer is up. The strip it came from keeps moving; see panels.setChosen.
+  setChosen(entry);
   clearEvidence();
   globe.clearMarkers();
   globe.setProgress(0);

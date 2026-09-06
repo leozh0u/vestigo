@@ -144,6 +144,10 @@ function plateLut() {
   return tex;
 }
 
+// The street, or zero while it is still unknown. render() needs it to hang the
+// cloud deck at a fixed height above the ground rather than above the ellipsoid.
+const floorOf = (m) => m.groundLevel() ?? 0;
+
 export class Manhattan {
   constructor(renderer, camera) {
     this.renderer = renderer;
@@ -221,6 +225,11 @@ export class Manhattan {
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.6));
 
     this.scene.add(this.buildSky());
+
+    // The deck the camera falls through. Positioned and faded from altitude in
+    // render(), because where the ground is is not known yet.
+    this.clouds = this.buildClouds();
+    this.scene.add(this.clouds);
 
     /*
       Bring Manhattan to the origin.
@@ -856,6 +865,123 @@ export class Manhattan {
   }
 
   /*
+    A deck of cloud to fall through, at two kilometres.
+
+    The oldest fix in the trade for this shot, and the one thing that was
+    missing. A descent from orbit to a street crosses an enormous range of
+    imagery quality — sharp from space, mush by the time the camera is among
+    buildings — and no amount of matching hides where that turns over, because
+    it is not a seam, it is a gradient the eye follows all the way down. What
+    hides it is going through weather: cloud takes the frame for half a second,
+    and what comes out the other side is simply what is there.
+
+    It is also the single largest thing this shot was missing on its own terms.
+    Every real descent has weather in it and this one fell through nothing.
+
+    Built as a stack of planes rather than as volume. Volumetric cloud is a
+    ray-march that would dominate the frame budget of a render already limited
+    by tile streaming, and it is not needed: several layers of soft noise at
+    slightly different heights and drifts, passed through rather than looked
+    at, read as cloud because the camera is inside them for a moment and the
+    parallax between layers is real.
+  */
+  buildClouds() {
+    const group = new THREE.Group();
+    const LAYERS = 5;
+    // Wide enough that the edge is never in frame at the altitude it is met.
+    const SIZE = 26000;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1024;
+    const g = canvas.getContext("2d");
+    g.clearRect(0, 0, 1024, 1024);
+    let seed = 11;
+    const rand = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    /*
+      Blobs at several scales, which is the cheapest thing that reads as cloud.
+
+      A single scale of noise reads as fog or as static. Cloud has structure at
+      every size at once — a few large masses, more medium ones, a scatter of
+      small — so the same drawing is done three times at three sizes and three
+      densities.
+    */
+    for (const [count, size, alpha] of [[13, 300, 0.52], [38, 128, 0.34], [95, 50, 0.2]]) {
+      for (let i = 0; i < count; i++) {
+        const x = rand() * 1024;
+        const y = rand() * 1024;
+        const r = size * (0.5 + rand());
+        const blob = g.createRadialGradient(x, y, 0, x, y, r);
+        blob.addColorStop(0, `rgba(255,255,255,${alpha})`);
+        blob.addColorStop(0.55, `rgba(255,255,255,${alpha * 0.45})`);
+        blob.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = blob;
+        g.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    }
+    /*
+      Cut the veil out, and keep the masses.
+
+      Soft blobs drawn over each other never reach zero: whatever the alpha of
+      each, the gaps between them fill in, and seven layers of that sum to an
+      even wash over the whole frame — which is fog. Cloud is the opposite. It
+      is lumps with clear air between them, and the clear air is what makes the
+      lumps read as objects with a shape rather than as dirt on the lens.
+
+      So the alpha is thresholded after drawing: anything under a third goes to
+      nothing at all, and what is left is stretched back out to full. It costs
+      one pass over a megapixel at load and it is the difference between weather
+      and haze.
+    */
+    const px = g.getImageData(0, 0, 1024, 1024);
+    const a = px.data;
+    for (let i = 3; i < a.length; i += 4) {
+      const v = a[i] / 255;
+      a[i] = Math.max(0, Math.min(1, (v - 0.32) / 0.5)) ** 1.15 * 255;
+    }
+    g.putImageData(px, 0, 0);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+
+    for (let i = 0; i < LAYERS; i++) {
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(SIZE, SIZE),
+        new THREE.MeshBasicMaterial({
+          map: tex, transparent: true, opacity: 0,
+          depthWrite: false,
+          // Seen from below as much as from above, because the camera goes
+          // through them.
+          side: THREE.DoubleSide,
+        }));
+      plane.material.map = tex.clone();
+      plane.material.map.needsUpdate = true;
+      // Each layer sees the texture at its own scale and offset, so the stack
+      // does not read as one picture repeated seven times.
+      /*
+        The repeat is what sets how big a cloud is, and it was three times too
+        low.
+
+        The plane is twenty-six kilometres across. At a repeat of 2.2 one tile
+        covers twelve kilometres, so the largest blobs in it came out three and
+        a half kilometres wide and the camera met one of them as a flat wash
+        over the whole frame — fog, not weather. At 6.5 a tile is four
+        kilometres and the same blob is about a kilometre, which is the size a
+        cumulus actually is.
+      */
+      const repeat = 6.5 + i * 0.6;
+      plane.material.map.repeat.set(repeat, repeat);
+      plane.material.map.offset.set(i * 0.37, i * 0.61);
+      plane.rotation.x = -Math.PI / 2;
+      plane.renderOrder = 5;
+      plane.frustumCulled = false;
+      group.add(plane);
+    }
+    group.userData.layers = LAYERS;
+    return group;
+  }
+
+  /*
     The sky, which the tileset does not come with.
 
     Photogrammetry is ground and buildings. Above the horizon there is nothing,
@@ -1044,6 +1170,26 @@ export class Manhattan {
           anyway, and it is gone by the time there is any real ground to look
           at.
         */
+        /*
+          Inside the cloud, as a screen-wide wash.
+
+          The deck is built from planes and planes cannot be gone *through*. At
+          two kilometres the camera is among them and looking straight down at a
+          patch of texture a hundred metres across, which is almost always a gap
+          — so the frame came out clear at exactly the moment it should have
+          been white. A volume would fix it and would also dominate the frame
+          budget of a render already limited by tile streaming.
+
+          What passing through cloud looks like is a whiteout, and a whiteout is
+          one number. The planes do the approach and the departure, where they
+          are seen from outside and read as a deck; this does the half second
+          inside, where nothing is visible at all.
+
+          It is also the seam that this whole descent needed. Every crossing
+          from good imagery to bad happens somewhere, and hiding it inside
+          weather is the oldest fix there is for this shot.
+        */
+        uCloud: { value: 0 },
         uPlate: { value: 0 },
         /*
           How far out of focus the coarse tiles are, in pixels, and why a zoom
@@ -1127,7 +1273,7 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch, uShow;
+        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch, uShow, uCloud;
         uniform sampler2D uLut;
         uniform vec2 uTexel;
         uniform vec3 uHaze, uShade, uWarm;
@@ -1295,6 +1441,12 @@ export class Manhattan {
             the descent, where it is doing something, so it fades in with
             everything else.
           */
+          // Inside the deck. See uCloud. Before the vignette, because a lens
+          // still darkens its corners when the frame is full of cloud.
+          if (uCloud > 0.0) {
+            c = mix(c, vec3(0.86, 0.88, 0.92), uCloud);
+          }
+
           float r = distance(vUv, vec2(0.5)) * 1.42;
           c *= 1.0 - 0.16 * (1.0 - uPlate) * pow(clamp(r, 0.0, 1.0), 2.4);
 
@@ -1370,6 +1522,56 @@ export class Manhattan {
     if (this.errorTarget && this.tiles) {
       this.tiles.errorTarget = above < 500
         ? Math.min(2, this.errorTarget) : this.errorTarget;
+    }
+
+    /*
+      The deck sits at two kilometres and is only there while the camera is near
+      it.
+
+      Two kilometres because that is where the imagery starts to give out — the
+      cloud arrives exactly where the picture would otherwise be visibly getting
+      worse, which is the whole point of it. The layers are spread over four
+      hundred metres so passing through takes a moment rather than a frame.
+
+      Faded in from above and out from below, over a band wide enough that it
+      arrives as weather rather than as an object switching on. Below the deck
+      it is behind the camera and off.
+    */
+    if (this.clouds) {
+      const DECK = 2000;
+      const SPREAD = 420;
+      const layers = this.clouds.userData.layers;
+      this.clouds.position.y = floorOf(this) + DECK;
+      const band = Math.abs(above - DECK);
+      const near = 1 - Math.min(1, band / 2100);
+      const shown = near * near * (3 - 2 * near);
+      this.clouds.visible = shown > 0.004;
+      /*
+        The whiteout, over four hundred metres either side of the deck.
+
+        At this point in the fall the camera covers about a kilometre a second,
+        so that band is a little over half a second of being inside it — long
+        enough to be weather and not so long that the shot goes away.
+
+        Not quite to white. A frame that reaches pure white reads as a cut to
+        white, which is the one thing this intro does not have anywhere else.
+      */
+      const inside = 1 - Math.min(1, band / 400);
+      this.grade.uniforms.uCloud.value = 0.93 * inside * inside * (3 - 2 * inside);
+
+      this.clouds.children.forEach((plane, i) => {
+        plane.position.y = (i - (layers - 1) / 2) * (SPREAD / layers);
+        /*
+          Thinner near the middle of the stack.
+
+          The camera passes through the middle, and a layer at full opacity a
+          few metres from the lens is a white frame. Weighted so the outside of
+          the deck is what is seen from a distance and the inside is barely
+          there, which is also what flying into cloud actually looks like.
+        */
+        const edge = Math.abs(i - (layers - 1) / 2) / ((layers - 1) / 2);
+        plane.material.opacity = shown * (0.14 + 0.46 * edge);
+      });
     }
 
     if (this.sky) this.sky.visible = above < 55000;

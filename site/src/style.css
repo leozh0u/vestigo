@@ -594,6 +594,26 @@ html, body {
   alive. Whatever the pause was worth, it was not worth that.
 */
 
+/*
+  The chosen photograph, pinned beside the answer.
+
+  Floated rather than laid out in a row, so the claim and its confidence bars
+  keep the full width they were designed at and the picture sits into the
+  corner of them. At this size it is a reminder of which photograph is being
+  talked about, not a gallery.
+*/
+.receipt-photo {
+  float: right;
+  width: 5.5rem;
+  height: 5.5rem;
+  object-fit: cover;
+  margin: 0 0 0.6rem 0.9rem;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--edge) 70%, transparent);
+  /* Held back a little, because the answer is the thing being read. */
+  filter: saturate(0.85) brightness(0.9);
+}
+
 /* A photograph, not a label.
    Square and dimmed until hovered, so the row reads as a set of choices rather
    than as a gallery competing with the globe behind it. */

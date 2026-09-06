@@ -576,6 +576,31 @@ export function buildFacade({ centre, normal, colour = "#8d4a37", screenImage = 
   const daylight = new THREE.DirectionalLight(0xfff2e0, 2.4);
   daylight.position.set(0.6, 1.1, 2.6);
   daylight.target = aim;
+  /*
+    Shadows, which are most of the difference between a room and a diagram.
+
+    Flat-lit geometry reads as a model however good its colours are, because
+    nothing in it is sitting on anything: the laptop floats on the desk, the
+    desk floats on the floor, and every corner is the same brightness as every
+    face. One shadow-casting light fixes all of that at once, and this scene has
+    the right one for it already — the afternoon through the window, which is
+    what would be casting them.
+
+    The frustum is drawn tight around the room. A directional light's shadow
+    camera is orthographic and its resolution is spread across whatever it
+    covers, so a default frustum big enough for a city spends almost none of its
+    texels on a desk.
+  */
+  daylight.castShadow = true;
+  daylight.shadow.mapSize.set(2048, 2048);
+  const sc = daylight.shadow.camera;
+  sc.left = -3.4; sc.right = 3.4;
+  sc.top = 3.0; sc.bottom = -3.0;
+  sc.near = 0.1; sc.far = 14;
+  // Enough to stop a surface shadowing itself into stripes, small enough that
+  // contact shadows still touch the thing casting them.
+  daylight.shadow.bias = -0.0009;
+  daylight.shadow.normalBias = 0.02;
   room.add(daylight);
   // A second, weaker one from the other side, so the walls the daylight misses
   // are dim rather than absent.
@@ -593,6 +618,17 @@ export function buildFacade({ centre, normal, colour = "#8d4a37", screenImage = 
   overhead.position.set(-0.2, 1.25, -2.2);
   room.add(overhead);
   room.add(new THREE.AmbientLight(0xa8b6c6, 0.45));
+
+  /*
+    Everything in the room casts and receives.
+
+    Set in one pass rather than at each construction site, because the list of
+    things in a room only grows and the one that gets forgotten is the one that
+    floats.
+  */
+  room.traverse((o) => {
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+  });
 
   // Every material that fades in together, so place() drives one number.
   group.userData.fading = [brickMat, trimMat, paintedGlass, glass.material];

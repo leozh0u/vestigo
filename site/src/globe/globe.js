@@ -996,6 +996,26 @@ export class Globe {
     return group;
   }
 
+  /*
+    Where the answer is on screen, as a fraction of the frame.
+
+    The wheel needs it so that zooming can hold the answer still instead of
+    holding the middle of the picture still. Returns null when there is nothing
+    to hold: no marker, or one that has gone round the back of the planet.
+  */
+  markerOnScreen() {
+    const first = this.markers.children[0];
+    if (!first) return null;
+    this.earth.updateMatrixWorld(true);
+    const world = first.getWorldPosition(new THREE.Vector3());
+    // Behind the planet from where the camera is, so it is not really on screen
+    // even though it projects onto it.
+    const toCamera = this.camera.position.clone().sub(world);
+    if (world.dot(toCamera) < 0) return null;
+    const v = world.clone().project(this.camera);
+    return { x: v.x, y: v.y };
+  }
+
   clearMarkers() {
     // A marker is a group of three meshes now, so this has to walk into it.
     // Disposing the group alone leaks every geometry and material it holds,

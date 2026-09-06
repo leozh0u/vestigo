@@ -99,6 +99,22 @@ const END = args.end === undefined ? null : Number(args.end);
 const OUT = args.out ?? "media/descent.mp4";
 
 /*
+  How many instants make up one frame, and how much of the frame the shutter is
+  open for.
+
+  A hundred and eighty degrees is the film convention — open for half the frame,
+  closed for half — and it is what the eye reads as normal motion. Six samples
+  is enough that the smear is continuous rather than a row of ghosts at the
+  speeds this shot reaches; beyond that the difference stops being visible and
+  the render time keeps going up.
+
+  Nearly free, because the cost of a frame here is waiting for tiles and the
+  tile set does not change across a sixtieth of a second.
+*/
+const SAMPLES = Number(args.samples ?? 6);
+const SHUTTER = Number(args.shutter ?? 0.5);
+
+/*
   Where the shot lands, and it has to be a building.
 
   East 6th near Avenue B. The first choice was two blocks north and turned out
@@ -116,7 +132,13 @@ const PLACE = { lat: 40.72466, lon: -73.98096 };
 
 const harness = ({ width, height, place, scene, ui }) => `
 <!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
-<canvas id="c" width="${width}" height="${height}"
+<!--
+  Two canvases. The WebGL one is drawn to several times per output frame and is
+  hidden; the 2D one holds their average and is the only thing photographed.
+  See shoot() below for why.
+-->
+<canvas id="c" width="${width}" height="${height}" style="display:none"></canvas>
+<canvas id="out" width="${width}" height="${height}"
         style="display:block;width:${width}px;height:${height}px"></canvas>
 <script>window.__UI_IMAGE = ${JSON.stringify(ui)};<\/script>
 <script>${scene}<\/script>
@@ -131,6 +153,10 @@ const harness = ({ width, height, place, scene, ui }) => `
         canvas: document.getElementById("c"), antialias: true });
       renderer.setPixelRatio(1);
       renderer.setSize(${width}, ${height}, false);
+      // For the room at the end. The tiles are unlit and cannot cast or
+      // receive, so this costs nothing until there is a room in the scene.
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       // The far plane has to clear the planet at the top of the move, where the
       // camera is six hundred kilometres up and the horizon is thousands of
       // kilometres away. At 80,000 the Earth was behind it and the opening
@@ -146,6 +172,64 @@ const harness = ({ width, height, place, scene, ui }) => `
       // the whole city and nothing else. See Manhattan.load.
       await m.load({ fade: false });
       window.__m = m;
+
+      /*
+        Motion blur, by accumulation.
+
+        A frame of film is not an instant, it is an exposure — a shutter open
+        for half a frame, gathering everything that moved past in that time.
+        Every frame here has been an instant, and that is a large part of why
+        the footage reads as rendered rather than as filmed: a camera falling
+        from orbit at this speed would have visible smear on every frame and
+        this one has none. It is also why the melted photogrammetry near the
+        ground is so conspicuous. Real footage moving that fast would not
+        resolve the mush either.
+
+        Done by sampling rather than by a post-process, because a post-process
+        needs velocity vectors and the tiles arrive as plain meshes with no
+        history. Sampling needs nothing: place the camera at several instants
+        inside the shutter, render each, average them. It is what a shutter
+        does.
+
+        The expensive part of a frame here is waiting for tiles, not drawing,
+        and the tile set does not change measurably across a sixtieth of a
+        second — so the wait happens once and the sub-frames are nearly free.
+
+        Averaged in floating point rather than by drawing each at one over n
+        into a canvas: that is a weighted blend favouring whichever was drawn
+        last, and at eight bits per channel the rounding shows as banding in a
+        night sky.
+      */
+      const W = ${width}, H = ${height};
+      const out = document.getElementById("out").getContext("2d", { willReadFrequently: true });
+      const sum = new Float32Array(W * H * 4);
+      const image = out.createImageData(W, H);
+      const grab = document.createElement("canvas");
+      grab.width = W; grab.height = H;
+      const grabCtx = grab.getContext("2d", { willReadFrequently: true });
+
+      window.__shoot = (t, end, samples, shutter) => {
+        sum.fill(0);
+        for (let k = 0; k < samples; k++) {
+          // Spread across the shutter and centred on the frame's own time, so
+          // the blur is symmetric and the frame is not displaced in time.
+          const offset = samples === 1 ? 0 : ((k + 0.5) / samples - 0.5) * shutter;
+          if (end === null) m.place(t + offset); else m.place(t + offset, end);
+          m.render();
+          grabCtx.drawImage(document.getElementById("c"), 0, 0);
+          const px = grabCtx.getImageData(0, 0, W, H).data;
+          for (let i = 0; i < sum.length; i++) sum[i] += px[i];
+        }
+        const data = image.data;
+        for (let i = 0; i < sum.length; i += 4) {
+          data[i] = sum[i] / samples;
+          data[i + 1] = sum[i + 1] / samples;
+          data[i + 2] = sum[i + 2] / samples;
+          data[i + 3] = 255;
+        }
+        out.putImageData(image, 0, 0);
+      };
+
       window.state = { stage: "ready" };
     } catch (e) {
       window.state = { stage: "failed", why: String(e).slice(0, 400) };
@@ -302,6 +386,9 @@ const browser = await puppeteer.launch({
       }, t, end);
 
       let signature = await settle(t, END);
+      // The shutter, then the photograph. See window.__shoot.
+      await page.evaluate(([t, end, n, shutter]) => window.__shoot(t, end, n, shutter),
+                          [t, END, SAMPLES, SHUTTER / frames]);
       const step = (a, b) => {
         let sum = 0;
         for (let p = 0; p < a.length; p++) sum += Math.abs(a[p] - b[p]);
@@ -315,13 +402,16 @@ const browser = await puppeteer.launch({
           if (typical === null || now < Math.max(2, typical * 2.5)) break;
           process.stdout.write(`  reshooting frame ${i} (${now.toFixed(0)} against ${typical.toFixed(0)})`);
           signature = await settle(t, END);
+          await page.evaluate(([t, end, n, shutter]) => window.__shoot(t, end, n, shutter),
+                              [t, END, SAMPLES, SHUTTER / frames]);
         }
         recent.push(step(signature, previous));
         if (recent.length > 12) recent.shift();
       }
       previous = signature;
 
-      const shot = await page.screenshot({ type: "png", optimizeForSpeed: true });
+      const shot = await page.screenshot({ type: "png", optimizeForSpeed: true,
+                                          clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT } });
       await fs.writeFile(path.join(dir, `f${String(i).padStart(5, "0")}.png`), shot);
       if (i % 20 === 0 || i === frames - 1) process.stdout.write(`  frame ${i}/${frames}`);
     }
