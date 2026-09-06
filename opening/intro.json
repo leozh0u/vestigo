@@ -1,6 +1,13 @@
 {
   "src": "/opening/intro-cbc3b02c74.mp4",
   "seconds": 20.9,
+  "open": {
+    "rotY": -0.9,
+    "rotX": 0,
+    "distance": 3.55,
+    "lift": 0.18,
+    "exposure": 1.12
+  },
   "screen": {
     "x": 0.5,
     "y": 0.5,
