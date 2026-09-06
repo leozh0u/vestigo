@@ -84,9 +84,17 @@ const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round((WIDTH * 9) / 16);
 const FPS = Number(args.fps ?? 30);
 const SECONDS = Number(args.seconds ?? 9);
-// Metres above the street at the end of the move. Higher than it sounds it
-// should be, and the reason is in the harness below.
-const END = Number(args.end ?? 80);
+/*
+  Metres above the street at the end of the move, and the default now comes from
+  the scene rather than from here.
+
+  Eighty was set when the shot finished on a wide view over the East Village,
+  and it stayed at eighty through a rebuild of the ending that took the stop
+  down to seventeen — a fifth-floor window — because place() takes the height as
+  an argument and this file kept passing its own. The scene's own default is
+  the one that was measured against the block. Overridable, for probing.
+*/
+const END = args.end === undefined ? null : Number(args.end);
 const OUT = args.out ?? "media/descent.mp4";
 
 /*
@@ -203,17 +211,32 @@ async function main() {
       */
       await page.evaluate(async (t, end) => {
         const m = window.__m;
-        for (let k = 0; k < 600; k++) {
-          m.place(t, end);
+        /*
+          Quiet for a run of passes, not quiet once.
+
+          "k > 20 and nothing in flight" only means twenty passes have happened
+          and this one happens to be quiet, so any lull after the twentieth ends
+          the wait. The renderer has lulls: it reports nothing downloading and
+          nothing parsing while it is still working out which tiles it wants,
+          and a frame photographed in that gap comes back nearly empty. One did,
+          at 53 m, with a single mesh in it — and the error target is now four
+          rather than twenty, so there is far more to fetch per frame and far
+          more room for a gap.
+
+          Twelve consecutive quiet passes is three hundred milliseconds of
+          nothing happening, which no lull has lasted. The counter resets the
+          moment anything moves again.
+        */
+        let quiet = 0;
+        for (let k = 0; k < 900; k++) {
+          // null means "whatever the scene says", which is where the measured
+          // ending lives. See END above.
+          if (end === null) m.place(t); else m.place(t, end);
           m.update();
           m.render();
           const s = m.tiles.stats ?? {};
-          // Twenty settled passes rather than six. At altitude the renderer
-          // reports nothing in flight for a moment while it is still deciding
-          // which tiles it wants, and a frame photographed in that gap came
-          // back as an empty rectangle — one frame at 60 km did exactly that
-          // in the altitude probe.
-          if (k > 20 && !s.downloading && !s.parsing) break;
+          quiet = (!s.downloading && !s.parsing) ? quiet + 1 : 0;
+          if (k > 20 && quiet >= 12) break;
           await new Promise((r) => setTimeout(r, 25));
         }
       }, t, END);

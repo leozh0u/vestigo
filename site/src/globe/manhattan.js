@@ -64,6 +64,34 @@ export const MANHATTAN = { lat: 40.7061, lon: -74.0087 };
 const SOFT = 5 / 1920;
 
 /*
+  Where the descent stops, found by scripts/probe-window.mjs rather than chosen.
+
+  The shot has to end level with a window on an upper floor of a tenement, and
+  none of the three numbers that requires can be read off a latitude and a
+  longitude. The target point turns out to be *inside* a building at that
+  height, with a wall 2.1 m away on almost every bearing, so falling to the
+  origin and turning gives a camera in a wall.
+
+  So the block was searched: a grid of positions at seventeen metres, discarding
+  anywhere with less than nine metres clear around it, then the nearest building
+  front on each. The first search asked for a front between twelve and thirty
+  metres and every result was unusable — at that range Google's scan has no
+  windows in it at all, only a smooth pale blob, because it never had a clean
+  line of sight down a narrow street. From about thirty metres the tenements
+  come back: window reveals, fire escapes, the courses in the brick.
+
+  Seventeen metres is a fifth-floor window in a six-storey walk-up, which is
+  what this block is made of.
+*/
+const END = {
+  x: -49,
+  z: 14,
+  height: 17,          // metres above the street
+  bearing: 105,        // degrees, towards the front the shot finishes on
+  distance: 27.7,      // metres to it
+};
+
+/*
   The tone curve as a texture rather than as an array uniform.
 
   A uniform array of 96 floats is within every limit that matters, but sampling
@@ -116,7 +144,25 @@ export class Manhattan {
     most conspicuous artifact in the footage, and it is guarding against a
     problem the renderer has already solved.
   */
-  async load({ fade = true } = {}) {
+  /*
+    `errorTarget` is how much screen-space error a tile is allowed before a
+    finer one is fetched, in pixels. Google's auth plugin sets it to 20, which
+    is right for a visitor on a phone and much too coarse for a render.
+
+    It is what the buildings glitching is. Twenty pixels of allowed error means
+    each level of detail is held until it is quite wrong, so when the next one
+    arrives it arrives as a large change: measured on the descent, the frame
+    gained twenty per cent of its fine detail and three or four levels of
+    brightness inside a tenth of a second, several times on the way down. There
+    is no fade to hide it — TilesFadePlugin is off for renders, because its
+    dithered alpha stipples every settled frame — and there should not need to
+    be. A pop that has to be hidden is a pop that was allowed to get too big.
+
+    At four the tileset is close to its best everywhere, so the switches happen
+    higher up the tree and each one moves the picture much less. It costs
+    download time, which offline is the cheapest thing there is.
+  */
+  async load({ fade = true, errorTarget = fade ? null : 4 } = {}) {
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!key) throw new Error("no VITE_GOOGLE_MAPS_KEY in site/.env.local");
 
@@ -125,6 +171,10 @@ export class Manhattan {
     // Tiles pop in as they arrive otherwise, and a building appearing whole in
     // front of the camera is the one thing that says "streaming" out loud.
     if (fade) tiles.registerPlugin(new TilesFadePlugin({ fadeDuration: 400 }));
+
+    // After the plugin, not before: GoogleCloudAuthPlugin sets this itself when
+    // it is registered, so anything set earlier is silently replaced.
+    if (errorTarget !== null) tiles.errorTarget = errorTarget;
 
     tiles.setCamera(this.camera);
     tiles.setResolutionFromRenderer(this.camera, this.renderer);
@@ -298,11 +348,34 @@ export class Manhattan {
       The chosen points sit in the middle of streets, so the topmost surface is
       the road.
     */
+    /*
+      And the topmost hit still has to be plausible ground.
+
+      The coarsest levels approximate the planet with very large flat triangles,
+      and a flat triangle across a curved surface sags. The sag is the sphere's
+      own geometry — a chord nine hundred kilometres long sits about seventeen
+      kilometres below the arc it replaces — so before the fine levels arrive,
+      a cast straight down through Manhattan reports the ground at -16,843 m and
+      means it.
+
+      Taken at face value that puts the camera seventeen kilometres underground,
+      which loads tiles for a camera underground, which never resolves into the
+      fine levels that would have given the right answer. The measurement and
+      the thing it depends on are in a loop.
+
+      So a reading is only ground if it is within nine kilometres of the
+      ellipsoid, which no street on Earth is not — the highest inhabited places
+      are under five and the lowest dry land is under half of one — and a coarse
+      chord sag is far outside. Anything else is treated as "not yet", the same
+      as no hit at all, and re-measured next call.
+    */
+    const PLAUSIBLE = 9000;
     const ray = new THREE.Raycaster(
       new THREE.Vector3(0, 6000, 0), new THREE.Vector3(0, -1, 0), 0, 30000);
     const hits = ray.intersectObject(this.tiles.group, true);
-    if (!hits.length) return null;
-    this.ground = hits[0].point.y;
+    const ground = hits.find((h) => Math.abs(h.point.y) < PLAUSIBLE);
+    if (!ground) return null;
+    this.ground = ground.point.y;
     this.groundSettled = settled;
     return this.ground;
   }
@@ -354,110 +427,80 @@ export class Manhattan {
     moves read as a wobble, not as choreography. One move that starts at 0.80
     and finishes at 1.0 cannot do that.
   */
-  place(t, endHeight = 80) {
+  place(t, endHeight = END.height) {
     /*
-      Heights are metres above the street, not above the origin.
-
-      getObjectFrame puts the ellipsoid surface at zero and over Manhattan the
-      street is sixteen metres below it, so taking the origin for the ground put
-      every framing nine floors too high. See groundLevel().
-
-      Falls back to zero while the first tiles are still arriving, which only
-      affects the opening frames — six hundred kilometres up, sixteen metres is
-      not a rounding error, it is nothing at all.
+      Heights are metres above the street, not above the origin. See
+      groundLevel: over Manhattan the ellipsoid surface is about twenty-six
+      metres above the road, and taking the origin for the ground put every
+      framing eight floors too high.
     */
     const floor = this.groundLevel() ?? 0;
-
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
-    // Hermite, the same curve smoothstep uses: zero slope at both ends, so the
-    // tilt begins and finishes without a corner.
     const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
 
-    /*
-      Log space, and eased out only.
-
-      The log is what makes it read as a zoom rather than a fall: a constant
-      ratio per second, so every second roughly halves the height all the way
-      down. The easing on top of it decides whether that ratio is actually
-      constant, and the first version got it wrong in a way that measurement
-      caught and four frames on a contact sheet did not.
-
-      It was ease-in-out. An ease-in has zero slope at zero, so over the opening
-      frames the height changed by nothing: scripts/check-intro.mjs counted 34
-      near-still frames — more than a second of a camera that is supposed to be
-      falling from orbit doing nothing — and then the middle of the curve lurched
-      at 8.4% a frame to catch up. Starting still and then rushing is precisely
-      the "stopping" this shot is not allowed to do.
-
-      A gentle ease-out instead. 3.45% a frame at the top, 2.89% in the middle,
-      0.64% at the end: it moves from the first frame, the rate varies by three
-      per cent across the whole descent, and it settles into the arrival rather
-      than hitting it. Past about 1.6 the tail decelerates to a standstill and
-      the stall comes back at the other end.
-    */
-    /*
-      Three thousand kilometres, not six hundred.
-
-      This is where the Earth beat hands over, and the two have to agree to the
-      metre or the join is a jump. The globe dives to 1.47 Earth radii — the
-      surface is 1, so that is 3,000 km — looking straight down at the same
-      point, and this picks the fall up from there.
-
-      Higher is also the only altitude the handover can work at. Blue Marble is
-      7.4 km a pixel: at six hundred kilometres the globe is showing about
-      fifty texture pixels across the frame, which no amount of matching makes
-      look like a photograph. At three thousand it is showing three hundred,
-      soft rather than absent, and a soft frame dissolving into a sharp one at
-      identical framing reads as detail arriving.
-    */
-    // The curve itself lives in handover.js, because the globe's last quarter
-    // second runs it too. Two copies of it drifted apart once already and the
-    // symptom was the seam this whole rebuild was chasing.
+    // The curve lives in handover.js, because the globe's last frames run it
+    // too. Two copies of it drifted apart once and the symptom was the seam.
     const height = fallHeight(t, endHeight);
 
     /*
-      The last fifth of the shot, and nothing before it.
+      Straight down, the whole way.
 
-      Until 0.80 the camera is directly over the target looking straight down,
-      which is what a descent from orbit looks like and what keeps the move
-      legible while the ground is still a map. Then it swings back and out to
-      about a street's width and the aim rises to fifty metres, so the shot
-      finishes looking along a block at building fronts.
+      It used to fall towards the origin and then swing back and out to about a
+      street's width over the last forty-five per cent, which finished on a wide
+      view over the East Village with the skyline behind it. Handsome, and not
+      an arrival: the camera turns while it is still two hundred metres up, so
+      by the time it is at window height it is already pointing at a panorama
+      rather than at a building.
+
+      A descent from orbit onto a place looks like a descent onto a place. It
+      falls onto the spot it is going to stop at, in a straight line, and does
+      not turn until it is there.
     */
+    this.camera.position.set(END.x, floor + height, END.z);
+
+    // The front the shot ends on, as a direction in this frame.
+    const a = END.bearing * THREE.MathUtils.DEG2RAD;
+    const front = new THREE.Vector3(Math.sin(a), 0, Math.cos(a));
+
     /*
-      The tilt takes the last 45% rather than the last 20%.
+      Two rotations, and they have to happen in this order.
 
-      At 20% it is a ninety-degree swing in under two seconds, and
-      check-intro.mjs measured the frame-to-frame change at four and a half
-      times the run of the shot for a solid half-second — a pan fast enough to
-      read as a whip. Nothing was wrong with it geometrically; it was hurried.
+      The first is roll, while the camera is still pointing straight down. It
+      begins with north at the top of frame, because that is what the globe
+      hands over, and ends with the front the shot is going to face at the
+      *bottom* of frame. That is the only orientation from which pitching up is
+      roll-free: a camera that pitches with its target already at the bottom of
+      frame simply raises it to the middle, and one that does not has to twist
+      as well.
 
-      Spread over 45% it overlaps most of the second half of the fall, which is
-      also better than a pan that waits for the descent to finish and then
-      happens: the camera straightens as it arrives rather than after.
+      Spread across the middle of the fall, where the ground is still a map and
+      a slow rotation reads as the camera finding its bearings.
     */
-    const tilt = smooth((t - 0.55) / 0.45);
+    const turn = smooth((t - 0.30) / 0.45);
+    const nadirUp = this.north
+      ? this.north.clone().lerp(front.clone().negate(), turn).normalize()
+      : front.clone().negate();
 
-    // Not exactly zero before the tilt: a camera at precisely (0, h, 0) looking
-    // at (0, 0, 0) is looking straight down its own up-vector, and lookAt has
-    // no way to choose a roll. It gimbals, and the picture spins. A thousandth
-    // of the altitude is enough to give it an answer and is invisible.
-    const back = height * 0.001 + (95 - height * 0.001) * tilt;
-    const side = height * 0.0004 + (34 - height * 0.0004) * tilt;
-
-    this.camera.position.set(side, floor + height, back);
     /*
-      Roll, stated instead of inferred. See the north vector in load().
+      The second is pitch, and it waits until the camera is nearly down.
 
-      North at the top while the camera is over the target, swinging to sky at
-      the top as it pitches up at the end. That lerp is not a stylistic choice;
-      it is what a camera with a fixed heading does as it pitches from nadir to
-      the horizon. The direction that was at the top of the frame goes on being
-      at the top of the frame, and the sky arrives underneath it.
+      The old version began it at fifty-five per cent and took the rest of the
+      shot. In log-space that is most of the descent by distance: the camera was
+      still a couple of hundred metres up and already looking at the horizon,
+      which is why the ending read as a fly-over rather than as arriving at a
+      window. Here it starts at eighty per cent, which is the last thirty metres
+      of altitude and the last second and a half.
     */
-    this.camera.up.copy(this.north ?? new THREE.Vector3(0, 0, 1))
-      .lerp(new THREE.Vector3(0, 1, 0), tilt).normalize();
-    this.camera.lookAt(0, floor + 50 * tilt, 0);
+    const tilt = smooth((t - 0.80) / 0.20);
+    this.camera.up.copy(nadirUp).lerp(new THREE.Vector3(0, 1, 0), tilt).normalize();
+
+    // Aim by angle rather than by moving a target point around, so the swing is
+    // even. Straight down at tilt zero, level with the front at tilt one.
+    const pitch = -Math.PI / 2 * (1 - tilt);
+    const dir = new THREE.Vector3(
+      Math.sin(a) * Math.cos(pitch), Math.sin(pitch), Math.cos(a) * Math.cos(pitch));
+    this.camera.lookAt(
+      this.camera.position.clone().addScaledVector(dir, END.distance));
     this.camera.updateMatrixWorld();
   }
 
