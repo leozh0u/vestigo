@@ -1,4 +1,10 @@
 {
   "src": "/opening/intro-2088dfe5f0.mp4",
-  "seconds": 21.9
+  "seconds": 21.9,
+  "screen": {
+    "x": 0.5,
+    "y": 0.5,
+    "w": 0.6131,
+    "h": 0.6855
+  }
 }

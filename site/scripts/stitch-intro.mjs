@@ -207,9 +207,22 @@ function publish(seconds) {
     }
   }
   fs.renameSync(OUT, hashed);
+  /*
+    The screen's rectangle travels with the video.
+
+    Written by render-descent from the camera that took the last frame. The page
+    grows the real interface out of it, so a re-render that moves the laptop
+    moves the handoff with it and there is nothing to keep in step by hand.
+  */
+  let screen = null;
+  try {
+    screen = JSON.parse(fs.readFileSync("media/descent-end.json", "utf8"));
+  } catch { /* an older render, or one beat only: the page falls back to a fade */ }
+
   fs.writeFileSync(path.join(DIR, "intro.json"),
                    `${JSON.stringify({ src: `/opening/${path.basename(hashed)}`,
-                                       seconds: Number(seconds.toFixed(2)) }, null, 2)}\n`);
+                                       seconds: Number(seconds.toFixed(2)),
+                                       screen }, null, 2)}\n`);
   console.log(`wrote ${hashed}  (${seconds.toFixed(1)}s)`);
 }
 

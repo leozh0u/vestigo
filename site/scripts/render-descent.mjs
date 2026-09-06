@@ -327,6 +327,45 @@ const browser = await puppeteer.launch({
     }
     console.log("");
 
+    /*
+      Where the laptop screen is in the last frame, as fractions of it.
+
+      The clip ends on a laptop that already has the page on its screen, and the
+      handoff grows that rectangle until it fills the viewport — so the real
+      interface arrives exactly where the picture of it already was. Nothing has
+      to be matched by eye, and nothing has to be typed into the CSS and kept in
+      step with a shot that gets re-rendered: the four corners are projected
+      through the camera that took the frame, which is the only thing that knows.
+    */
+    const screen = await page.evaluate(() => {
+      const { THREE } = window.SCENE;
+      const m = window.__m;
+      const mesh = m.facade?.userData?.screen;
+      if (!mesh) return null;
+      mesh.updateMatrixWorld(true);
+      const g = mesh.geometry.attributes.position;
+      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+      for (let i = 0; i < g.count; i++) {
+        const v = new THREE.Vector3().fromBufferAttribute(g, i)
+          .applyMatrix4(mesh.matrixWorld).project(m.camera);
+        minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
+        minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+      }
+      // NDC is -1..1 with y up; the page thinks in 0..1 with y down.
+      return {
+        x: +((minX + maxX) / 2 * 0.5 + 0.5).toFixed(4),
+        y: +(-(minY + maxY) / 2 * 0.5 + 0.5).toFixed(4),
+        w: +((maxX - minX) / 2).toFixed(4),
+        h: +((maxY - minY) / 2).toFixed(4),
+      };
+    });
+    if (screen) {
+      await fs.writeFile("media/descent-end.json",
+                         `${JSON.stringify(screen, null, 2)}\n`);
+      console.log(`  screen fills ${(screen.w * 100).toFixed(0)}% of the frame, ` +
+                  `centred at ${(screen.x * 100).toFixed(0)}%, ${(screen.y * 100).toFixed(0)}%`);
+    }
+
     await fs.mkdir(path.dirname(OUT), { recursive: true });
     await new Promise((resolve, reject) => {
       const ff = spawn("ffmpeg", [

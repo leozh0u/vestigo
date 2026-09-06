@@ -46,8 +46,11 @@ export class Opening {
     try {
       const res = await fetch(MANIFEST, { cache: "no-store" });
       if (!res.ok) return null;
-      const { src } = await res.json();
-      return typeof src === "string" && src ? src : null;
+      const { src, screen } = await res.json();
+      if (typeof src !== "string" || !src) return null;
+      // The laptop screen's rectangle in the last frame, for the handoff. Older
+      // manifests do not have it and the page falls back to a plain fade.
+      return { src, screen: screen ?? null };
     } catch {
       return null;
     }
@@ -102,21 +105,27 @@ export class Opening {
     this.onBegin?.();
     this.root?.classList.add("opening-playing");
 
-    const src = await Opening.available();
-    if (!src) {
+    const found = await Opening.available();
+    if (!found) {
       this.finish();
       return;
     }
+    const { src, screen } = found;
+    this.screen = screen;
 
     /*
       The handoff.
 
-      The clip ends on a laptop with a dark screen. The interface fades up
-      inside the bezel and the bezel then scales up and off the edges, so
-      nothing ever has to line up: the UI appears inside a frame this code
-      controls. A straight cut would need a pixel-perfect match against a
-      generated frame, which is hard to produce and obvious when it is close
-      but wrong.
+      The clip ends on a laptop that already has this page on its screen. So the
+      last move is not a fade from a video to an interface, it is the screen
+      growing until it is the interface: the video is scaled about the centre of
+      that rectangle until the rectangle fills the viewport, and by the time it
+      does, what is under it is the same page at the same size.
+
+      The rectangle is measured, not typed. render-descent projects the screen's
+      four corners through the camera that took the last frame and stitch-intro
+      carries the result in the manifest, so re-rendering the shot moves the
+      handoff with it.
     */
     const video = document.createElement("video");
     video.className = "opening-video";
@@ -130,24 +139,101 @@ export class Opening {
     // once and came back to show a colleague should not have to sit through it.
     this.root.querySelector(".opening-skip").classList.add("over-video");
 
-    video.addEventListener("ended", () => this.finish());
+    video.addEventListener("ended", () => { this.played = true; this.finish(); });
     // A clip that fails mid-play should not strand the visitor on a black
     // rectangle, so any error lands on the same exit as a normal end.
     video.addEventListener("error", () => this.finish());
 
+    /*
+      A refused play is not always a refusal.
+
+      A browser blocking autoplay outright is a good reason to give up and show
+      the page. A browser pausing "video-only background media to save power" is
+      not: it happens when the tab is not on screen, and the visitor who comes
+      back to it should find the intro rather than find it already skipped.
+      Chrome reports both as an AbortError on the same promise.
+
+      So one retry, when the page is next actually visible, and only then a
+      fall-through to the page itself.
+    */
+    const start = async () => { await video.play(); };
     try {
-      await video.play();
+      await start();
     } catch {
-      this.finish();
+      if (document.visibilityState === "hidden") {
+        const again = () => {
+          document.removeEventListener("visibilitychange", again);
+          start().catch(() => this.finish());
+        };
+        document.addEventListener("visibilitychange", again);
+      } else {
+        this.finish();
+      }
     }
   }
 
   finish() {
     if (this.finished) return;       // ended and skipped can both arrive
     this.finished = true;
+
+    /*
+      Grow the screen into the page.
+
+      Only when the clip ran to its end — a skip is somebody asking to be
+      somewhere else, and should cut, not perform a flourish. And only when the
+      manifest carried a rectangle: without one there is nothing to grow and the
+      fade underneath is still correct.
+
+      object-fit is cover, so the video is scaled to the larger of the two
+      ratios and the overflow is cropped evenly. The rectangle arrives in frame
+      coordinates and has to be moved into that cropped space before it means
+      anything on screen, or the handoff lands off-centre on every window that
+      is not exactly sixteen by nine.
+    */
+    const video = this.root?.querySelector(".opening-video");
+    const box = video?.getBoundingClientRect();
+    /*
+      And only when there is something to measure.
+
+      A tab that has never been on screen lays nothing out: the element comes
+      back zero by zero, the scale works out as a division by zero, and the
+      browser drops the invalid transform without a word — the class goes on,
+      the move does not happen, and nothing anywhere says why. The fade
+      underneath is the right answer in that case and is already correct.
+    */
+    if (video && this.screen && this.played && box.width > 1 && box.height > 1) {
+      const vw = video.videoWidth || 16;
+      const vh = video.videoHeight || 9;
+      const w = box.width;
+      const h = box.height;
+      const cover = Math.max(w / vw, h / vh);
+      const shownW = vw * cover;
+      const shownH = vh * cover;
+      // Where the screen's centre lands inside the element, in per cent.
+      const originX = ((this.screen.x * shownW) - (shownW - w) / 2) / w * 100;
+      const originY = ((this.screen.y * shownH) - (shownH - h) / 2) / h * 100;
+      /*
+        Enough to take the rectangle out past both edges.
+
+        In element pixels, not in fractions: the rectangle is a fraction of the
+        *frame*, the frame has been scaled up by cover and cropped, and the two
+        are only the same thing on a window that happens to match the video's
+        ratio. Its on-screen size is its fraction times the shown size, and the
+        scale is whatever makes that reach the element.
+      */
+      const grow = Math.max(w / (this.screen.w * shownW),
+                            h / (this.screen.h * shownH)) * 1.04;
+      if (Number.isFinite(grow) && Number.isFinite(originX) && Number.isFinite(originY)) {
+        video.style.transformOrigin = `${originX}% ${originY}%`;
+        video.style.transform = `scale(${grow.toFixed(3)})`;
+        this.root.classList.add("opening-growing");
+      }
+    }
+
     this.root?.classList.add("opening-done");
     // Long enough for the fade in CSS, short enough not to feel like a wait.
-    setTimeout(() => this.root?.remove(), 900);
+    // Long enough for whichever transition is running, short enough not to wait.
+    setTimeout(() => this.root?.remove(), 1200);
     this.onFinish?.();
   }
 }

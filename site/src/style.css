@@ -800,6 +800,20 @@ html, body {
 }
 .opening-done { opacity: 0; pointer-events: none; }
 
+/*
+  The handoff: the laptop screen grows until it is the page.
+
+  A longer, slower fade than the plain one, because the two images are the same
+  image — the video ends on a screenshot of this interface and the interface is
+  underneath it — so there is nothing to hide and every reason to let the move
+  finish. The scale is set in JS from a rectangle the render measured.
+*/
+.opening-growing { transition: opacity 1100ms cubic-bezier(0.3, 0, 0.2, 1); }
+.opening-growing .opening-video {
+  transition: transform 1100ms cubic-bezier(0.3, 0, 0.2, 1);
+  will-change: transform;
+}
+
 .opening-inner {
   width: min(30rem, 84vw);
   padding: 0 1.5rem;
