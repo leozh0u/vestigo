@@ -57,3 +57,8 @@ site/dist/
 site/.descent-*/
 site/.render-*/
 site/.bundle-*/
+
+# scratch from the render and check scripts
+site/.check-*
+site/.bundle-*
+site/.descent-*
