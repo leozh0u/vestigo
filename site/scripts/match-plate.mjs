@@ -36,12 +36,28 @@
   samples, so a curve read straight off them wobbles, and a non-monotone tone
   curve makes darker pixels come out lighter than their neighbours, which shows
   up as banding in a sky.
+
+  ## Why it composes instead of replacing
+
+  Fitted once from scratch, the result did not land: measured afterwards, the
+  tiles came out about five levels a channel under the globe, and the two
+  handover frames still differed by twice a normal frame-to-frame step. The fit
+  is not exact, and cannot be — it is quantised to sixty-four entries, smoothed
+  to keep it monotone, and read off a reference frame that has been through
+  H.264 — so a single pass leaves a residual of roughly its own error.
+
+  So each run captures the frame with the *current* curve applied, fits the
+  correction still outstanding, and composes the two. The error left after a
+  pass is the error of that pass, and running it twice puts it below anything
+  measurable. Convergence rather than accuracy in one shot, which is the usual
+  answer when a fit has to survive being quantised.
 */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
 import { HANDOVER } from "../src/globe/handover.js";
+import { PLATE_LUT } from "../src/globe/plate-lut.js";
 
 const W = 1920;
 const H = 1080;
@@ -124,12 +140,14 @@ const harness = (scene) => `
 <\/script></body></html>`;
 
 /*
-  The tiles' handover frame, with the curve itself switched off.
+  The tiles' handover frame, as it currently stands.
 
-  Everything else stays: the defocus is at full strength and the vignette is
-  gated off, because those are what the frame will look like when the curve is
-  applied to it. Fitting against a frame graded differently from the one the
-  curve runs on produces a curve that corrects for the wrong thing.
+  The curve it already has stays on, and the fit is of what is left over. See
+  the note on composition at the top. Everything else stays too — the defocus at
+  full strength, the vignette gated off, the plate at full opacity — because
+  those are what the frame looks like when the curve runs on it, and fitting
+  against a frame graded differently from the one the curve runs on corrects for
+  the wrong thing.
 */
 async function tilesFrame() {
   const browser = await puppeteer.launch({
@@ -157,7 +175,6 @@ async function tilesFrame() {
       await new Promise((z) => setTimeout(z, 25));
     }
     m.render();
-    m.grade.uniforms.uMatch.value = 0;
     m.renderer.setRenderTarget(m.target);
     m.renderer.render(m.scene, m.camera);
     m.renderer.setRenderTarget(null);
@@ -218,7 +235,16 @@ console.log("matching the tiles' handover frame to the globe's");
 const [globe, tiles] = [await globeFrame(), await tilesFrame()];
 const lut = {};
 for (const [i, ch] of ["r", "g", "b"].entries()) {
-  lut[ch] = curve(histogram(tiles, i), histogram(globe, i));
+  const residual = curve(histogram(tiles, i), histogram(globe, i));
+  // Composed onto what is already there: look up where the current curve sends
+  // each entry, then where the residual sends that.
+  const at = (v) => {
+    const x = Math.min(1, Math.max(0, v)) * (N - 1);
+    const lo = Math.floor(x);
+    const hi = Math.min(N - 1, lo + 1);
+    return residual[lo] + (residual[hi] - residual[lo]) * (x - lo);
+  };
+  lut[ch] = PLATE_LUT[ch].map(at);
 }
 
 const show = (ch) => [0, 16, 32, 48, 63]

@@ -167,6 +167,42 @@ export class Manhattan {
     tiles.group.updateMatrixWorld(true);
 
     /*
+      Blue Marble, on the same ellipsoid, in front of the tiles.
+
+      This is the last of the seam and the only part that could not be corrected
+      by grading, because it is not a difference in tone, it is a difference in
+      what the two datasets contain. On the globe the Great Lakes are almost
+      black; on Google's coarse plate they are the same pale lavender as the
+      continental shelf, because that plate paints every body of water alike.
+      Across the join they went from black to white, in the middle of frame,
+      and no curve fixes that: a tone curve maps levels, and these are two
+      different pictures of the same lakes. Fitting one only moves the problem,
+      since the tiles' lakes sit at the same brightness as their shelf and any
+      curve that darkens one darkens the other.
+
+      So the tiles do not have to be the picture at the top of the descent. The
+      camera is three thousand kilometres up, where what Google serves is not
+      photography either — it is a painted plate with bathymetry on it. Putting
+      NASA's imagery on the ellipsoid, in the same frame, and fading it out as
+      the camera falls means the handover frame is the *same image* on both
+      sides of it, and the difference the eye was catching has nowhere left to
+      be. What was a hard swap over three frames becomes lakes and shelf slowly
+      resolving into photographs over the two seconds after, which is what
+      arriving somewhere looks like.
+
+      Built as a lat-lon grid in earth-centred coordinates rather than as a
+      SphereGeometry that then gets rotated into place. A sphere in Three has
+      its pole on Y and this frame has it on Z, the texture winds one way and
+      the maths the other, and every one of those is a chance to end up with a
+      mirrored planet. Written out, each vertex is a latitude and a longitude
+      put through the standard ellipsoid formula and given the equirectangular
+      texture coordinate that belongs to it, and there is nothing left to get
+      backwards.
+    */
+    this.plate = await this.buildPlate(frame);
+    this.scene.add(this.plate);
+
+    /*
       Which way is north, measured rather than assumed.
 
       The camera at the top of the descent looks straight down, and a camera
@@ -426,6 +462,79 @@ export class Manhattan {
   }
 
   /*
+    The Blue Marble plate. See where it is added, in load().
+
+    Async because the texture has to be on the GPU before the first frame is
+    photographed. Offscreen there is no second chance: the render loop waits for
+    tiles, not for images, so a texture still in flight is a black sphere over
+    the whole frame and the first frames go out that way.
+  */
+  async buildPlate(frame) {
+    const A = 6378137;                 // WGS84 semi-major axis, metres
+    const B = 6356752.314245;          // semi-minor
+    const E2 = 1 - (B * B) / (A * A);  // first eccentricity squared
+    const LON = 256;
+    const LAT = 128;
+
+    const position = [];
+    const uv = [];
+    for (let j = 0; j <= LAT; j++) {
+      const lat = (-90 + (180 * j) / LAT) * THREE.MathUtils.DEG2RAD;
+      const sin = Math.sin(lat);
+      const cos = Math.cos(lat);
+      // Radius of curvature in the prime vertical: the ellipsoid's answer to
+      // "how far out is the surface at this latitude".
+      const n = A / Math.sqrt(1 - E2 * sin * sin);
+      for (let i = 0; i <= LON; i++) {
+        const lon = (-180 + (360 * i) / LON) * THREE.MathUtils.DEG2RAD;
+        position.push(n * cos * Math.cos(lon), n * cos * Math.sin(lon),
+                      n * (1 - E2) * sin);
+        // Equirectangular: u eastward from the antimeridian, v northward from
+        // the south pole, which is what flipY on a loaded image already gives.
+        uv.push(i / LON, j / LAT);
+      }
+    }
+    const index = [];
+    for (let j = 0; j < LAT; j++) {
+      for (let i = 0; i < LON; i++) {
+        const a = j * (LON + 1) + i;
+        const b = a + 1;
+        const c = a + LON + 1;
+        const d = c + 1;
+        index.push(a, b, c, b, d, c);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    geometry.setIndex(index);
+
+    const map = await new Promise((res, rej) => {
+      new THREE.TextureLoader().load("/textures/earth-day.jpg", res, undefined, rej);
+    });
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+      map,
+      transparent: true,
+      opacity: 0,
+      // Over the tiles rather than fighting them for depth. The two surfaces
+      // are the same surface, to within the difference between an ellipsoid and
+      // the ground, so any depth test between them is a coin toss per pixel and
+      // shows as speckle.
+      depthTest: false,
+      depthWrite: false,
+    }));
+    mesh.renderOrder = 10;
+    mesh.frustumCulled = false;
+    // Into the same frame the tileset was moved into, so the two coincide.
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.copy(frame).invert();
+    return mesh;
+  }
+
+  /*
     The sky, which the tileset does not come with.
 
     Photogrammetry is ground and buildings. Above the horizon there is nothing,
@@ -667,6 +776,25 @@ export class Manhattan {
           either half of the handover changes.
         */
         uMatch: { value: 0 },
+        /*
+          How much of what is on screen is Google's imagery, as against NASA's
+          plate sitting over it.
+
+          Everything in this grade that depends on how bright a pixel already is
+          — the highlight roll-off, the shadow gamma, the lift for the dim
+          coarse levels, the cool-to-warm split — exists to make photogrammetry
+          read as a photograph at dusk. None of it is wanted over the plate,
+          which is a finished picture already, and worse, all of it is
+          *unfixable* over the plate: those terms key off luminance rather than
+          off each channel separately, so they reorder colours in a way no
+          per-channel curve can undo. That is why the tone match kept landing
+          the frame's average exactly right and its bright shelf water forty
+          levels out in red.
+
+          So the grade fades in as the plate fades out, and the curve is left
+          with a straightforward per-channel job it can actually do.
+        */
+        uShow:  { value: 1 },
         uLut:   { value: plateLut() },
         uTexel: { value: new THREE.Vector2(1 / 1920, 1 / 1080) },
         uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
@@ -678,7 +806,7 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch;
+        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch, uShow;
         uniform sampler2D uLut;
         uniform vec2 uTexel;
         uniform vec3 uHaze, uShade, uWarm;
@@ -754,7 +882,11 @@ export class Manhattan {
             photograph rather than as a texture. At 0.86/0.46 the same footage
             came back looking like a night flight over an unlit city.
           */
-          c *= mix(1.02, 0.86, smoothstep(0.15, 0.85, l));
+          /*
+            Every luminance-dependent part of this grade is gated on how much of
+            Google's imagery is actually on screen. See uShow.
+          */
+          c *= mix(1.0, mix(1.02, 0.86, smoothstep(0.15, 0.85, l)), uShow);
 
           /*
             Lift the shadows, because the satellite imagery is very dark and
@@ -770,6 +902,11 @@ export class Manhattan {
             pixels near one barely move. That is what opens shadow detail
             without flattening anything that was already bright.
           */
+          // Not gated: a gamma is per-channel and a lift is a multiply, and a
+          // per-channel curve composes with both exactly. Gating them only made
+          // the plate very dark and left the curve to undo it, which quantised
+          // to sixty-four entries turned into a step: everything above level 65
+          // crushed to one value.
           c = pow(clamp(c, 0.0, 1.0), vec3(0.78));
           c *= uLift;
 
@@ -788,7 +925,7 @@ export class Manhattan {
           // filter rather than as light.
           vec3 cool = vec3(0.88, 0.95, 1.12);
           vec3 warm = vec3(1.11, 1.01, 0.89);
-          c *= mix(cool, warm, smoothstep(0.10, 0.52, l));
+          c *= mix(vec3(1.0), mix(cool, warm, smoothstep(0.10, 0.52, l)), uShow);
 
           /*
             Aerial perspective, from real distance.
@@ -988,13 +1125,63 @@ export class Manhattan {
       Math.log(Math.max(above, LOW) / LOW) / Math.log(3000000 / LOW)));
     this.grade.uniforms.uPlate.value = p * p * (3 - 2 * p);
     /*
-      Defocus on the same log fade as the colour, for the same reason: the fall
-      is logarithmic, so anything tied to altitude has to be.
+      The plate fades out between three thousand kilometres and three hundred,
+      which is about two seconds of falling.
 
-      The radius is set from measurement, not from taste. See uSoft.
+      Its own curve rather than uPlate's, because they are answering different
+      questions. uPlate asks how much the *grade* still has to correct and runs
+      all the way down to thirty kilometres. This asks how long NASA's imagery
+      is a better picture than Google's, and the answer is: until Google's stops
+      being a painted plate, which happens a good deal higher.
+
+      Set before the defocus, not after, because the defocus reads it. It was
+      the other way round for one edit, which cost nothing anywhere except on
+      the single frame that matters: opacity starts at zero, so the first frame
+      of the descent — the one the dissolve is pairing with the globe — read a
+      plate that was not there yet and blurred itself at full strength.
     */
-    this.grade.uniforms.uSoft.value = SOFT * w * this.grade.uniforms.uPlate.value;
-    this.grade.uniforms.uMatch.value = this.grade.uniforms.uPlate.value;
+    const q = Math.min(1, Math.max(0,
+      Math.log(Math.max(above, 300000) / 300000) / Math.log(3000000 / 300000)));
+    if (this.plate) {
+      this.plate.material.opacity = q * q * (3 - 2 * q);
+      // Off rather than invisible, once it is contributing nothing. It covers
+      // the whole frame with depth testing disabled, and a full-screen quad at
+      // an opacity of nought point nought one is a cost with no picture in it.
+      this.plate.visible = this.plate.material.opacity > 0.002;
+    }
+
+    /*
+      Defocus only where Google's imagery is showing.
+
+      This was tied to uPlate, from before the Blue Marble plate existed, when
+      the frame at the handover *was* Google's tiles and had four times the fine
+      detail of the globe. It does not any more: the plate is NASA's imagery at
+      NASA's resolution, so blurring it makes the handover frame softer than the
+      globe rather than equal to it, which is the same mismatch as before with
+      the sign reversed. Measured on the difference between the two handover
+      frames, it showed as a bright outline on every coastline — the signature
+      of two images at different sharpness, not of two images in the wrong
+      place, which is what it was mistaken for first.
+
+      So it follows what the plate is *not* covering. Nothing at three thousand
+      kilometres, where the picture is already the globe's picture; rising
+      through the middle of the descent as the tiles come through underneath;
+      gone by the time there is a city.
+    */
+    const showing = 1 - (this.plate ? this.plate.material.opacity : 0);
+    this.grade.uniforms.uShow.value = showing;
+    this.grade.uniforms.uSoft.value =
+      SOFT * w * this.grade.uniforms.uPlate.value * showing;
+    /*
+      The tone curve follows the plate, not the altitude fade.
+
+      It was fitted to put *NASA's plate* on the globe, and below three hundred
+      kilometres there is no plate: what is on screen is Google's imagery, which
+      the curve was never fitted for and which it would lift hard — level 65 to
+      139 — for no reason. Tied to the plate it is full strength exactly where
+      it was measured and gone exactly when the thing it corrects is gone.
+    */
+    this.grade.uniforms.uMatch.value = 1 - showing;
     this.grade.uniforms.uTexel.value.set(1 / w, 1 / h);
 
     this.renderer.setRenderTarget(this.target);

@@ -854,7 +854,34 @@ export class Globe {
       inflating. Scaled together, or the coastline slides up and down as it
       grows.
     */
-    const relief = 0.028 * eased;
+    /*
+      And it leaves again before the camera arrives.
+
+      The exaggeration exists for the limb, and by the bottom of the dive there
+      is no limb in frame: the camera is at 1.47 radii, three thousand
+      kilometres up, looking at ground that fills the picture. What 180 km of
+      relief does there is shade every ridge in the continent, and the tiles
+      that take over at that moment are photographs of a planet whose mountains
+      are the size mountains are. Measured between the two handover frames, once
+      colour and framing and scale all matched, the difference left was the
+      shape of the Appalachians.
+
+      Gone by 1.50 radii and untouched above 1.84, and those two numbers are
+      not free choices. The site lets a visitor pinch the globe in to 0.52 of
+      its idle distance, which is 1.85 radii, so a window that opened any wider
+      than this would flatten the terrain on the night globe when somebody
+      zoomed in — a change to the thing on the page, made for the sake of two
+      frames of the intro. At 1.84 the relief is still whole; the dive passes
+      through the window in its last half second and hands over flat.
+
+      Worth being straight about the size of this: on the aggregate difference
+      between the two handover frames it was worth about one per cent, which is
+      nothing. It is here because 180 km mountains against a flat plate is wrong
+      in a way that will show up somewhere eventually, not because it fixed the
+      seam. What fixed the seam was the plate itself.
+    */
+    const high = Math.min(1, Math.max(0, (this.camera.position.z - 1.50) / 0.34));
+    const relief = 0.028 * eased * (high * high * (3 - 2 * high));
     this.material.displacementScale = relief;
     this.material.displacementBias = -0.36 * relief;
     /*
