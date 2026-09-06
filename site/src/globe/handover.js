@@ -36,8 +36,22 @@ export const HANDOVER = {
   // melts: brick drips and windows become smears. Demonstrated across eighteen
   // candidate endings before settling here.
   end: 80,
-  // Length of the descent, seconds. render-descent.mjs renders 270 frames at 30.
-  seconds: 9,
+  /*
+    Length of the descent, seconds.
+
+    Twelve rather than nine, and the reason is the turn at the end. The shot has
+    to pitch ninety degrees from looking straight down to level with a window,
+    and it is only allowed to do that once it is nearly there — turning at two
+    hundred metres is what made the old ending read as a fly-over. At nine
+    seconds the last fifth is 1.5 s, which is sixty degrees a second and
+    measured as a whip: four times the surrounding motion, on a shot that is
+    already moving fast because the camera is among buildings.
+
+    The altitudes the turn spans are unchanged, about eighty-five metres down to
+    seventeen. There is simply more time to cross them, because the fall is
+    logarithmic and stretching the shot stretches the bottom of it most.
+  */
+  seconds: 12,
   // Overlap at the seam. Short, because it is no longer hiding anything.
   fade: 0.10,
 };

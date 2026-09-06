@@ -162,7 +162,11 @@ for (const t of MOMENTS) {
     for (let i = 0; i < px.length; i += 4) sum += px[i] + px[i + 1] + px[i + 2];
     return {
       mean: +(sum / (px.length / 4 * 3)).toFixed(1),
-      altitude: Math.round(cam.position.y - ground),
+      altitude: +(cam.position.y - ground).toFixed(2),
+      floor: +ground.toFixed(2),
+      camY: +cam.position.y.toFixed(2),
+      camX: +cam.position.x.toFixed(2),
+      camZ: +cam.position.z.toFixed(2),
       near: cam.near,
       far: cam.far,
       meshes: (() => { let n = 0; m.tiles.group.traverse((o) => { if (o.isMesh) n += 1; }); return n; })(),
@@ -175,7 +179,7 @@ for (const t of MOMENTS) {
 
   await page.screenshot({ path: path.join(OUT, `t${t.toFixed(2)}.png`) });
   console.log(`  t=${t.toFixed(2)}  mean ${String(info.mean).padStart(5)}  ` +
-              `alt ${String(info.altitude).padStart(8)}m  span ${String(info.spanKm).padStart(6)}km  ` +
+              `alt ${String(info.altitude).padStart(9)}m  floor ${String(info.floor).padStart(8)}  cam ${info.camX},${info.camY},${info.camZ}  ` +
               `fov ${info.fov}  ${info.meshes} meshes`);
 }
 

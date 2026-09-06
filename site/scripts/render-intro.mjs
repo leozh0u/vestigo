@@ -165,7 +165,16 @@ function beat(t) {
   */
   const HAND = 1 - HANDOVER.fade / SECONDS;
   const start = 0.30;
-  const dive = Math.pow(clamp01((t - start) / (HAND - start)), 1.5);
+  /*
+    1.12, not 1.5.
+
+    The exponent sets how much faster than its own average the dive is moving
+    when it hands over, and that has to equal the rate the tiles pick up at. The
+    tiles' rate is set by the length of the descent, so lengthening the descent
+    from nine seconds to twelve slowed their opening by a quarter and left the
+    globe arriving a third too fast. Scaled to match.
+  */
+  const dive = Math.pow(clamp01((t - start) / (HAND - start)), 1.12);
   const FROM = 3.55;
   const TO = 1 + HANDOVER.top / 6371000;
   let cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);

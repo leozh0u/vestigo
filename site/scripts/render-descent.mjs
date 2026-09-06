@@ -48,6 +48,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
+import { HANDOVER } from "../src/globe/handover.js";
 
 /*
   Bundle the scene into one script with no imports left in it.
@@ -83,7 +84,7 @@ const args = Object.fromEntries(
 const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round((WIDTH * 9) / 16);
 const FPS = Number(args.fps ?? 30);
-const SECONDS = Number(args.seconds ?? 9);
+const SECONDS = Number(args.seconds ?? HANDOVER.seconds);
 /*
   Metres above the street at the end of the move, and the default now comes from
   the scene rather than from here.
@@ -198,6 +199,13 @@ async function main() {
     if (state.stage !== "ready") throw new Error(state.why ?? "tiles did not load");
     console.log("  tileset open");
 
+    // Rolling state for the out-of-line check below.
+
+    let previous = null;
+
+    const recent = [];
+
+
     for (let i = 0; i < frames; i++) {
       const t = i / (frames - 1);
       /*
@@ -209,7 +217,26 @@ async function main() {
         the render: a slightly incomplete frame in the middle of a descent is
         recoverable, an eight-minute hang is not.
       */
-      await page.evaluate(async (t, end) => {
+      /*
+        Settle, photograph, and check the photograph against the ones before it.
+
+        A frame occasionally comes out unlike its neighbours even after the wait
+        — measured on a finished render, every frame in a stretch changed by
+        about twenty and one changed by sixty-five, with the frames either side
+        of it perfectly smooth. That is not the camera moving faster for a
+        thirtieth of a second; it is one frame photographed with a different set
+        of tiles in it, a tile arriving or being evicted at the wrong moment.
+
+        It cannot be waited away, because from inside the loop the renderer
+        looks finished both times. So the frame is measured instead: a small
+        greyscale signature of each frame, compared against the one before, and
+        against the running median of the last dozen. Wildly out of line means
+        settle again and re-shoot, up to twice. Against a rolling median rather
+        than a fixed number because the shot legitimately speeds up as it falls,
+        by a lot, and a threshold that works at three thousand kilometres would
+        fire on every frame near the ground.
+      */
+      const settle = async (t, end) => page.evaluate(async (t, end) => {
         const m = window.__m;
         /*
           Quiet for a run of passes, not quiet once.
@@ -239,7 +266,39 @@ async function main() {
           if (k > 20 && quiet >= 12) break;
           await new Promise((r) => setTimeout(r, 25));
         }
-      }, t, END);
+        // A small grey signature of what was drawn, for the check below.
+        const c = document.getElementById("c");
+        const g = document.createElement("canvas");
+        g.width = 48; g.height = 27;
+        const x = g.getContext("2d");
+        x.drawImage(c, 0, 0, 48, 27);
+        const px = x.getImageData(0, 0, 48, 27).data;
+        const out = [];
+        for (let p = 0; p < px.length; p += 4) {
+          out.push(0.2126 * px[p] + 0.7152 * px[p + 1] + 0.0722 * px[p + 2]);
+        }
+        return out;
+      }, t, end);
+
+      let signature = await settle(t, END);
+      const step = (a, b) => {
+        let sum = 0;
+        for (let p = 0; p < a.length; p++) sum += Math.abs(a[p] - b[p]);
+        return sum / a.length;
+      };
+      if (previous) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const now = step(signature, previous);
+          const sorted = [...recent].sort((a, b) => a - b);
+          const typical = sorted.length >= 6 ? sorted[Math.floor(sorted.length / 2)] : null;
+          if (typical === null || now < Math.max(2, typical * 2.5)) break;
+          process.stdout.write(`  reshooting frame ${i} (${now.toFixed(0)} against ${typical.toFixed(0)})`);
+          signature = await settle(t, END);
+        }
+        recent.push(step(signature, previous));
+        if (recent.length > 12) recent.shift();
+      }
+      previous = signature;
 
       const shot = await page.screenshot({ type: "png", optimizeForSpeed: true });
       await fs.writeFile(path.join(dir, `f${String(i).padStart(5, "0")}.png`), shot);
