@@ -119,10 +119,47 @@ def test_a_mismatched_encoder_is_named_rather_than_discovered_in_torch():
 
 def test_embeddings_carry_the_exact_names_they_were_made_with():
     """Parsing the directory name back gives a lowercased slug that fails at
-    load time rather than at save time."""
+    load time rather than at save time.
+
+    Two shapes are allowed. One encoder writes its own name and weights; a set
+    joined by ml/pair.py writes a list of them, in the order the halves were
+    concatenated, because a head trained on both needs both at inference and
+    needs them that way round. Either way every name here has to be one
+    open_clip will actually load.
+    """
     import json
     import pathlib
     for d in pathlib.Path("ml/embeddings").iterdir():
-        if (d / "vectors.npy").exists() and (d / "encoder.json").exists():
-            blob = json.loads((d / "encoder.json").read_text())
-            assert blob["model"] and blob["pretrained"]
+        if not ((d / "vectors.npy").exists() and (d / "encoder.json").exists()):
+            continue
+        blob = json.loads((d / "encoder.json").read_text())
+        named = blob["encoders"] if "encoders" in blob else [blob]
+        assert named, f"{d.name} names no encoder at all"
+        for one in named:
+            assert one["model"] and one["pretrained"]
+
+
+def test_a_joined_set_is_as_wide_as_its_halves_together():
+    """The head's input width has to be the sum, or the first query fails
+    inside a matrix multiply rather than at load."""
+    import json
+    import pathlib
+    import numpy as np
+    root = pathlib.Path("ml/embeddings")
+    for d in root.iterdir():
+        marker = d / "encoder.json"
+        if not (marker.exists() and (d / "vectors.npy").exists()):
+            continue
+        blob = json.loads(marker.read_text())
+        if "encoders" not in blob:
+            continue
+        joined = np.load(d / "vectors.npy", mmap_mode="r").shape[1]
+        halves = []
+        for one in blob["encoders"]:
+            slug = one["model"].lower() + "__" + one["pretrained"]
+            part = root / slug
+            if (part / "vectors.npy").exists():
+                halves.append(np.load(part / "vectors.npy", mmap_mode="r").shape[1])
+        if halves:
+            assert joined == sum(halves), (
+                f"{d.name} is {joined} wide against halves summing to {sum(halves)}")

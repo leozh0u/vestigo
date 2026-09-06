@@ -42,6 +42,10 @@ class _Loaded:
 
     model = None
     cells = None
+    # Every encoder the head was trained on, as (model, preprocess) pairs, in
+    # the order their vectors were joined. encoder and preprocess are the first
+    # of them, kept for anything that only ever wanted one.
+    encoders = ()
     encoder = None
     preprocess = None
     temperature = 1.0
@@ -62,25 +66,41 @@ def _load():
     head.load_state_dict(blob["state_dict"])
     head.eval()
 
-    # The encoder the head was trained against, named in the checkpoint. Older
-    # checkpoints do not carry it and fall back to the bridge's default.
+    """The encoder or encoders the head was trained against.
+
+    A list, because a head can be trained on two backbones' vectors joined end
+    to end — measured, that is worth four points of cell accuracy and fifteen
+    kilometres of median error over either one alone, because one linear layer's
+    ceiling is the representation under it and two encoders trained differently
+    disagree about different photographs. See ml/pair.py.
+
+    Order matters and comes from the checkpoint: the halves were concatenated in
+    that order and a query joined the other way round is a vector the layer has
+    never seen. Checkpoints written before this was a list carry the two
+    singular keys instead, and are read as a list of one.
+    """
     from ..ml_bridge import EncoderMismatch, load_encoder   # torch out of import time
-    encoder, preprocess = load_encoder(blob.get("encoder"), blob.get("pretrained"))
+    wanted = blob.get("encoders") or [
+        {"model": blob.get("encoder"), "pretrained": blob.get("pretrained")}]
+    loaded = [load_encoder(e.get("model"), e.get("pretrained")) for e in wanted]
+    encoder, preprocess = loaded[0]
 
     # Checked before the first image rather than discovered on it. A head
     # trained on 768-dimensional vectors against a 512-dimensional encoder
     # fails with "mat1 and mat2 shapes cannot be multiplied", once per image,
     # from inside torch, and the tool result says only that it failed. That
     # cost a whole eval run before anyone read the summaries.
-    width = getattr(encoder.visual, "output_dim", None)
-    if width is not None and width != blob["dim"]:
+    widths = [getattr(m.visual, "output_dim", None) for m, _ in loaded]
+    if all(w is not None for w in widths) and sum(widths) != blob["dim"]:
+        named = ", ".join(e.get("model") or "the default encoder" for e in wanted)
         raise EncoderMismatch(
             f"the head expects {blob['dim']}-dimensional vectors and "
-            f"{blob.get('encoder', 'the default encoder')} produces {width}. "
-            f"Re-run ml/train.py against the embeddings this encoder wrote, "
-            f"or embed with the encoder the head was trained on."
+            f"{named} produces {sum(widths)}. "
+            f"Re-run ml/train.py against the embeddings these encoders wrote, "
+            f"or embed with the encoders the head was trained on."
         )
 
+    _Loaded.encoders = loaded
     _Loaded.encoder, _Loaded.preprocess = encoder, preprocess
     _Loaded.model = head
     _Loaded.temperature = float(blob.get("temperature", 1.0))
@@ -119,11 +139,26 @@ class GeocellTool(Tool):
         _load()
         top_k = max(1, min(int(top_k), 5))
         image = PILImage.open(image_path).convert("RGB")
-        batch = _Loaded.preprocess(image).unsqueeze(0)
 
         with torch.no_grad():
-            feats = _Loaded.encoder.encode_image(batch)
-            feats = feats / feats.norm(dim=-1, keepdim=True)
+            """One vector per encoder, each normalised, joined in order.
+
+            Normalised before joining and not after. Embeddings from different
+            backbones have no obligation to be the same length, and if one comes
+            out systematically larger it dominates the layer above it for a
+            reason that has nothing to do with what it knows. This is the same
+            step ml/pair.py takes when building the training set, and the two
+            have to agree or the head is being shown vectors unlike the ones it
+            was fitted on.
+
+            Each encoder brings its own preprocessing, so the image is prepared
+            once per encoder rather than once.
+            """
+            parts = []
+            for model, preprocess in _Loaded.encoders:
+                feats = model.encode_image(preprocess(image).unsqueeze(0))
+                parts.append(feats / feats.norm(dim=-1, keepdim=True))
+            feats = torch.cat(parts, dim=-1) if len(parts) > 1 else parts[0]
             logits = _Loaded.model(feats.float())
             probs = torch.softmax(logits / _Loaded.temperature, dim=1)[0]
 

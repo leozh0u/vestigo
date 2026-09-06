@@ -47,8 +47,8 @@ EMB = ROOT / "ml/embeddings"
 DEFAULT_ENCODER, DEFAULT_PRETRAINED = "ViT-B-32", "laion2b_s34b_b79k"
 
 
-def encoder_of(emb: pathlib.Path) -> dict:
-    """Which encoder wrote these vectors, as open_clip would be called.
+def encoder_of(emb: pathlib.Path) -> list[dict]:
+    """Which encoder or encoders wrote these vectors, as open_clip calls them.
 
     From `encoder.json`, written beside the vectors, not from the directory
     name. The name is a lowercased slug and "vit-l-14" is not a model open_clip
@@ -61,8 +61,15 @@ def encoder_of(emb: pathlib.Path) -> dict:
     marker = emb / "encoder.json"
     if marker.exists():
         blob = json.loads(marker.read_text())
-        return {"model": blob["model"], "pretrained": blob["pretrained"]}
-    return {"model": DEFAULT_ENCODER, "pretrained": DEFAULT_PRETRAINED}
+        # ml/pair.py writes a list, because a head trained on two encoders'
+        # vectors concatenated needs both at inference and needs them in the
+        # order they were joined. A query embedded the other way round is a
+        # different vector and the layer has never seen one.
+        if "encoders" in blob:
+            return [{"model": e["model"], "pretrained": e["pretrained"]}
+                    for e in blob["encoders"]]
+        return [{"model": blob["model"], "pretrained": blob["pretrained"]}]
+    return [{"model": DEFAULT_ENCODER, "pretrained": DEFAULT_PRETRAINED}]
 
 # Which encoder's vectors to train on. Embeddings from different backbones have
 # different widths and are not interchangeable, so they live in their own
@@ -337,11 +344,16 @@ def main() -> int:
     # left inference silently mismatched, and every call failed on a shape
     # error inside a $3.37 eval run before anyone noticed. Whoever loads the
     # head can now load the right encoder, or say why it cannot.
-    encoder = encoder_of(emb)
+    encoders = encoder_of(emb)
     torch.save({"state_dict": model.state_dict(), "temperature": temperature,
                 "n_cells": len(cells), "dim": X.shape[1],
-                "encoder": encoder["model"],
-                "pretrained": encoder["pretrained"],
+                # The list is what inference reads. The two singular keys are
+                # kept beside it so a checkpoint written here still loads in
+                # anything that predates the list, which is the whole point of
+                # having written the encoder into the checkpoint at all.
+                "encoders": encoders,
+                "encoder": encoders[0]["model"],
+                "pretrained": encoders[0]["pretrained"],
                 "embeddings": emb.name}, OUT / "geocell_head.pt")
     save_cells(cells, OUT / "cells.json")
     (OUT / "metrics.json").write_text(json.dumps({
