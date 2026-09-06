@@ -1209,6 +1209,29 @@ export class Manhattan {
           uFocus is where the lens is focused, in metres; uAperture is how
           quickly things fall out of it.
         */
+        /*
+          How hard to even out water, and why water specifically.
+
+          Google's imagery is a mosaic of passes flown on different days, and
+          the joins between them are straight lines where the colour steps. Over
+          a city the step is hidden by the city — there is so much going on that
+          a slight shift in white balance has nowhere to show. Over water there
+          is nothing to hide behind, so the seam runs down the middle of a river
+          with grey on one side and blue on the other, which is the most
+          conspicuous thing in the frame at that altitude.
+
+          The source cannot be fixed from here. What can be reduced is the size
+          of the step, and most of it is saturation rather than brightness: one
+          pass came out bluer than the other. Pulling blue-dominant pixels
+          towards their own luminance brings the two sides together and leaves
+          everything that is not water alone, because everything that is not
+          water is not blue-dominant.
+
+          Only across the altitudes where the joins are on screen and large. From
+          orbit they are far too small to see and among the buildings there is no
+          open water in frame.
+        */
+        uWater: { value: 0 },
         uFocus: { value: 1 },
         uAperture: { value: 0 },
         uPlate: { value: 0 },
@@ -1295,7 +1318,7 @@ export class Manhattan {
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
         uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft, uMatch, uShow, uCloud;
-        uniform float uFocus, uAperture;
+        uniform float uFocus, uAperture, uWater;
         uniform sampler2D uLut;
         uniform vec2 uTexel;
         uniform vec3 uHaze, uShade, uWarm;
@@ -1478,6 +1501,13 @@ export class Manhattan {
             the descent, where it is doing something, so it fades in with
             everything else.
           */
+          // Even out the mosaic joins on open water. See uWater.
+          if (uWater > 0.0) {
+            float blue = clamp((c.b - max(c.r, c.g)) * 6.0, 0.0, 1.0);
+            float wl = dot(c, vec3(0.2126, 0.7152, 0.0722));
+            c = mix(c, mix(vec3(wl), c, 0.42), uWater * blue);
+          }
+
           // Inside the deck. See uCloud. Before the vignette, because a lens
           // still darkens its corners when the frame is full of cloud.
           if (uCloud > 0.0) {
@@ -1802,6 +1832,14 @@ export class Manhattan {
     } else {
       this.grade.uniforms.uAperture.value = 0;
     }
+
+    /*
+      Full between two and forty kilometres, which is the band where a mosaic
+      join is both on screen and big enough to read as a line.
+    */
+    const lo = Math.min(1, Math.max(0, (Math.log(Math.max(above, 1)) - Math.log(900)) / Math.log(2.5)));
+    const hi = 1 - Math.min(1, Math.max(0, (Math.log(Math.max(above, 1)) - Math.log(40000)) / Math.log(3)));
+    this.grade.uniforms.uWater.value = Math.min(lo, hi);
 
     const showing = 1 - (this.plate ? this.plate.material.opacity : 0);
     this.grade.uniforms.uShow.value = showing;
