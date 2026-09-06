@@ -41,11 +41,26 @@
 import * as THREE from "three";
 import { TilesRenderer, WGS84_ELLIPSOID } from "3d-tiles-renderer";
 import { GoogleCloudAuthPlugin, TilesFadePlugin } from "3d-tiles-renderer/plugins";
+import { HANDOVER, fallHeight } from "./handover.js";
 
 // Lower Manhattan, looking north up the island. Chosen because the skyline
 // reads as New York from almost any angle here, which a residential street
 // further uptown would not.
 export const MANHATTAN = { lat: 40.7061, lon: -74.0087 };
+
+/*
+  Defocus at the handover, as a fraction of frame width.
+
+  A fraction and not a count of pixels, which is how it was written first and is
+  a trap this project walked straight into. The probe renders at 960 wide and
+  the real render at 1920, so the same pixel radius was twice as strong in the
+  thing being measured as in the thing being shipped. The number was tuned on
+  the probe, looked right, and went out at half strength.
+
+  Set by matching mean absolute Laplacian — plainly, how much fine detail a
+  frame holds — against the globe's own value at the moment it hands over.
+*/
+const SOFT = 5 / 1920;
 
 export class Manhattan {
   constructor(renderer, camera) {
@@ -331,10 +346,10 @@ export class Manhattan {
       soft rather than absent, and a soft frame dissolving into a sharp one at
       identical framing reads as detail arriving.
     */
-    const TOP = 3000000;
-    const fall = 1 - Math.pow(1 - t, 1.25);
-    const height = Math.exp(
-      Math.log(TOP) + (Math.log(endHeight) - Math.log(TOP)) * fall);
+    // The curve itself lives in handover.js, because the globe's last quarter
+    // second runs it too. Two copies of it drifted apart once already and the
+    // symptom was the seam this whole rebuild was chasing.
+    const height = fallHeight(t, endHeight);
 
     /*
       The last fifth of the shot, and nothing before it.
@@ -572,6 +587,32 @@ export class Manhattan {
           at.
         */
         uPlate: { value: 0 },
+        /*
+          How far out of focus the coarse tiles are, in pixels, and why a zoom
+          that has already been matched four ways still reads as a cut.
+
+          The two halves are not the same kind of picture. The globe is NASA's
+          Blue Marble, 3,600 pixels wide for the whole planet, so at the
+          handover the frame is showing about four hundred texture pixels
+          stretched across 1,920 — soft, and nothing can make it otherwise.
+          Google's tiles at the same altitude are photographs.
+
+          Measured on the stitched file as mean absolute Laplacian, which is a
+          plain way of asking how much fine detail a frame contains: the globe
+          holds a steady 8, the dissolve drops it to 5 because averaging two
+          not-quite-aligned images destroys local contrast, and the tiles come
+          in at 10 and climb to 12. Mush, then a two-and-a-half-fold snap into
+          sharpness, inside four tenths of a second. Position, colour and speed
+          were all matched by then. Texture was not, and it is the loudest of
+          the four.
+
+          So the tiles arrive at the globe's resolution and sharpen as they
+          fall. That is not a fudge to hide a join: it is what a descent through
+          an atmosphere looks like, and it means detail *arrives* over the length
+          of the zoom rather than all at once in one frame near the top.
+        */
+        uSoft:  { value: 0 },
+        uTexel: { value: new THREE.Vector2(1 / 1920, 1 / 1080) },
         uShade: { value: new THREE.Color(0x2c3f63) },   // kept for reference
         uWarm:  { value: new THREE.Color(0xffc07a) },
       },
@@ -581,7 +622,8 @@ export class Manhattan {
       fragmentShader: `
         uniform sampler2D uScene;
         uniform sampler2D uDepth;
-        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate;
+        uniform float uNear, uFar, uAmount, uFog, uLift, uPlate, uSoft;
+        uniform vec2 uTexel;
         uniform vec3 uHaze, uShade, uWarm;
         varying vec2 vUv;
 
@@ -593,8 +635,33 @@ export class Manhattan {
           return (2.0 * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear));
         }
 
+        /*
+          Defocus by explicit taps rather than by a mipmap bias.
+
+          A bias is one fetch and would be prefiltered properly, but it depends
+          on mipmaps actually being generated for a half-float render target,
+          and if they quietly are not the blur silently does nothing. This
+          project has had three separate bugs whose only symptom was a measured
+          number failing to move, and a fourth is not wanted. Forty-nine taps
+          cannot fail quietly, and this runs offline where the cost is nothing.
+        */
+        vec3 soft(vec2 uv) {
+          if (uSoft < 0.01) return texture2D(uScene, uv).rgb;
+          vec3 sum = vec3(0.0);
+          float wsum = 0.0;
+          for (int y = -3; y <= 3; y++) {
+            for (int x = -3; x <= 3; x++) {
+              vec2 d = vec2(float(x), float(y));
+              float w = exp(-dot(d, d) * 0.22);
+              sum += texture2D(uScene, uv + d * (uSoft / 3.0) * uTexel).rgb * w;
+              wsum += w;
+            }
+          }
+          return sum / wsum;
+        }
+
         void main() {
-          vec3 day = texture2D(uScene, vUv).rgb;
+          vec3 day = soft(vUv);
           vec3 c = day;
           float d = texture2D(uDepth, vUv).x;
 
@@ -712,8 +779,18 @@ export class Manhattan {
           // hole rather than a shadow.
           c += vec3(0.004, 0.006, 0.011);
 
+          /*
+            The vignette waits until there is a city to put it on.
+
+            Measured across the join, corner brightness against centre: the
+            globe hands over at 0.93 and the tiles took it at 0.79. A vignette
+            appearing over a quarter of a second is a lens changing in the
+            middle of a continuous shot. It belongs to the street-level end of
+            the descent, where it is doing something, so it fades in with
+            everything else.
+          */
           float r = distance(vUv, vec2(0.5)) * 1.42;
-          c *= 1.0 - 0.16 * pow(clamp(r, 0.0, 1.0), 2.4);
+          c *= 1.0 - 0.16 * (1.0 - uPlate) * pow(clamp(r, 0.0, 1.0), 2.4);
 
           gl_FragColor = vec4(mix(day, c, uAmount), 1.0);
         }`,
@@ -863,6 +940,14 @@ export class Manhattan {
     const p = Math.min(1, Math.max(0,
       Math.log(Math.max(above, LOW) / LOW) / Math.log(3000000 / LOW)));
     this.grade.uniforms.uPlate.value = p * p * (3 - 2 * p);
+    /*
+      Defocus on the same log fade as the colour, for the same reason: the fall
+      is logarithmic, so anything tied to altitude has to be.
+
+      The radius is set from measurement, not from taste. See uSoft.
+    */
+    this.grade.uniforms.uSoft.value = SOFT * w * this.grade.uniforms.uPlate.value;
+    this.grade.uniforms.uTexel.value.set(1 / w, 1 / h);
 
     this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);

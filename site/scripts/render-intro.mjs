@@ -22,6 +22,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
+import { HANDOVER, fallHeight } from "../src/globe/handover.js";
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(" ").split("--").filter(Boolean)
@@ -139,11 +140,41 @@ function beat(t) {
     The distances are unchanged. Earth radii from the centre: the surface is 1,
     so three thousand kilometres up is 1.47, which is where the descent begins.
   */
+  /*
+    The dive ends where the tiles begin, and then runs their curve.
+
+    Two separate things. The first is the dive proper, which covers three and a
+    half Earth radii down to three thousand kilometres and eases in only, so it
+    arrives at speed instead of coasting to a halt. The second is the last
+    quarter second, which is the part the dissolve overlaps.
+
+    That tail exists because of what a dissolve actually does: it pairs the
+    globe's frame at time T with the tiles' frame at T minus the offset. Ending
+    the dive at the *end* of the beat meant those pairs were 3,645 km against
+    3,000, then 3,427 against 2,656, then 3,000 against 2,084 — twenty-one per
+    cent apart at the start of the blend and forty-four at the end. The two
+    images never agreed on the size of anything, so every overlapped frame drew
+    the coastline twice at two different scales, which is the picture appearing
+    to jump.
+
+    So the dive reaches three thousand kilometres at the moment the blend opens,
+    and for the length of the blend the globe falls on the descent's own
+    function out of handover.js. Not a curve fitted to it — the same one. Every
+    paired frame is then the same place at the same size and the dissolve has
+    nothing left to do but change which renderer is drawing it.
+  */
+  const HAND = 1 - HANDOVER.fade / SECONDS;
   const start = 0.30;
-  const dive = Math.pow(clamp01((t - start) / (1 - start)), 1.5);
+  const dive = Math.pow(clamp01((t - start) / (HAND - start)), 1.5);
   const FROM = 3.55;
-  const TO = 1 + 3000 / 6371;
-  const cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);
+  const TO = 1 + HANDOVER.top / 6371000;
+  let cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);
+  if (t > HAND) {
+    // Seconds past the handover, which is exactly how far into the descent the
+    // tiles are at this frame. Earth radii from the centre, so the surface is 1.
+    const into = (t - HAND) * SECONDS;
+    cameraZ = 1 + fallHeight(into / HANDOVER.seconds) / 6371000;
+  }
   // Straightens as it falls. The lift is what keeps the sphere off the bottom
   // of the frame early on and would be a tilt by the end, so it goes to zero.
   const cameraY = 0.18 * (1 - dive);
