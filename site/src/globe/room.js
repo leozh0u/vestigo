@@ -55,7 +55,16 @@ const METRES_PER_TILE = 1.9;
 */
 function brick({ base = "#8d4a37", mortar = "#9a8a7c", seed = 7 } = {}) {
   const COURSES = 24;
-  const size = 1024;
+  /*
+    2048, because the camera ends up close enough for 1024 to show.
+
+    One tile covers 1.9 m of wall, so 1024 is about 540 pixels a metre. In the
+    last two seconds the camera is a couple of metres from the brick and the
+    frame is a metre and a half across 1920 pixels — 1,280 a metre — and the
+    texture is being magnified two and a half times. It showed: the bond went
+    blocky exactly where the shot slows down and there is time to look at it.
+  */
+  const size = 2048;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -83,7 +92,10 @@ function brick({ base = "#8d4a37", mortar = "#9a8a7c", seed = 7 } = {}) {
       c.multiplyScalar(0.82 + rand() * 0.36);
       c.offsetHSL((rand() - 0.5) * 0.02, (rand() - 0.5) * 0.08, 0);
       g.fillStyle = `#${c.getHexString()}`;
-      g.fillRect(x + offset + 1.5, row * h + 1.5, w - 3, h - 3);
+      // Mortar joints in texture pixels, scaled with the texture so the
+      // bond does not thin out when the resolution goes up.
+      const joint = size / 340;
+      g.fillRect(x + offset + joint, row * h + joint, w - joint * 2, h - joint * 2);
     }
   }
 
@@ -91,7 +103,8 @@ function brick({ base = "#8d4a37", mortar = "#9a8a7c", seed = 7 } = {}) {
   // stops a hundred rectangles reading as a hundred rectangles.
   for (let i = 0; i < 500; i++) {
     g.fillStyle = `rgba(30,20,15,${0.02 + rand() * 0.05})`;
-    g.fillRect(rand() * size, rand() * size, 20 + rand() * 90, 3 + rand() * 10);
+    g.fillRect(rand() * size, rand() * size,
+               (20 + rand() * 90) * size / 1024, (3 + rand() * 10) * size / 1024);
   }
 
   /*
@@ -121,6 +134,9 @@ function brick({ base = "#8d4a37", mortar = "#9a8a7c", seed = 7 } = {}) {
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
+  // The wall is seen at a glancing angle for most of the approach, which is
+  // exactly where isotropic filtering turns a brick bond into mush.
+  tex.anisotropy = 8;
   return tex;
 }
 
