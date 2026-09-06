@@ -148,13 +148,35 @@ for (const f of present) lengths.push(await duration(f));
   starts before the one before it has finished.
 */
 const inputs = present.flatMap((f) => ["-i", f]);
-let filter = "";
-let label = "0:v";
+
+/*
+  Every beat onto the same frame rate before anything is joined.
+
+  xfade refuses two inputs at different rates -- "First input link main frame
+  rate (60/1) do not match" -- and it refuses them by failing the whole filter
+  graph, so what you get is an encoder that never opens and an ffmpeg error
+  five lines from the actual cause. The Earth beat is rendered at 60 for a
+  sphere that has no motion blur; the descent is 30 with a 180-degree shutter,
+  which is what makes it look photographed.
+
+  Sixty is the target rather than thirty, because upsampling duplicates frames
+  and downsampling drops them. A duplicated frame is invisible and costs almost
+  nothing to encode -- it is a P-frame with no residual. A dropped one is a
+  judder in a shot that was built to be smooth.
+
+  setsar as well, since a pixel aspect that disagrees between two inputs fails
+  the same way and is even harder to see coming.
+*/
+const RATE = 60;
+let filter = present
+  .map((_, i) => `[${i}:v]fps=${RATE},setsar=1[v${i}];`)
+  .join("");
+let label = "v0";
 let elapsed = lengths[0];
 for (let i = 1; i < present.length; i++) {
   const next = `x${i}`;
   const offset = (elapsed - FADE).toFixed(3);
-  filter += `[${label}][${i}:v]xfade=transition=fade:duration=${FADE}:offset=${offset}[${next}];`;
+  filter += `[${label}][v${i}]xfade=transition=fade:duration=${FADE}:offset=${offset}[${next}];`;
   label = next;
   elapsed = elapsed - FADE + lengths[i];
 }
@@ -225,10 +247,25 @@ function publish(seconds, earthSeconds) {
     grows the real interface out of it, so a re-render that moves the laptop
     moves the handoff with it and there is nothing to keep in step by hand.
   */
+  /*
+    From the room beat now, and from the descent before there was one.
+
+    The descent used to end on a laptop, so it was the descent that knew where
+    the screen was. It ends at a hundred and fifty metres over a street, so the
+    rectangle belongs to whatever beat actually finishes the film — and the
+    order matters, because media/descent-end.json may still be lying around
+    from an older render and would quietly win.
+  */
   let screen = null;
-  try {
-    screen = JSON.parse(fs.readFileSync("media/descent-end.json", "utf8"));
-  } catch { /* an older render, or one beat only: the page falls back to a fade */ }
+  for (const f of ["media/room-end.json", "media/descent-end.json"]) {
+    try {
+      screen = JSON.parse(fs.readFileSync(f, "utf8"));
+      break;
+    } catch { /* not this one */ }
+  }
+  if (!screen) {
+    console.log("  no screen rectangle: the page will fade rather than grow");
+  }
 
   /*
     And what the globe was doing in the screenshot on that screen.

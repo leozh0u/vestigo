@@ -31,7 +31,17 @@ const args = Object.fromEntries(
 const WIDTH = Number(args.width ?? 1920);
 const HEIGHT = Math.round(WIDTH * 9 / 16);
 const FPS = Number(args.fps ?? 60);
-const SECONDS = Number(args.seconds ?? 12);
+/*
+  Five, and it has been six and before that seven.
+
+  The complaint each time was the same: the fall from space is slow, and
+  slowest right before it hands over. Both halves of that are fixed here rather
+  than by trimming. The dive is shorter and later so it is moving when it
+  arrives, and the beat itself is a second shorter because the thing worth
+  watching -- metal becoming a lit planet -- is over by two and a quarter
+  seconds and everything after it is travel.
+*/
+const SECONDS = Number(args.seconds ?? 5);
 // Outside public/, because this is the raw beat that stitch-intro.mjs joins
 // to the generated clips. Only the joined intro.mp4 is served.
 const OUT = args.out ?? "media/earth.mp4";
@@ -94,7 +104,21 @@ export function beat(t, seconds = SECONDS) {
     shot ended over the Caribbean, because New York is at 40 degrees north and
     nothing was tilting the globe to bring it up to the centre of frame.
   */
-  const spin = easeOut(Math.min(1, t / 0.62));
+  /*
+    Eased out, but started from rest.
+
+    easeOut has its *maximum* slope at zero: on the first frame the sphere was
+    already turning at about five radians a second, from a standstill, which is
+    a lurch. It is also the first thing that happens after the page has spent
+    820ms carefully arriving at this exact frame and holding still, so it is the
+    one frame where a lurch is most visible.
+
+    Composing with smoothstep gives zero slope at both ends and leaves easeOut
+    in charge of the shape, so the deceleration into New York is unchanged and
+    the start is a start. It ramps in over about three tenths of a second, which
+    reads as the camera picking the object up rather than as a stall.
+  */
+  const spin = easeOut(smooth(Math.min(1, t / 0.62)));
   const target = -(NYC.lon * Math.PI) / 180 - Math.PI / 2;
   const rotationY = -0.9 + (target + Math.PI * 2 - -0.9) * spin;
   /*
@@ -191,7 +215,19 @@ export function beat(t, seconds = SECONDS) {
     it. The rate it hands over at is unchanged, which is the number that has to
     stay put.
   */
-  const start = 0.22;
+  /*
+    0.32, not 0.22.
+
+    The dive's arrival rate has to equal the rate the tiles pick up at, and that
+    rate is fixed by the descent. Given the rate, the exponent needed is
+    proportional to how long the dive runs -- so a long dive needs a steep
+    exponent, which back-loads it and makes the first half of the fall crawl.
+    Starting later shortens it and brings the exponent down with it.
+
+    Overlaps the spin by a second and a half, which is deliberate. Nothing here
+    starts when something else stops.
+  */
+  const start = 0.32;
   /*
     1.12, not 1.5.
 
@@ -201,7 +237,27 @@ export function beat(t, seconds = SECONDS) {
     from nine seconds to twelve slowed their opening by a quarter and left the
     globe arriving a third too fast. Scaled to match.
   */
-  const dive = Math.pow(clamp01((t - start) / (HAND - start)), 1.12);
+  /*
+    1.57, and it is not a taste decision.
+
+    The exponent sets how much faster than its own average the dive is moving
+    when it hands over, and that has to equal the rate the tiles pick up at.
+    Measured on the old cut: the Earth beat arrived at a log-rate of 0.216 per
+    second and the descent began at 0.324, a third faster. A fall that
+    decelerates and then speeds up again is read as two shots joined, whatever
+    the dissolve does.
+
+    Solved rather than tuned. The descent's opening rate is
+    ln(top/end) * 1.25 / fallSeconds, which is 3.93 million metres a second at
+    three thousand kilometres. The dive's arrival rate is
+    6371000 * 1.4709 * 0.8812 * p / D, where D is how long the dive runs. Set
+    them equal and p is 0.476 * D. At five seconds with the dive starting at
+    0.32, D is 3.3 and p is 1.57.
+
+    Which means shortening the descent moves this number, and it is the one
+    thing here that must be recomputed rather than left alone.
+  */
+  const dive = Math.pow(clamp01((t - start) / (HAND - start)), 1.58);
   const FROM = 3.55;
   const TO = 1 + HANDOVER.top / 6371000;
   let cameraZ = Math.exp(Math.log(FROM) + (Math.log(TO) - Math.log(FROM)) * dive);

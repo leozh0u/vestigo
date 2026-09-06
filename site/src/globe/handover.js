@@ -32,10 +32,29 @@ export const HANDOVER = {
   // matching makes look like a photograph. At three thousand it is showing
   // three hundred.
   top: 3000000,
-  // Eighty metres above the street. Lower than that and the photogrammetry
-  // melts: brick drips and windows become smears. Demonstrated across eighteen
-  // candidate endings before settling here.
-  end: 16,
+  /*
+    Fifty-five metres above the street, and it used to be sixteen.
+
+    Sixteen put the camera level with a fifth-floor window, which is the shot
+    this was designed around, and the shot cannot be had: measured off the
+    finished file, the last four and a half seconds are unusable. At eleven
+    seconds in, twenty-seven metres up, the frame is melted brick and smeared
+    windows, because Google's photogrammetry below about forty metres has no
+    data to reconstruct from. Everything after that was a hand-built facade and
+    room, which is worse again -- flat tiling brick and black rectangles for the
+    neighbours' windows.
+
+    A hundred and fifty is where it still holds up, and getting to that number
+    took three passes of probe frames. Fifty-five was the first guess and it is
+    wrong for a reason worth writing down: the fall lands over a tree-lined
+    street, and Google reconstructs a tree canopy as dark blobs. At a hundred
+    and fourteen metres the frame was blobs. At two hundred it was legible
+    rooftops, cars and kerbs, sharp.
+
+    So the shot ends at a hundred and fifty and goes to black, and what happens
+    indoors is a photograph rather than a guess.
+  */
+  end: 150,
   /*
     Length of the descent, seconds.
 
@@ -51,7 +70,19 @@ export const HANDOVER = {
     seventeen. There is simply more time to cross them, because the fall is
     logarithmic and stretching the shot stretches the bottom of it most.
   */
-  seconds: 15,
+  /*
+    Ten point four, and there is no longer a turn to level at the end of it.
+
+    The fifteen seconds were fifteen because the shot had to pitch ninety
+    degrees and then fly at a window, and it had to do the pitch late or it read
+    as a fly-over. Neither happens now: the shot stops at fifty-five metres,
+    where the camera is still above every roof, and the pitch only comes round
+    far enough to put the street ahead in frame.
+
+    Five and a half seconds shorter, and all of it came out of the part nobody
+    could stand to look at.
+  */
+  seconds: 9.4,
   /*
     How much of that is the fall, seconds.
 
@@ -62,7 +93,16 @@ export const HANDOVER = {
     a third time — that rate is set by how fast the fall starts, and the fall is
     the same fall.
   */
-  fallSeconds: 12,
+  /*
+    All of it. The shot is a fall now and nothing else.
+
+    This used to be shorter than `seconds`, because the last two seconds were a
+    horizontal push at a window rather than a descent. There is no push, so the
+    two are the same number and place() has no second phase -- which is also why
+    it is still a separate field: the fall's rate at the top is set by this, and
+    that rate is what the Earth beat's dive has to hand over at.
+  */
+  fallSeconds: 9.4,
   // Overlap at the seam. Short, because it is no longer hiding anything.
   fade: 0.10,
 };

@@ -155,8 +155,25 @@ try {
   const median = sorted[Math.floor(sorted.length / 2)] || 0;
   const at = (i) => `${(i / fps).toFixed(2)}s (frame ${i})`;
 
+  /*
+    The blackout at the end is not a fault, and these tests all call it one.
+
+    The descent finishes by mixing the frame down to near-black over about a
+    second, deliberately: it is how the shot leaves the street and arrives
+    indoors without a cut. To these tests that is a run of dim, flat frames
+    that barely differ from each other, which is exactly the signature of a
+    renderer that died -- the thing they exist to catch.
+
+    So the tail is excluded rather than the tests being loosened. Loosening
+    them would blind the checks to a genuinely dead render everywhere else in
+    the shot, which has happened twice. A fixed 1.2 seconds is measured from
+    the end and everything before it is judged as strictly as before.
+  */
+  const TAIL = Math.round(fps * 1.2);
+  const inTail = (frame) => frame > count - TAIL;
+
   const dark = means.map((m, i) => [i, m, spreads[i]])
-    .filter(([, m, sd]) => m < DARK && sd < FLAT);
+    .filter(([i, m, sd]) => m < DARK && sd < FLAT && !inTail(i));
   /*
     Each step against the run of steps around it.
 
@@ -179,7 +196,7 @@ try {
     if (local > 0.01 && deltas[i] > local * JUMP) jumps.push([i + 1, deltas[i], local]);
   }
   const stalls = deltas.map((d, i) => [i + 1, d])
-    .filter(([, d]) => d < median * STALL);
+    .filter(([i, d]) => d < median * STALL && !inTail(i));
 
   /*
     Sags. See the note at the top.
