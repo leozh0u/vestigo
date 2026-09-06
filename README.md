@@ -13,7 +13,7 @@ so the metric that matters is calibration rather than distance error.
 Every claim carries the tool result or the rule that produced it. A claim with
 nothing behind it does not count toward the answer.
 
-There is a site for it at **https://vestigo.earth**.
+There is a site for it at **https://vestigo.earth**. It shows what the agent does; you cannot run it there yet.
 
 ## Status
 
