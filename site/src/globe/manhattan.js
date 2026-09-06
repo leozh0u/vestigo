@@ -123,6 +123,39 @@ export class Manhattan {
       tiles.group.position, tiles.group.quaternion, tiles.group.scale);
     tiles.group.updateMatrixWorld(true);
 
+    /*
+      Which way is north, measured rather than assumed.
+
+      The camera at the top of the descent looks straight down, and a camera
+      looking straight down has no opinion about which way up the picture is.
+      Three resolves that roll from `camera.up`, and the default (0, 1, 0) is
+      parallel to the view direction, so the answer came from the thousandth-of-
+      an-altitude nudge that exists only to stop the gimbal. It came out as
+      south.
+
+      That is the whole seam. The globe hands over with north at the top of the
+      frame and the tiles picked it up with north at the bottom, so the dissolve
+      was rotating the Earth 180 degrees over half a second between two
+      otherwise identical pictures. Rotate the descent's first frame by a half
+      turn and it is the globe's last frame: same lakes, same coastline, same
+      scale. Nothing was wrong with the position, the altitude or the field of
+      view, all of which had been measured. The roll had not been.
+
+      So take a point a little way north on the ellipsoid, bring it through the
+      same inverse frame the tileset went through, and keep the horizontal part.
+      Measured from the geodesy rather than written down, because the sign
+      conventions in a local frame are exactly the kind of thing that is
+      remembered wrong.
+    */
+    const northOf = new THREE.Vector3();
+    WGS84_ELLIPSOID.getCartographicToPosition(
+      (MANHATTAN.lat + 0.05) * THREE.MathUtils.DEG2RAD,
+      MANHATTAN.lon * THREE.MathUtils.DEG2RAD,
+      0, northOf,
+    );
+    northOf.applyMatrix4(tiles.group.matrix);
+    this.north = new THREE.Vector3(northOf.x, 0, northOf.z).normalize();
+
     this.tiles = tiles;
     this.ready = true;
     // Not known until geometry has arrived, and not trusted until it has all
@@ -334,6 +367,17 @@ export class Manhattan {
     const side = height * 0.0004 + (34 - height * 0.0004) * tilt;
 
     this.camera.position.set(side, floor + height, back);
+    /*
+      Roll, stated instead of inferred. See the north vector in load().
+
+      North at the top while the camera is over the target, swinging to sky at
+      the top as it pitches up at the end. That lerp is not a stylistic choice;
+      it is what a camera with a fixed heading does as it pitches from nadir to
+      the horizon. The direction that was at the top of the frame goes on being
+      at the top of the frame, and the sky arrives underneath it.
+    */
+    this.camera.up.copy(this.north ?? new THREE.Vector3(0, 0, 1))
+      .lerp(new THREE.Vector3(0, 1, 0), tilt).normalize();
     this.camera.lookAt(0, floor + 50 * tilt, 0);
     this.camera.updateMatrixWorld();
   }
