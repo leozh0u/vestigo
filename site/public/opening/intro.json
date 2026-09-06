@@ -1,10 +1,15 @@
 {
-  "src": "/opening/intro-6cff81f6dc.mp4",
+  "src": "/opening/intro-946117ce7e.mp4",
   "seconds": 21.9,
   "screen": {
     "x": 0.5,
     "y": 0.5,
     "w": 0.6131,
     "h": 0.6855
+  },
+  "ui": {
+    "rotY": 0.68217,
+    "rotX": 0,
+    "distance": 3.55
   }
 }
