@@ -1,6 +1,6 @@
 {
-  "src": "/opening/intro-89826e4d83.mp4",
-  "seconds": 14.3,
+  "src": "/opening/intro-d30e710c53.mp4",
+  "seconds": 18.4,
   "open": {
     "rotY": -0.9,
     "rotX": 0,
@@ -8,7 +8,12 @@
     "lift": 0.18,
     "exposure": 1.12
   },
-  "screen": null,
+  "screen": {
+    "x": 0.4991,
+    "y": 0.5,
+    "w": 0.6413,
+    "h": 0.6902
+  },
   "ui": {
     "rotY": 0.68217,
     "rotX": 0,
