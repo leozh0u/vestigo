@@ -122,7 +122,22 @@ const UI = "/media/ui.png";
 
   The swap is 32% because that is the near plate uncropped. Not chosen.
 */
-const START = 0.075;   // the room wide: the screen is a small dark rectangle
+/*
+  The start is the far plate's own framing, and it has to be derived rather
+  than chosen.
+
+  It was 0.075, picked by eye as "the room, wide". The plate's screen is 8.94%
+  of it, so for the first stretch of the beat the schedule was asking for a
+  crop wider than the photograph -- which clamps, and a clamped crop does not
+  move. Measured on the finished cut: 0.64 seconds of frame-to-frame difference
+  at exactly 0.00, immediately after the shot comes out of the dark. Two thirds
+  of a second of a still photograph in the middle of a camera move, which is
+  the most obvious cut in the whole intro and was put there by a number that
+  looked reasonable.
+
+  Set from the plate itself, so it starts at the widest framing that photograph
+  actually has and every frame after it moves.
+*/
 const SWAP = 0.322;
 const END = 0.62;
 // Seconds of overlap at the swap. Long enough to be a dissolve, short enough
@@ -135,6 +150,9 @@ const centreOf = (q, w, h) => [
   q.reduce((s, p) => s + p[1], 0) / 4 / h,
 ];
 const widthOf = (q, w) => ((q[1][0] - q[0][0]) + (q[2][0] - q[3][0])) / 2 / w;
+
+// See the note above the SWAP and END constants.
+const START = widthOf(PLATES.far.screen, PLATES.far.w);
 
 /*
   Where the shot is at a moment, as a fraction of the whole.
@@ -153,8 +171,22 @@ const widthOf = (q, w) => ((q[1][0] - q[0][0]) + (q[2][0] - q[3][0])) / 2 / w;
 function beat(t) {
   const clamp01 = (x) => Math.max(0, Math.min(1, x));
   const smooth = (x) => { const c = clamp01(x); return c * c * (3 - 2 * c); };
-  // Ease in, then out, in log space.
-  const k = smooth(t);
+  /*
+    Eased out only. It has to arrive already moving.
+
+    smoothstep has zero slope at both ends, so this beat used to start from a
+    standstill -- and the beat before it is a fall through the sky that is still
+    travelling when the light goes. Measured across the join, the descent's last
+    visible frames and the room's first ones are a shot decelerating to nothing
+    and then starting again, which is what a cut is, whether or not there is
+    darkness over the top of it.
+
+    The exponent gives it 1.8 times its average speed at the moment it comes out
+    of the dark and none at all by the end, which is also the right shape for
+    what is happening: the camera has fallen a long way, comes through, and
+    settles onto the desk.
+  */
+  const k = 1 - Math.pow(1 - clamp01(t), 1.8);
   const shown = Math.exp(Math.log(START) + (Math.log(END) - Math.log(START)) * k);
 
   const half = BLEND / SECONDS / 2;
