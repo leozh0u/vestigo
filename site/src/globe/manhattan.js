@@ -598,11 +598,35 @@ export class Manhattan {
       walls do, and every degree the camera turns away from vertical trades a
       surface it has data for against one it does not.
 
-      Thirteen degrees is enough to feel like heading somewhere and not enough
-      to put a facade in the frame.
+      Fifty-nine degrees, and thirteen was too careful.
+
+      That conclusion was drawn from one frame at a hundred and fourteen metres,
+      and it was half right. Probed properly at the altitude this shot actually
+      ends at, sweeping the angle with everything else held still: fourteen,
+      thirty-one, fifty and fifty-nine degrees off vertical all come back with
+      legible rooftops, cars, kerbs and facades. Sixty-eight does not -- the near
+      buildings still hold, but the far half of the frame turns to smeared grey.
+
+      So the limit is not the buildings and it is not the angle on its own. It is
+      how much *distance* the angle drags into shot. At sixty-eight degrees the
+      horizon arrives, and a horizon means kilometres of the coarsest tiles in
+      the set rendered edge-on. At fifty-nine there is no horizon and every
+      surface in frame is close enough to have been photographed properly.
+
+      Both numbers matter, then. A hundred and fifty metres buys back most of the
+      angle that a hundred and fourteen could not afford.
     */
+    /*
+      How far off vertical the shot ends, as a fraction of a right angle.
+
+      Overridable so a probe can sweep it without editing this file. Thirteen
+      degrees is what the frames above justify; the open question is whether a
+      hundred and fifty metres buys back some of the angle that a hundred and
+      fourteen could not afford, and that is a measurement, not an argument.
+    */
+    const level = this.endPitch ?? 0.60;
     const tilt = smooth((t - 0.58) / 0.42);
-    const pitch = -Math.PI / 2 * (1 - 0.15 * tilt);
+    const pitch = -Math.PI / 2 * (1 - level * tilt);
 
     /*
       Up, derived from the pitch rather than interpolated towards it.
