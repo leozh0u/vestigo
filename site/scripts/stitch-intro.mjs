@@ -182,10 +182,33 @@ for (let i = 1; i < present.length; i++) {
 }
 filter = filter.replace(/;$/, "");
 
+/*
+  The sound, if it has been made, and it goes on here rather than afterwards.
+
+  It has to be inside the file before the file is hashed. Muxing audio onto an
+  already-published intro would give the same picture a different name, or --
+  worse, if the name were left alone -- let a cache serve last week's silence
+  over this week's cut, which is the exact failure the hashing exists to
+  prevent.
+
+  Optional, like every other beat. No media/intro-audio.m4a and the intro is
+  silent, which is what it has been until now and is still a working intro.
+  See scripts/sound-bed.mjs.
+*/
+const AUDIO = "media/intro-audio.m4a";
+const hasAudio = fs.existsSync(AUDIO);
+console.log(hasAudio ? "  with sound" : "  no sound bed, joining silent");
+
 await run("ffmpeg", [
   "-y", ...inputs,
+  ...(hasAudio ? ["-i", AUDIO] : []),
   "-filter_complex", filter,
   "-map", `[${label}]`,
+  // The audio is already cut to the length of the picture, and -shortest
+  // guards the case where it is not: a bed longer than the video would
+  // otherwise extend the file past its last frame.
+  ...(hasAudio ? ["-map", `${present.length}:a`, "-c:a", "aac", "-b:a", "128k",
+                  "-shortest"] : []),
   // Same encoding rules as the render: yuv420p and even dimensions, or Safari
   // and QuickTime refuse the file.
   /*
