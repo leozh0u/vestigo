@@ -196,8 +196,19 @@ filter = filter.replace(/;$/, "");
   See scripts/sound-bed.mjs.
 */
 const AUDIO = "media/intro-audio.m4a";
-const hasAudio = fs.existsSync(AUDIO);
-console.log(hasAudio ? "  with sound" : "  no sound bed, joining silent");
+/*
+  Opt in, because the page plays this muted.
+
+  Autoplay requires a muted element, and although pressing ENTER is a user
+  gesture and would permit sound, the page has not been changed to ask for it.
+  So a bed muxed in by default is a third of a megabyte and a decode every
+  visitor pays for and nobody hears. It goes in when the page is ready to play
+  it, and not before.
+
+      node scripts/stitch-intro.mjs --sound
+*/
+const hasAudio = process.argv.includes("--sound") && fs.existsSync(AUDIO);
+console.log(hasAudio ? "  with sound" : "  silent (pass --sound to include the bed)");
 
 await run("ffmpeg", [
   "-y", ...inputs,

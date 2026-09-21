@@ -69,8 +69,8 @@ const LAYERS = [
 
       It ends on the seam, not after it. See the note at the top.
     */
-    file: "descent.mp3", at: 2.0, gain: -4,
-    fadeIn: 2.5, outAt: SEAM_ROOM - 0.05, fadeOut: 0.3,
+    file: "descent.mp3", at: 1.2, gain: -4,
+    fadeIn: 3.4, outAt: SEAM_ROOM - 0.05, fadeOut: 0.3,
   },
   {
     // On the deck, a little before the whiteout peaks, so the ear is inside the
@@ -135,13 +135,28 @@ const chains = present.map((l, i) => {
          `apad[a${i}]`;
 });
 
+/*
+  A master trim over the whole bed, and it is not a taste knob.
+
+  The first mix measured -24 dB RMS at its loudest, which is a foreground
+  level: correct for something being listened to and wrong for weather under a
+  title sequence, where the picture is the subject and the sound is the room it
+  happens in. Nine decibels down puts the peak of the wind near -33 and the
+  room tone under -50, which is present without asking for attention.
+
+  Applied once on the sum rather than spread across six gains, so the balance
+  between the layers -- which is the part that took measuring -- cannot drift
+  when the overall level is changed.
+*/
+const MASTER = -9;
+
 const mixed = present.map((_, i) => `[a${i}]`).join("");
 const filter = [
   ...chains,
   `${mixed}amix=inputs=${present.length}:normalize=0:dropout_transition=0[m]`,
   // A limiter rather than a normaliser on the sum, so the transients keep their
   // shape and only the overs are caught.
-  `[m]alimiter=limit=0.9:level=disabled,atrim=0:${END},asetpts=N/SR/TB[out]`,
+  `[m]volume=${MASTER}dB,alimiter=limit=0.9:level=disabled,atrim=0:${END},asetpts=N/SR/TB[out]`,
 ].join(";");
 
 await run("ffmpeg", [
