@@ -130,17 +130,10 @@ const inline = (file) => new Promise((done, fail) => {
 });
 
 /*
-  What is left, before and after, and a floor under it.
-
-  Leo's instruction was that this must not be able to cost him money. Two
-  things make that true and neither is trust. The account's usage-based billing
-  is off, so running out of credits fails a request rather than charging a card.
-  And nothing here runs without first reading the balance and refusing below a
-  floor, so a loop that goes wrong stops with credits to spare instead of at
-  zero.
-
-  Needs the key's `user` scope. Without it the balance is unreadable, and this
-  says so loudly rather than quietly generating blind.
+  Refuse to generate when the subscription balance cannot be verified or is
+  below the reserve. This check alone does not establish that a request is
+  free: account billing settings and the chosen model's cost still need to be
+  checked before use. The local Blender proof does not call this API.
 */
 const FLOOR = 15000;
 
@@ -149,8 +142,10 @@ async function balance(xi) {
                         { headers: { "xi-api-key": xi } });
   if (!r.ok) return null;
   const s = await r.json();
-  const used = s.character_count ?? 0;
-  const limit = s.character_limit ?? 0;
+  const used = s.character_count;
+  const limit = s.character_limit;
+  if (!Number.isFinite(used) || !Number.isFinite(limit) ||
+      used < 0 || limit <= 0 || used > limit) return null;
   return { used, limit, left: limit - used };
 }
 
@@ -159,7 +154,7 @@ await fs.mkdir(OUT, { recursive: true });
 
 const before = await balance(xi);
 if (!before) {
-  console.log("  ! cannot read the balance (key has no `user` scope) -- running blind");
+  throw new Error("Cannot verify the credit balance; generation was not started. Check the key's user scope and subscription response.");
 } else {
   console.log(`  credits ${before.left.toLocaleString()} of ${before.limit.toLocaleString()}`);
   if (before.left < FLOOR) {

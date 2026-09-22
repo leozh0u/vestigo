@@ -3,9 +3,9 @@
 
     node scripts/stitch-intro.mjs
 
-  Reads whatever exists in public/opening and skips what does not, so the
-  pipeline works with one clip or with all four and the page always has
-  something to play.
+  Requires every clip listed in ORDER. An incomplete render must fail before
+  encoding or replacing the served manifest. This legacy assembly still does
+  not include the new continuous window scene.
 
   ## Why the seams are dissolves and not cuts
 
@@ -33,8 +33,7 @@ const DIR = "public/opening";
   because they are inputs to this join rather than things the site serves. The
   third is generated elsewhere and dropped into media/ by hand.
 
-  Missing files are skipped, so this works with one beat or with all three and
-  the page always has something to play.
+  All listed files are required; missing footage is an error.
 */
 // Relative to the site root, which is where this script is run from. They were
 // relative to DIR, which resolved public/opening/../media — a directory that
@@ -96,47 +95,12 @@ const duration = async (file) => Number(await run("ffprobe", [
   "-of", "default=noprint_wrappers=1:nokey=1", file,
 ]));
 
-const present = ORDER.filter((f) => fs.existsSync(f));
-
-if (!present.length) {
-  console.error("no beats rendered yet. Start with:\n" +
-                "  node scripts/render-intro.mjs");
-  process.exit(1);
+const missing = ORDER.filter((f) => !fs.existsSync(f));
+if (missing.length) {
+  throw new Error(`Opening is incomplete. Missing required footage: ${missing.join(", ")}`);
 }
-
+const present = ORDER;
 console.log(`joining ${present.length}: ${present.map((f) => path.basename(f)).join(", ")}`);
-
-if (present.length === 1) {
-  /*
-    One beat is still a finished intro and has to be published like one.
-
-    This used to copy the file and exit, which skipped the hashing and the
-    manifest entirely — so the page fetched /opening/intro.json, got a 404,
-    concluded there was no cinematic, and started on the globe with no way in.
-    The ENTER panel simply stopped appearing, which is an odd thing to debug:
-    nothing errors, and the page is behaving exactly as designed for the case
-    where no intro exists.
-  */
-  /*
-    Encoded, not copied.
-
-    The beats are mastered at crf 18, which is right for a file that is an input
-    to this join: quality lost there cannot be recovered. The output is
-    different — every visitor downloads it before they see anything — and a
-    straight copy shipped 36.6 MB against a whole site of 14. Same treatment as
-    the multi-clip path, which is the only sane arrangement: what leaves this
-    script is a web file however many beats went in.
-  */
-  await run("ffmpeg", [
-    "-y", "-i", present[0],
-    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "27", "-preset", "slow",
-    "-movflags", "+faststart", OUT,
-  ]);
-  // One beat, so the whole file is that beat: its length is the cut's length.
-  const only = await duration(OUT);
-  publish(only, present[0] === "media/earth.mp4" ? only : 0);
-  process.exit(0);
-}
 
 const lengths = [];
 for (const f of present) lengths.push(await duration(f));
