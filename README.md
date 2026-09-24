@@ -3,7 +3,7 @@
 [![ci](https://github.com/leozh0u/vestigo/actions/workflows/ci.yml/badge.svg)](https://github.com/leozh0u/vestigo/actions/workflows/ci.yml)
 
 Works out where a photograph was taken, at the most specific level the evidence
-actually supports.
+supports.
 
 Most geolocation systems return a point no matter how little they have to go on.
 This one returns the most specific claim it can defend and stops there. Country
@@ -18,32 +18,27 @@ There is a site for it at **https://vestigo.earth**. It shows what the agent doe
 ## Status
 
 The agent runs end to end, with a trained geocell classifier alongside it and
-seven measured evaluation runs behind it.
+eight measured evaluation runs behind it.
 
-What exists is the measurement that defines the problem, which is deliberate:
-the point of starting there was to find out whether a plain model call is
-already good enough before building anything on top of it. On top of that sits
-`vestigo/`, the evidence board and the contract every tool is written against,
-the first tool, and the scoring that judges a claim on what it claimed. The
-types the board holds came out of what the baseline measured, so the order is
-the argument.
+It started as a measurement rather than a system. The point was to find out
+whether a plain model call is already good enough before building anything on
+top of it, and the types the board holds came out of what that baseline
+measured.
 
 ```
 vestigo/board.py         claims, evidence, and constraints that filter candidates
 vestigo/observe.py       structured readings, and which of them are the same reading
 vestigo/solar.py         solar position, and the constraints built on it
+vestigo/metas.py         facts about countries a photograph can show, as constraints
+vestigo/verify.py        checks every claim against what could disprove it
+vestigo/consensus.py     one answer out of repeated samples
 vestigo/scoring.py       granularity-aware correctness and calibration
 vestigo/agent.py         the loop
 vestigo/llm.py           one interface over every provider, with a budget
-vestigo/tools/base.py    one contract for every tool
+vestigo/tools/           solar, gazetteer, geocell classifier, metas, one contract for all
+ml/                      the classifier: embedding, geocells, training
 eval/                    the experiments, none of which need network access
 ```
-
-The loop is observe, guess, use tools, claim, resolve. The second step is the
-one that looks wrong and is not: a bare model call is already good, so the
-unaided guess is kept as a candidate and the tools filter it rather than
-replace it. Nothing can reach the answer except through the board, and a claim
-citing evidence that does not exist is rejected and the rejection is reported.
 
 ## The baseline
 
@@ -128,11 +123,20 @@ The rounds after that isolated something worth knowing. The agent's first pass
 is itself a frontier model call, so a tool only moves the result if it supplies
 something the model does not already hold. Solar geometry is physics it knows,
 the classifier is a second opinion, and the observation extractor is the same
-model looking again. Tools that query the outside world are the open direction,
-and the plan for them is below.
+model looking again.
 
 Full writeup, including the three bugs found on the way, in
 [results/agent.md](results/agent.md).
+
+The eighth run tested that with the first tool that does query the outside
+world, a place-name lookup against OpenStreetMap. Of the nineteen images both
+runs answered, eighteen came back at a distance identical to three decimal
+places. That is not noise. It means no tool could have moved the answer: the
+ranking seeds the model's own guess at a prior no evidence can overcome, so
+outside evidence can cap how precisely an answer is stated but never change
+where it is. The cap did work, and ten answers claimed a city, a district or a
+point, where no earlier run had ever claimed anything finer than a region.
+Writeup in [results/gazetteer.md](results/gazetteer.md).
 
 ## The first tool
 
@@ -216,22 +220,27 @@ Full writeup in [results/calibration.md](results/calibration.md).
 
 ## What comes next
 
-The measured result points at one thing: a tool only moves the answer if it
-returns something the model does not already contain. Three directions, in
-order:
+The gazetteer run changed the order. Another tool that proposes a place would
+measure flat for the same reason the last ones did, so the work now is on what
+is allowed to overrule the first guess.
 
-1. **Tools that query the outside world.** Search on text read from the image,
-   Overpass queries against OpenStreetMap for spatial co-occurrence, reverse
-   image search. These return facts the model does not contain. My own decision
-   log says text extraction was the highest-value tool and I built the solar
-   solver first anyway.
+1. **Constraints that eliminate places.** Which side of the road people drive
+   on, what script the signs use, what colour the centre line is. These are
+   facts about countries rather than about Street View, and they rule places
+   out instead of proposing new ones. Built in `vestigo/metas.py`, not yet
+   written up.
 2. **Aggregating repeated samples.** Run-to-run noise is a 40 km median with a
-   14,951 km tail, and the system currently takes one answer per run.
-3. **Verification.** Hand a guess to a second call that tries to refute it.
+   14,951 km tail. `vestigo/consensus.py` makes one answer out of the samples
+   the eval already pays for. Built, not yet written up.
+3. **Verification.** Every claim checked against what could disprove it, in
+   `vestigo/verify.py`. Built, not yet written up.
+4. **The ranking itself.** The 1.0 seed was a fix for a real failure: ranking
+   on tool candidates once refused three answers that were right to within a
+   kilometre. Replacing it is a trade the project has now measured both sides
+   of, so it gets decided carefully rather than patched.
 
-On the classifier side, the cheapest gain is a haversine-smoothed loss. Plain
-cross-entropy scores a neighbouring cell exactly as wrong as the opposite
-hemisphere, which for a geographic task throws away most of the signal.
+On the classifier side, the next gains are more data and unfreezing the
+encoder, which needs a real GPU.
 
 ## What this is aimed at
 
@@ -257,13 +266,16 @@ python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
 ./.venv/bin/pytest
 ```
 
-The ML half needs torch and about 3 GB of imagery:
+The ML half needs torch and about 8 GB of imagery for the full set:
 
 ```
-./.venv/bin/python scripts/fetch_training.py --target 20000 --per-place 150 --spread-km 180
-./.venv/bin/python ml/embed.py
-./.venv/bin/python ml/train.py
+./.venv/bin/python scripts/fetch_training.py --target 200000 --per-place 150 --spread-km 180
+./.venv/bin/python ml/embed.py --model ViT-SO400M-14-SigLIP --pretrained webli
+./.venv/bin/python ml/train.py --embeddings vit-so400m-14-siglip__webli
 ```
+
+Without the flags, `ml/embed.py` uses ViT-B/32, which runs on a laptop in
+minutes and is the first row of the encoder table below.
 
 The package itself has no dependencies. Pillow is for the ingest scripts and
 pytest is for the tests.
@@ -288,26 +300,32 @@ hosted version is rate limited. Please do not use this to locate people.
 
 ## The classifier
 
-The only model here that I trained. 20,000 Mapillary images, a frozen CLIP
-encoder, one linear head over 236 geocells clustered from the training points
-rather than laid out on a grid, because what a photograph shows changes at
-borders and not at round numbers.
+The only model here that I trained. About 65,000 Mapillary images, a frozen
+image encoder, and one linear head over 250 geocells clustered from the training
+points rather than laid out on a grid, because what a photograph shows changes
+at borders and not at round numbers.
 
-| | |
-|---|---|
-| cell accuracy | 21.5% against 0.42% chance |
-| median distance | 1,024 km |
-| **calibration error** | **10.7% to 1.4%** |
+The first version used 20,000 images and landed at a 1,024 km median. Tripling
+the data took that to 527 km. Swapping the frozen encoder did more than the
+data had:
 
-Fifty times chance, and coarse by design at this data size, which is what I
-wrote down it would be before building it. The calibration is the part worth
-having: after temperature scaling, stated confidence tracks observed accuracy to
-within two points across the whole range below 0.6.
+| encoder | cell accuracy | median | within 200 km | calibration error |
+|---|---|---|---|---|
+| CLIP ViT-B/32 | 31.9% | 527 km | 37% | 2.6% |
+| CLIP ViT-L/14 | 44.8% | 198 km | 50% | 3.5% |
+| **SigLIP SO400M** | **51.6%** | **142 km** | **58%** | **3.7%** |
 
-That makes it the only evidence source in the project whose strength is
-measured rather than written by the model citing it. On one image it is wrong,
-placing a Mexican road in Central Asia, and reports 7%. Wrong answer, honestly
-signalled, and nothing can lean on it further than that.
+Chance is 0.4%. For scale, a frontier model call managed 94 km on the rural
+half of the eval, so a linear layer trained on a laptop in ninety seconds is
+now within about 1.5 times of it rather than 5.6.
+
+The calibration is the part worth having. After temperature scaling the error
+stays under 4% at every encoder, so a more accurate model did not come at the
+cost of an honest one. On the encoder with the full breakdown written up, every
+band above the lowest is slightly underconfident, which is the safe direction to
+be wrong in. That makes it the only evidence source in
+the project whose strength is measured rather than written by the model citing
+it.
 
 The split holds out whole seed locations rather than random images, because
 several photographs were drawn from each 10 km box and a random split would
