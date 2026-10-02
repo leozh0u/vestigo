@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
-const OUT = "/private/tmp/claude-501/-Users-leo-Projects/1a890156-e8d2-41dc-b9d6-faf2d035be6c/scratchpad";
+import fs from "node:fs/promises";
+const OUT = await fs.mkdtemp(".check-");
 const url = process.argv[2] ?? "http://localhost:5173/";
 const b = await puppeteer.launch({ args: ["--use-gl=angle", "--enable-webgl", "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--hide-scrollbars"] });
 const p = await b.newPage();
