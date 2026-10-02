@@ -1,5 +1,5 @@
 {
-  "src": "/opening/intro-e8125d1b6f.mp4",
+  "src": "/opening/intro-a64c22e64b.mp4",
   "seconds": 23.125,
   "open": {
     "rotY": -0.9,
@@ -2610,10 +2610,5 @@
         ]
       ]
     ]
-  },
-  "credits": {
-    "start": 4.875,
-    "end": 17.125,
-    "text": "Airbus; Data SIO, NOAA, U.S. Navy, NGA, GEBCO; Google; Vexcel Imaging US, Inc."
   }
 }
