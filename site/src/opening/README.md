@@ -1,72 +1,40 @@
 # The opening sequence
 
-The cinematic that plays before the page: orbit, down through the atmosphere,
-into Manhattan, through a window, onto a laptop showing this UI.
+The intro runs from Earth through Manhattan, into an apartment and onto a laptop. The laptop screen contains the live page. At the end, that page fills the viewport and becomes interactive. Skip and Escape return directly to the page.
 
-It is built in two halves because the two halves have genuinely different
-answers, and neither of them is "model it in three.js".
+## Render pipeline
 
-## Half one: orbit to Manhattan — Google Photorealistic 3D Tiles
+The published film combines an Earth render, Google Photorealistic 3D Tiles and a Blender apartment. The accepted six-second apartment shot stays intact. A four-second exterior approach connects the city camera to its first frame. Camera position and rotation must agree at the window join.
 
-Not a texture and not a model. Google serves photogrammetry of real cities as
-open-standard 3D tiles, and NASA's `3DTilesRendererJS` streams them into an
-ordinary three.js scene. You fly between real buildings because they are real
-buildings, in the same canvas as the globe, with no cut.
+Local render outputs live under `media/continuous/` and are ignored by Git. The assembly script checks frame counts, duration, black intervals and the window camera join. It produces a review candidate before touching the public manifest.
 
-This is why the globe's own descent stops in orbit: a 4096-pixel texture has no
-detail below about a hundred kilometres, and no amount of camera work invents
-some. The tiles are where the detail comes from.
+```sh
+# Requires Python with Pillow, ffmpeg and the existing rendered inputs.
+node scripts/assemble-connected-intro.mjs
+node scripts/check-screen-portal.mjs
+node scripts/check-intro-guards.mjs
+npm run build
+```
 
-**Needs:** a Google Maps Platform API key with the Map Tiles API enabled.
-1,000 free sessions a month, then $0.60 per thousand. Put it in
-`site/.env.local` as `VITE_GOOGLE_MAPS_KEY=...` — Vite only exposes variables
-prefixed `VITE_`, and `.env.local` is gitignored by default.
+Set `PYTHON` if Pillow is installed in a separate Python environment. The portal check reads the accepted room's `camera.json`.
 
-Before committing to it, check whether billing counts a session or a tile
-request. A flyover pulls a lot of tiles, and that distinction is the difference
-between free forever and a bill.
+After visual review, place the verdict and exact candidate SHA-256 in `approach-final/review.json`. Only a passing verdict for those bytes allows publication:
 
-    npm install 3d-tiles-renderer
+```sh
+node scripts/assemble-connected-intro.mjs --publish
+./scripts/deploy.sh
+```
 
-## Half two: window to laptop — generated video
+The deploy script builds locally, validates asset references and pushes a new commit to `gh-pages` without rewriting history.
 
-Photogrammetry stops at rooftops. There are no interiors in that dataset and
-there is no way to fly through a window into a room with it.
+## City rendering and credits
 
-A room modelled from primitives and lit as though it were photographed looks
-like a room modelled from primitives and lit badly, so the answer is a short
-generated clip: six seconds, window to desk, ending on a dark laptop screen.
-Higgsfield, Runway, Kling or Veo will all do it; Higgsfield has explicit
-camera-move presets, which is what this shot is made of.
+`render-city-bridge.mjs` renders the descent and exterior background. `render-approach.py` renders the apartment facade with transparency. These tools do not extract Google's meshes. A map render requires an enabled Map Tiles API key and a same-day check of the account's no-cash billing condition. The CLI date flag records that check; it does not establish billing status by itself. Keys stay in an ignored environment file.
 
-Save it as `site/public/opening/interior.mp4`.
+The film includes the Google Maps logo, returned provider credits and a promotional-use label. The page repeats those credits during the map segment so they remain readable when a narrow viewport crops the film. See [Google's Map Tiles policies](https://developers.google.com/maps/documentation/tile/policies). Native scene asset sources and licences are recorded in `scripts/scene-assets.json`.
 
-### The handoff, which is why the video does not have to be perfect
+## Live laptop screen
 
-Do **not** cut from the video into the UI. A pixel-perfect match is hard to
-generate and obvious when it is slightly wrong.
+`screen-portal.js` projects the existing page into the laptop's four screen corners using the exported camera track. It moves the actual DOM nodes, including the WebGL canvas, into a temporary stage. A matching hole in the video reveals them. The final transform becomes the viewport's identity transform, then the nodes return to their original positions.
 
-Instead the clip ends on a laptop with a dark screen, the real interface fades
-up *inside the bezel*, and the bezel then scales up and off the edges of the
-frame. Nothing has to match, because the UI appears in a frame this code
-controls. It reads as deliberate rather than as a seam that was got away with.
-
-### Prompt to generate it
-
-> Slow cinematic dolly through an open apartment window at night into a dim
-> Manhattan loft. Moonlight and street light through the glass, dust in the
-> air, shallow depth of field. The camera glides low over a wooden desk and
-> settles on an open laptop, screen dark and reflective, filling the last
-> third of the frame. No people. No text. Locked, steady move, no handheld
-> shake. Photorealistic, 24fps, anamorphic.
-
-Ask for the final frame to hold on the screen for half a second. That still
-frame is what the UI fades up over.
-
-## Falling back
-
-If neither asset is present the page skips the opening and starts on the globe,
-which is the state it is in today. That is a deliberate default rather than an
-error: the site has to work for someone opening it thirty seconds before an
-interview, and a cinematic that fails to load must never be the reason it does
-not.
+The manifest carries the film path, camera state, screen track and credit interval. Missing assets, load errors and timeouts return control to the page. `?introProof` selects the local candidate only in development.

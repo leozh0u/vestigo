@@ -458,6 +458,7 @@ Opening.available().then((src) => {
       globe.setProgress(0);
       globe.progress = 0;
 
+      let animation;
       const step = (now) => {
         const u = Math.min(1, (now - started) / (ms ?? 820));
         const k = ease(u);
@@ -470,9 +471,10 @@ Opening.available().then((src) => {
           lift: at(from.lift, to.lift),
           exposure: at(from.exposure, to.exposure),
         });
-        if (u < 1) requestAnimationFrame(step);
+        if (u < 1) animation = requestAnimationFrame(step);
       };
-      requestAnimationFrame(step);
+      animation = requestAnimationFrame(step);
+      return () => cancelAnimationFrame(animation);
     },
     /*
       Match the page to the picture of it, then hold still through the move.
@@ -496,9 +498,10 @@ Opening.available().then((src) => {
         distance: ui.distance,
         lift: 0,
         exposure: 1,
+        safeBottom: bar?.offsetHeight ?? 0,
       });
     },
-    onFinish: () => {
+    onFinish: ({ portal = false } = {}) => {
       /*
         Give the strip its room back.
 
@@ -514,7 +517,8 @@ Opening.available().then((src) => {
       */
       if (bar) globe.pose({ safeBottom: bar.offsetHeight });
       // After the growth, not during it. The CSS transition is 1100ms.
-      setTimeout(() => { globe.spinning = true; }, 1150);
+      if (portal) globe.spinning = true;
+      else setTimeout(() => { globe.spinning = true; }, 1150);
     },
   }).mount();
 });

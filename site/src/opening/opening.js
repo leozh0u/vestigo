@@ -23,6 +23,7 @@
   manifest beside it. The manifest is small and may be re-fetched freely; the
   video it points at is immutable and never needs to be.
 */
+import { ScreenPortal } from './screen-portal.js';
 const MANIFEST = "/opening/intro.json";
 
 /*
@@ -65,9 +66,11 @@ export class Opening {
   */
   static async available() {
     try {
-      const res = await fetch(MANIFEST, { cache: "no-store" });
+      const proof = import.meta.env.DEV && new URLSearchParams(location.search).has('introProof');
+      const res = await fetch(proof ? '/media/continuous/handoff-proof.json' : MANIFEST,
+        { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (!res.ok) return null;
-      const { src, open, screen, ui } = await res.json();
+      const { src, open, screen, ui, portal, credits } = await res.json();
       if (typeof src !== "string" || !src) return null;
       /*
         The pose the clip opens on, the laptop screen's rectangle in its last
@@ -76,7 +79,8 @@ export class Opening {
         An older manifest has none of them and the page falls back to a fade at
         each end, which is what this used to do everywhere.
       */
-      return { src, open: open ?? null, screen: screen ?? null, ui: ui ?? null };
+      return { src, open: open ?? null, screen: screen ?? null, ui: ui ?? null,
+        portal: portal ?? null, credits: credits ?? null };
     } catch {
       return null;
     }
@@ -121,6 +125,8 @@ export class Opening {
       </div>`;
     parent.append(el);
     this.root = el;
+    this.escape = (event) => { if (event.key === 'Escape') this.finish(); };
+    document.addEventListener('keydown', this.escape);
 
     el.querySelector(".opening-go").addEventListener("click", () => this.begin());
     el.querySelector(".opening-skip").addEventListener("click", () => this.finish());
@@ -128,6 +134,9 @@ export class Opening {
   }
 
   async begin() {
+    if (this.started || this.finished) return;
+    this.started = true;
+    this.root.querySelector('.opening-go').disabled = true;
     this.onBegin?.();
     /*
       Arrive at the clip's first frame, then start the clip.
@@ -149,16 +158,17 @@ export class Opening {
       and the motion starts from a still frame that was already on screen.
     */
     const found = await Opening.available();
+    if (this.finished) return;
     if (!found) {
       this.finish();
       return;
     }
-    const { src, open, screen, ui } = found;
+    const { src, open, screen, ui, portal, credits } = found;
     this.screen = screen;
     this.ui = ui;
 
     document.documentElement.classList.add("entering");
-    this.onEnter?.(open, SETTLE);
+    this.cancelEnter = this.onEnter?.(open, SETTLE);
     this.root?.classList.add("opening-playing");
 
     /*
@@ -178,10 +188,35 @@ export class Opening {
     video.playsInline = true;
     video.preload = "auto";
     this.root.append(video);
+    if (credits) {
+      const source = document.createElement('aside');
+      source.className = 'opening-sources';
+      source.hidden = true;
+      const logo = document.createElement('img');
+      logo.src = '/opening/google-maps.png';
+      logo.alt = 'Google Maps';
+      const text = document.createElement('span');
+      text.textContent = `City background: ${credits.text}. For promotional purposes only.`;
+      source.append(logo, text);
+      this.root.append(source);
+      video.addEventListener('timeupdate', () => {
+        source.hidden = video.currentTime < credits.start || video.currentTime >= credits.end;
+      });
+    }
+    if (portal && Array.isArray(portal.frames) && portal.frames.length > 1) {
+      this.portal = new ScreenPortal(video, portal, () => {
+        this.cancelEnter?.();
+        this.onHandoff?.(this.ui);
+      });
+    }
 
     // A skip that is visible from the first frame. Somebody who has seen this
     // once and came back to show a colleague should not have to sit through it.
-    this.root.querySelector(".opening-skip").classList.add("over-video");
+    const skip = this.root.querySelector('.opening-skip');
+    skip.classList.add('over-video');
+    this.root.append(skip);
+    this.root.querySelector('.opening-inner').inert = true;
+    skip.focus({ preventScroll: true });
 
     video.addEventListener("ended", () => { this.played = true; this.finish(); });
     // A clip that fails mid-play should not strand the visitor on a black
@@ -202,13 +237,24 @@ export class Opening {
       the whole file would hold a still page for no reason.
     */
     const decoded = video.readyState >= 2
-      ? Promise.resolve()
+      ? Promise.resolve(true)
       : new Promise((done) => {
-          video.addEventListener("loadeddata", done, { once: true });
-          video.addEventListener("error", done, { once: true });
+          const settle = (ok) => {
+            clearTimeout(timer);
+            video.removeEventListener('loadeddata', loaded);
+            video.removeEventListener('error', failed);
+            this.abortLoad = null;
+            done(ok);
+          };
+          const loaded = () => settle(true), failed = () => settle(false);
+          const timer = setTimeout(failed, 12000);
+          this.abortLoad = failed;
+          video.addEventListener('loadeddata', loaded, { once: true });
+          video.addEventListener('error', failed, { once: true });
         });
-    await Promise.all([decoded, wait(SETTLE)]);
+    const [ready] = await Promise.all([decoded, wait(SETTLE)]);
     if (this.finished) return;       // skipped while we were waiting
+    if (!ready) { this.finish(); return; }
 
     video.classList.add("opening-video-in");
     await wait(FADE);
@@ -232,9 +278,12 @@ export class Opening {
     } catch {
       if (document.visibilityState === "hidden") {
         const again = () => {
+          if (document.visibilityState !== 'visible') return;
           document.removeEventListener("visibilitychange", again);
-          start().catch(() => this.finish());
+          this.retryVisible = null;
+          if (!this.finished) start().catch(() => this.finish());
         };
+        this.retryVisible = again;
         document.addEventListener("visibilitychange", again);
       } else {
         this.finish();
@@ -245,7 +294,20 @@ export class Opening {
   finish() {
     if (this.finished) return;       // ended and skipped can both arrive
     this.finished = true;
+    document.removeEventListener('keydown', this.escape);
+    if (this.retryVisible) document.removeEventListener('visibilitychange', this.retryVisible);
+    this.root?.querySelector('video')?.pause();
+    this.abortLoad?.();
+    this.cancelEnter?.();
     document.documentElement.classList.remove("entering");
+    if (this.portal) {
+      if (!this.portal.stage) this.onHandoff?.(this.ui);
+      this.portal.finish();
+      this.root?.querySelector('video')?.pause();
+      this.root?.remove();
+      this.onFinish?.({ portal: true });
+      return;
+    }
 
     /*
       Grow the screen into the page.

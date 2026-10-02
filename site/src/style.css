@@ -872,6 +872,41 @@ html, body {
 }
 .opening-video-in { opacity: 1; }
 
+.opening-live-stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: 0 0;
+  background: var(--void);
+  pointer-events: none;
+  will-change: transform;
+}
+.opening-sources {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  min-height: 45px;
+  box-sizing: border-box;
+  padding: 10px 95px 10px 14px;
+  background: #080a0c;
+  color: #fff;
+  font: 11px/1.4 Arial, sans-serif;
+}
+.opening-sources img { height: 18px; width: auto; margin: 0 10px 0 0; vertical-align: middle; }
+.opening-sources[hidden] { display: none; }
+.screen-portal-active .opening { background: transparent; }
+.screen-portal-active .opening-live-stage .examples {
+  transform: none;
+  opacity: 1;
+  transition: none;
+}
+.screen-portal-active .opening-live-stage :is(.machinery, .receipt, .wordmark, .field) {
+  opacity: 1;
+  transition: none;
+}
+
 /*
   The handoff: the laptop screen grows until it is the page.
 
