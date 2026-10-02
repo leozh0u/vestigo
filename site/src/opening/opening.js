@@ -40,8 +40,8 @@ const MANIFEST = "/opening/intro.json";
   video element and a WebGL canvas do not agree to the last level on gamma, and
   a few frames of blend is enough for that never to be visible.
 */
-const SETTLE = 820;
-const FADE = 380;
+const SETTLE = 600;
+const FADE = 250;
 
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -187,6 +187,16 @@ export class Opening {
     video.muted = true;              // autoplay is blocked otherwise
     video.playsInline = true;
     video.preload = "auto";
+    // Move through orbit and the city faster, then ease back to the accepted
+    // room's speed. Media time still drives the screen track and credits.
+    if (Number.isFinite(portal?.start) && portal.start > 4) {
+      const pace = () => {
+        const u = Math.min(1, Math.max(0, (video.currentTime - (portal.start - 4)) / 4));
+        video.playbackRate = 1 + 0.3 * (1 - u * u * (3 - 2 * u));
+      };
+      pace();
+      video.addEventListener('timeupdate', pace);
+    }
     this.root.append(video);
     if (credits) {
       const source = document.createElement('aside');
