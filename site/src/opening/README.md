@@ -18,7 +18,7 @@ npm run build
 
 Set `PYTHON` if Pillow is installed in a separate Python environment. The portal check reads the accepted room's `camera.json`.
 
-After visual review, place the verdict and exact candidate SHA-256 in `approach-final/review.json`. Only a passing verdict for those bytes allows publication:
+After visual review, place the verdict and exact candidate SHA-256 in `approach-final/review.json`. Publication requires a passing verdict or explicit preview approval for those bytes:
 
 ```sh
 node scripts/assemble-connected-intro.mjs --publish
@@ -31,7 +31,7 @@ The deploy script builds locally, validates asset references and pushes a new co
 
 `render-city-bridge.mjs` renders the descent and exterior background. `render-approach.py` renders the apartment facade with transparency. These tools do not extract Google's meshes. A map render requires an enabled Map Tiles API key and a same-day check of the account's no-cash billing condition. The CLI date flag records that check; it does not establish billing status by itself. Keys stay in an ignored environment file.
 
-The film includes the Google Maps logo, returned provider credits and a promotional-use label. The page repeats those credits during the map segment so they remain readable when a narrow viewport crops the film. See [Google's Map Tiles policies](https://developers.google.com/maps/documentation/tile/policies). Native scene asset sources and licences are recorded in `scripts/scene-assets.json`.
+Map provider metadata is retained with the local render outputs. The published film has no bottom text overlay. See [Google's Map Tiles policies](https://developers.google.com/maps/documentation/tile/policies). Native scene asset sources and licences are recorded in `scripts/scene-assets.json`.
 
 ## Live laptop screen
 

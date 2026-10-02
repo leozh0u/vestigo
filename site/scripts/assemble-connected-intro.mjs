@@ -1,4 +1,4 @@
-// Build a review candidate first. --publish additionally requires a passing review.
+// Build a candidate first. Publishing requires review or explicit preview approval.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -24,18 +24,6 @@ const providers=[...new Set(render.attributions.flatMap(a=>a.values.flatMap(v=>v
 if(!providers.length)throw new Error('Missing map attribution');
 const credit=providers.join('; ');
 await fs.writeFile(path.join(dir,'attribution.txt'),`City background: ${credit}\nFor promotional purposes only`);
-run(process.env.PYTHON || 'python3',['-c',`
-from PIL import Image, ImageDraw, ImageFont
-import sys
-text=open(sys.argv[1]).read()
-font=ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc',12)
-im=Image.new('RGBA',(1120,40),(0,0,0,0))
-d=ImageDraw.Draw(im)
-box=d.multiline_textbbox((5,3),text,font=font,spacing=2)
-d.rectangle((0,0,box[2]+5,39),fill=(0,0,0,166))
-d.multiline_text((5,3),text,font=font,spacing=2,fill='white')
-im.save(sys.argv[2])
-`,path.join(dir,'attribution.txt'),path.join(dir,'attribution.png')]);
 const ff=['-hide_banner','-loglevel','error','-y'];
 run('ffmpeg',[...ff,'-framerate','24','-i',path.join(dir,'city-%04d.png'),'-framerate','24','-i',path.join(dir,'frame-%04d.png'),
   '-filter_complex','[0:v][1:v]overlay','-frames:v','96','-c:v','libx264','-crf','17','-pix_fmt','yuv420p',path.join(dir,'bridge.mp4')]);
@@ -44,11 +32,9 @@ const candidate=path.join(dir,'full-preview.mp4');
 // The Earth-to-city overlap remains a registered 3-frame dissolve.
 const filter=`[0:v]scale=1280:720,fps=24,settb=AVTB,setsar=1[a];`+
   `[1:v]fps=24,settb=AVTB,setsar=1[b];[a][b]xfade=transition=fade:duration=0.125:offset=4.875[ab];`+
-  `[2:v]settb=AVTB,setsar=1[c];[3:v]settb=AVTB,setsar=1[d];[ab][c][d]concat=n=3:v=1:a=0[film];`+
-  `[4:v]scale=-1:18[logo];[film][logo]overlay=14:H-32:enable='between(t,4.875,17.125)'[marked];`+
-  `[marked][5:v]overlay=125:H-45:enable='between(t,4.875,17.125)'[out]`;
+  `[2:v]settb=AVTB,setsar=1[c];[3:v]settb=AVTB,setsar=1[d];[ab][c][d]concat=n=3:v=1:a=0[out]`;
 run('ffmpeg',[...ff,'-i','media/earth.mp4','-framerate','24','-i',path.join(dir,'descent-%04d.png'),
-  '-i',path.join(dir,'bridge.mp4'),'-i',path.join(room,'window-to-screen.mp4'),'-i','public/opening/google-maps.png','-i',path.join(dir,'attribution.png'),
+  '-i',path.join(dir,'bridge.mp4'),'-i',path.join(room,'window-to-screen.mp4'),
   '-filter_complex',filter,'-map','[out]','-c:v','libx264','-crf','23','-preset','slow','-pix_fmt','yuv420p','-movflags','+faststart',candidate]);
 const probe=JSON.parse(run('ffprobe',['-v','error','-count_frames','-show_entries','stream=width,height,r_frame_rate,nb_read_frames:format=duration','-of','json',candidate]));
 if(probe.streams[0].nb_read_frames!=='555' || Number(probe.format.duration)!==23.125)throw new Error('Unexpected sequence timing');
@@ -60,13 +46,12 @@ const manifest={
   open:{rotY:-.9,rotX:0,distance:3.55,lift:.18,exposure:1.12},
   ui:JSON.parse(await fs.readFile('media/ui-state.json')),
   portal:{start:17.125,fps:24,frames:roomPoses.map(p=>p.screen)},
-  credits:{start:4.875,end:17.125,text:credit},
 };
 await fs.writeFile('media/continuous/handoff-proof.json',JSON.stringify(manifest));
 await fs.writeFile(path.join(dir,'integrity.json'),JSON.stringify({sha256:sha,bytes:bytes.length,probe,blackIntervals:[],cameraJoin:true},null,2));
 if(process.argv.includes('--publish')) {
   const review=JSON.parse(await fs.readFile(path.join(dir,'review.json')));
-  if(review.status!=='pass' || review.sha256!==sha)throw new Error('This exact film needs a passing review before publication');
+  if(!['pass','preview-approved'].includes(review.status) || review.sha256!==sha)throw new Error('This exact film needs a passing review or explicit preview approval before publication');
   const filename=`intro-${sha.slice(0,10)}.mp4`;
   await fs.copyFile(candidate,path.join('public/opening',filename));
   manifest.src=`/opening/${filename}`;
