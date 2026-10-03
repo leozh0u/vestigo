@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
 const dir=path.resolve(process.argv.find(a=>a.startsWith('--dir='))?.slice(6) || 'media/continuous/approach-final');
-const room=path.resolve('media/continuous/round-3-motion');
+const room=path.resolve(process.argv.find(a=>a.startsWith('--room='))?.slice(7) || 'media/continuous/round-3-motion');
 const run=(command,args)=>{
   const p=spawnSync(command,args,{encoding:'utf8',maxBuffer:8*1024*1024});
   if(p.status!==0)throw new Error(`${command} failed: ${p.stderr?.slice(-2000)}`);

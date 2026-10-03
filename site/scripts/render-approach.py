@@ -9,7 +9,7 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--out', default='exterior-realism-3')
+parser.add_argument('--out', default='exterior-rebuild-1')
 parser.add_argument('--frames', default='1,13,25,37,49,61,73,85,97')
 parser.add_argument('--width', type=int, default=1280)
 parser.add_argument('--samples', type=int, default=48)
@@ -29,7 +29,8 @@ scene.render.engine = 'CYCLES'
 scene.cycles.samples = args.samples
 scene.render.resolution_x = args.width
 scene.render.resolution_y = round(args.width*9/16)
-scene.render.use_motion_blur = False
+scene.render.use_motion_blur = True
+scene.render.motion_blur_shutter = .04
 scene.render.film_transparent=True
 scene.render.image_settings.color_mode='RGBA'
 scene.frame_end = 97
@@ -52,16 +53,6 @@ def box(name, loc, size, material):
 # Exterior geometry is separate from the accepted room and shared camera.
 import runpy
 runpy.run_path(str(Path(__file__).with_name('exterior-details.py')))['build'](box, brick, ivory, iron)
-
-# Broad daylight on the exterior; smoothly meet the room's established fill
-# as the camera reaches its window. The accepted endpoint remains unchanged.
-fill = bpy.data.objects['Soft daylight through the open sash'].data
-fill.animation_data_clear()
-for f, energy, size in [(1, 55, 8), (78, 55, 8), (85, 105, 6.8), (97, 450, 3)]:
-    fill.energy = energy
-    fill.size = size
-    fill.keyframe_insert(data_path='energy', frame=f)
-    fill.keyframe_insert(data_path='size', frame=f)
 
 # Match the usable aerial frame at 8.25 seconds, then meet the accepted room camera.
 t=8.25/9.4

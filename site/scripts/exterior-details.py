@@ -64,123 +64,106 @@ def build(box, brick, ivory, iron):
         bump=n.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.2;bump.inputs['Distance'].default_value=.004
         links.new(noise.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs[0],p.inputs['Normal'])
 
-    glasses=[]
-    for i in range(5):
-        m=mat('Old window glass '+str(i),(.88,.94,.97),.025+i*.008,0)
-        p=m.node_tree.nodes.get('Principled BSDF')
-        p.inputs['Transmission Weight'].default_value=1
-        p.inputs['IOR'].default_value=1.48
-        n=m.node_tree.nodes; links=m.node_tree.links
-        tex=n.new('ShaderNodeTexNoise');tex.inputs['Scale'].default_value=5;tex.inputs['Detail'].default_value=2
-        bump=n.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.12;bump.inputs['Distance'].default_value=.018
-        links.new(tex.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs[0],p.inputs['Normal'])
-        glasses.append(m)
-
-    # A reflection-only card reuses the saved city image. It creates parallax in
-    # the glazing without fetching tiles or altering the accepted room lighting.
-    reflection=mat('Saved city reflection',(.1,.1,.1))
-    n=reflection.node_tree.nodes;links=reflection.node_tree.links;n.clear()
-    out=n.new('ShaderNodeOutputMaterial');em=n.new('ShaderNodeEmission');em.inputs['Strength'].default_value=.8
-    image=n.new('ShaderNodeTexImage');image.image=bpy.data.images.load(str(Path(__file__).resolve().parents[1]/'media/continuous/approach-final/city-0061.png'))
-    links.new(image.outputs['Color'],em.inputs['Color'])
-    # Reflect only into the added upper stories. Rays from the accepted room
-    # pass through, preserving its original window and interior reflections.
-    geom=n.new('ShaderNodeNewGeometry');ray=n.new('ShaderNodeLightPath')
-    scale=n.new('ShaderNodeVectorMath');scale.operation='SCALE'
-    links.new(geom.outputs['Incoming'],scale.inputs[0]);links.new(ray.outputs['Ray Length'],scale.inputs[3])
-    add=n.new('ShaderNodeVectorMath');add.operation='ADD'
-    links.new(geom.outputs['Position'],add.inputs[0]);links.new(scale.outputs[0],add.inputs[1])
-    xyz=n.new('ShaderNodeSeparateXYZ');links.new(add.outputs[0],xyz.inputs[0])
-    upper=n.new('ShaderNodeMath');upper.operation='GREATER_THAN';upper.inputs[1].default_value=4.7;links.new(xyz.outputs['Z'],upper.inputs[0])
-    transparent=n.new('ShaderNodeBsdfTransparent');mix=n.new('ShaderNodeMixShader')
-    links.new(upper.outputs[0],mix.inputs[0]);links.new(transparent.outputs[0],mix.inputs[1]);links.new(em.outputs[0],mix.inputs[2]);links.new(mix.outputs[0],out.inputs['Surface'])
-    bpy.ops.mesh.primitive_plane_add(size=2,location=(0,-23,14),rotation=(math.pi/2,0,0))
-    card=bpy.context.object;card.name='City reflection only';card.scale=(35,22,1);card.data.materials.append(reflection)
-    card.visible_camera=False;card.visible_diffuse=False;card.visible_shadow=False;card.visible_transmission=False
-
-    stain=mat('Sill runoff',(.07,.052,.033),1)
-    n=stain.node_tree.nodes;links=stain.node_tree.links;p=n.get('Principled BSDF');out=n.get('Material Output')
-    tc=n.new('ShaderNodeTexCoord');xyz=n.new('ShaderNodeSeparateXYZ');links.new(tc.outputs['Generated'],xyz.inputs[0])
-    noise=n.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=7;noise.inputs['Detail'].default_value=3
-    stretch=n.new('ShaderNodeVectorMath');stretch.operation='MULTIPLY';stretch.inputs[1].default_value=(4,1,.3)
-    links.new(tc.outputs['Generated'],stretch.inputs[0]);links.new(stretch.outputs[0],noise.inputs[0])
-    fade=n.new('ShaderNodeMath');fade.operation='MULTIPLY';links.new(xyz.outputs['Z'],fade.inputs[0]);links.new(noise.outputs['Fac'],fade.inputs[1])
-    strength=n.new('ShaderNodeMath');strength.operation='MULTIPLY';strength.inputs[1].default_value=.38;links.new(fade.outputs[0],strength.inputs[0])
-    clear=n.new('ShaderNodeBsdfTransparent');mix=n.new('ShaderNodeMixShader');links.new(strength.outputs[0],mix.inputs[0]);links.new(clear.outputs[0],mix.inputs[1]);links.new(p.outputs[0],mix.inputs[2]);links.new(mix.outputs[0],out.inputs[0])
-
-    # One coordinate space keeps brick courses aligned across piers/spandrels.
+    # Authored CC0 architectural modules retain their UVs, mouldings and worn paint.
+    # All masonry uses one world coordinate frame so mortar courses line up.
     anchor=bpy.data.objects.new('Exterior masonry coordinates',None)
     bpy.context.collection.objects.link(anchor)
-    facade=brick.copy(); facade.name='Exterior aged brick'
+    anchor.rotation_euler=(0,0,0)
+    facade=brick.copy();facade.name='Continuous facade brick'
+    for node in facade.node_tree.nodes:
+        if node.type=='TEX_COORD':node.object=anchor
     n=facade.node_tree.nodes; links=facade.node_tree.links
+    p=n.get('Principled BSDF')
+    coords=n.new('ShaderNodeTexCoord');coords.object=anchor
+    split=n.new('ShaderNodeSeparateXYZ');links.new(coords.outputs['Object'],split.inputs[0])
+    uv=n.new('ShaderNodeCombineXYZ');links.new(split.outputs['X'],uv.inputs['X']);links.new(split.outputs['Z'],uv.inputs['Y'])
+    scale=n.new('ShaderNodeVectorMath');scale.operation='SCALE';scale.inputs[3].default_value=.72;links.new(uv.outputs[0],scale.inputs[0])
     for node in n:
-        if node.type=='TEX_COORD': node.object=anchor
-    bs=n.get('Principled BSDF')
-    original=bs.inputs['Base Color'].links[0].from_socket
-    tc=n.new('ShaderNodeTexCoord');tc.object=anchor
-    stretch=n.new('ShaderNodeVectorMath');stretch.operation='MULTIPLY';stretch.inputs[1].default_value=(1.3,1.3,.12)
-    links.new(tc.outputs['Object'],stretch.inputs[0])
-    noise=n.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=1.6;noise.inputs['Detail'].default_value=4
-    links.new(stretch.outputs[0],noise.inputs['Vector'])
-    ramp=n.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].position=.24;ramp.color_ramp.elements[0].color=(.43,.40,.36,1)
-    ramp.color_ramp.elements[1].position=.72;ramp.color_ramp.elements[1].color=(.92,.89,.84,1)
-    links.new(noise.outputs['Fac'],ramp.inputs[0])
-    mix=n.new('ShaderNodeMixRGB');mix.blend_type='MULTIPLY';mix.inputs[0].default_value=.6
-    links.new(original,mix.inputs[1]);links.new(ramp.outputs[0],mix.inputs[2]);links.new(mix.outputs[0],bs.inputs['Base Color'])
+        if node.type=='TEX_IMAGE':
+            node.projection='FLAT';links.new(scale.outputs[0],node.inputs['Vector'])
+    tex=n.new('ShaderNodeTexImage')
+    tex.image=bpy.data.images.load(str(Path(__file__).resolve().parents[1]/'media/continuous/assets/red_brick_03/Displacement.jpg'))
+    tex.image.colorspace_settings.name='Non-Color';tex.projection='FLAT'
+    mapping=scale
+    links.new(mapping.outputs[0],tex.inputs['Vector'])
+    bump=n.new('ShaderNodeBump');bump.inputs['Distance'].default_value=.012;bump.inputs['Strength'].default_value=.55
+    links.new(tex.outputs['Color'],bump.inputs['Height']);links.new(bump.outputs['Normal'],p.inputs['Normal'])
+    for obj in bpy.data.objects:
+        if obj.name.startswith('Masonry'):
+            obj.data.materials.clear();obj.data.materials.append(facade)
 
-    # Keep the room shell intact. The upper wall has true apertures and deep reveals.
-    box('Building lower stories',(0,11,-9),(14,23,14),brick)
-    box('Upper rear mass',(0,12.5,13.05),(18,20,16.9),facade)
-    xs=[-6.6,-3.3,0,3.3,6.6]; zs=[6,9.3,12.6,15.9,19.2]
-    for lo,hi in zip([-9]+[x+.68 for x in xs], [x-.68 for x in xs]+[9]):
-        box('Masonry pier',((lo+hi)/2,.98,13.05),(hi-lo,3,16.9),facade)
-    for lo,hi in zip([4.6]+[z+1.02 for z in zs], [z-1.02 for z in zs]+[21.5]):
-        for x in xs:
-            box('Masonry spandrel',(x,.98,(lo+hi)/2),(1.36,3,hi-lo),facade)
-    detail('Transition stone belt',(0,-.54,4.57),(18.1,.24,.16),stone)
-    for x in [-6.15,6.15]:box('Extended side facade',(x,-.23,1.4),(1.7,.48,6.4),brick)
+    asset=Path(__file__).resolve().parents[1]/'media/continuous/assets/modular_urban_apartments_facade'
+    names=['wall_window_centered_small_01','window_centered_small_01',
+           'wall_window_centered_large_01','window_centered_large_01','crown_standard_standard_01']
+    before=set(bpy.data.images)
+    with bpy.data.libraries.load(str(asset/'modular_urban_apartments_facade_2k.blend'),link=False) as (src,dst):
+        dst.objects=list(names)
+    sources={obj.name:obj for obj in dst.objects}
+    for image in set(bpy.data.images)-before:
+        if image.source=='FILE':
+            image.filepath=str(asset/'textures'/Path(image.filepath).name)
+            image.reload()
+    glass=mat('Architectural clear glazing',(.94,.97,.98),.075)
+    g=glass.node_tree.nodes.get('Principled BSDF');g.inputs['Transmission Weight'].default_value=1;g.inputs['IOR'].default_value=1.46
+    for source in sources.values():
+        for i,m in enumerate(source.data.materials):
+            if m.name.endswith('_plaster'):source.data.materials[i]=facade
+            elif m.name.endswith('_glass'):source.data.materials[i]=glass
 
-    for row,z in enumerate(zs):
+    def module(name,x,z):
+        source=sources[name];obj=source.copy();obj.data=source.data
+        obj.parent=None;obj.location=(x+1.65,-.48,z);obj.scale=(1.1,1,1.1)
+        bpy.context.collection.objects.link(obj)
+        return obj
+
+    # Five bays, five upper floors, deep rooms behind the windows. The selected
+    # open window below remains aligned with the continuous camera flight.
+    box('Building lower stories',(0,11,-9),(16.5,23,14),facade)
+    box('Upper rear mass',(0,13.2,12.85),(16.5,18.6,16.5),facade)
+    for side in [-1,1]:
+        box('Building return',(side*8.14,11,12.85),(.22,23,16.5),facade)
+        box('Lower facade extension',(side*6.76,-.23,1.4),(2.98,.48,6.4),facade)
+    xs=[-6.6,-3.3,0,3.3,6.6]
+    for row in range(5):
+        base=4.6+row*3.3
         for col,x in enumerate(xs):
-            trim=trims[rng.randrange(len(trims))]
-            glass=glasses[rng.randrange(len(glasses))]
-            # Dark recess, reflective inset glazing, separate rails and putty lines.
-            box('Recess back',(x,1.0,z),(1.35,.08,2.02),shadow)
-            box('Inset glass',(x,-.17,z),(1.18,.008,1.88),glass)
-            for side in [-1,1]:
-                detail('Recess jamb',(x+side*.626,-.29,z),(.09,.27,2.04),trim,.007)
-                detail('Sash side',(x+side*.562,-.23,z),(.045,.07,1.9),trim,.004)
-            for dz in [-.975,.975]:detail('Recess head and foot',(x,-.29,z+dz),(1.34,.27,.09),trim,.007)
-            detail('Sash centre rail',(x,-.235,z-.04),(1.17,.075,.075),trim,.006)
-            detail('Stone sill',(x,-.52,z-1.06),(1.57,.53,.15),stone,.025)
-            detail('Lintel',(x,-.535,z+1.11),(1.54,.16,.19),stone,.012)
-            # Differing partial blinds sit in front of dark panes to read at speed.
-            if rng.random()<.78:
-                drop=rng.uniform(.24,1.3)
+            variant='large' if col in (0,4) else 'small'
+            wall=module('wall_window_centered_'+variant+'_01',x,base)
+            solid=wall.modifiers.new('Masonry reveal depth','SOLIDIFY');solid.thickness=.24;solid.offset=-1
+            module('window_centered_'+variant+'_01',x,base)
+            width=2.05*1.1 if variant=='large' else 1.05*1.1
+            box('Apartment recess',(x,2.1,base+1.26),(width,.15,2.55),shadow)
+            for side in [-1,1]:box('Window interior reveal',(x+side*(width/2+.015),.85,base+1.28),(.04,2.6,2.56),shadow)
+            box('Recess ceiling',(x,.9,base+2.57),(width,2.7,.05),shadow)
+            if rng.random()<.82:
+                drop=rng.uniform(.35,1.7)
                 blind=blinds[rng.randrange(len(blinds))]
-                box('Lowered blind',(x,.02,z+.91-drop/2),(1.1,.014,drop),blind)
-                for j in range(int(drop/.065)):
-                    box('Blind slat shadow',(x,.009,z+.91-j*.065),(1.09,.009,.009),trims[0])
-                detail('Blind bottom rail',(x,.004,z+.91-drop),(1.11,.025,.024),trim,.003)
-            if (row*5+col) in [2,6,13,19,22]:
-                detail('Window AC casing',(x,-.64,z-.79),(.82,.62,.4),vent,.025)
-                box('AC intake',(x,-.959,z-.79),(.71,.012,.28),iron)
-                for j in range(9):box('AC grille',(x-.32+j*.08,-.974,z-.79),(.014,.018,.27),flashing)
-                detail('AC support',(x,-.54,z-1.01),(.88,.64,.055),rust,.008)
-            # Slightly irregular sealant under sills and drip stains.
-            box('Rain streaks',(x,-.523,z-1.40),(1.46,.002,.47),stain)
-            box('Sill underside',(x,-.535,z-1.155),(1.42,.024,.025),darkstone)
+                box('Apartment blind',(x,.15,base+2.35-drop/2),(width-.1,.018,drop),blind)
+                for j in range(int(drop/.07)):
+                    box('Blind slat',(x,.133,base+2.35-j*.07),(width-.11,.018,.014),trims[0])
+            detail('Stone window sill',(x,-.51,base-.035),(width+.22,.53,.13),stone,.02)
+    for x in xs:module('crown_standard_standard_01',x,21.1)
+    for source in sources.values():bpy.data.objects.remove(source,do_unlink=True)
 
+    # Stable lighting for both approach and room. The interior fill is physically
+    # inside the opening, aimed inward, so it cannot paint a hotspot on the facade.
+    from mathutils import Vector
+    key=bpy.data.objects['Soft daylight through the open sash']
+    key.data.animation_data_clear();key.location=(0,.16,2.55)
+    key.data.energy=65;key.data.size=1.2;key.data.shape='DISK'
+    key.rotation_euler=(Vector((0,3.4,1.0))-key.location).to_track_quat('-Z','Y').to_euler()
+    key.data.color=(.9,.94,1)
+    bpy.data.objects['Late afternoon sun'].data.specular_factor=.2
     # Roofing has seams, repairs and equipment with physical scale and shadows.
-    box('Roof deck',(0,11,21.65),(18,23,.3),tar)
+    box('Roof deck',(0,11,21.65),(16.5,23,.3),tar)
     for x in range(-8,9,2):box('Roof membrane seam',(x,11,21.806),(.025,22.5,.01),patch)
     for x,y,w,h in [(-4,5,2.3,3.1),(5,16,3.1,2.0),(1,11,1.3,4.8)]:box('Roof patch',(x,y,21.81),(w,h,.012),patch)
-    for x in [-8.8,8.8]:
+    for x in [-8.05,8.05]:
         box('Side parapet',(x,11,22),(.45,23,.7),facade)
         detail('Side coping',(x,11,22.39),(.57,23.1,.12),darkstone,.02)
-    box('Front parapet',(0,-.35,22),(18.3,.55,.7),facade)
-    detail('Parapet coping',(0,-.35,22.39),(18.45,.68,.12),darkstone,.02)
-    box('Rear parapet',(0,22.25,22),(18,.45,.7),facade)
+    box('Front parapet',(0,-.35,22),(16.65,.55,.7),facade)
+    detail('Parapet coping',(0,-.35,22.39),(16.8,.68,.12),darkstone,.02)
+    box('Rear parapet',(0,22.25,22),(16.5,.45,.7),facade)
     for x,y in [(-5.6,8),(5.3,15)]:
         detail('Roof HVAC plinth',(x,y,21.94),(2.1,2.5,.27),darkstone,.04)
         detail('Roof HVAC housing',(x,y,22.46),(1.8,2.15,.8),vent,.035)
@@ -195,5 +178,5 @@ def build(box, brick, ivory, iron):
         pipe('Plumbing flashing',x,y,21.86,.28,.08,flashing)
         pipe('Plumbing stack',x,y,22.18,.07,.7,iron)
     for z in [7,11,15,19]:
-        detail('Drain bracket',(8.3,-.60,z),(.18,.08,.04),iron,.003)
-    pipe('Rainwater downpipe',8.3,-.69,13.0,.07,17,iron)
+        detail('Drain bracket',(7.85,-.60,z),(.18,.08,.04),iron,.003)
+    pipe('Rainwater downpipe',7.85,-.69,13.0,.07,17,iron)
