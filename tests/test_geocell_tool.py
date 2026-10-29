@@ -13,7 +13,11 @@ from vestigo.tools.geocell import REACH, GeocellTool
 torch = pytest.importorskip("torch", reason="needs the ML stack")
 CHECKPOINT_MISSING = not __import__("pathlib").Path(
     "ml/checkpoints/geocell_head.pt").exists()
-needs_model = pytest.mark.skipif(CHECKPOINT_MISSING, reason="classifier not trained")
+needs_checkpoint = pytest.mark.skipif(CHECKPOINT_MISSING, reason="classifier not trained")
+needs_model = pytest.mark.skipif(
+    CHECKPOINT_MISSING or not __import__("pathlib").Path(
+        "data/images/rural_7ee09e498b.jpg").exists(),
+    reason="optional classifier and evaluation image are required")
 
 
 def test_the_tool_declares_itself_region_level():
@@ -90,6 +94,7 @@ def test_its_cells_become_candidates_weighted_by_confidence():
     assert max(priors) == pytest.approx(result.max_strength)
 
 
+@needs_checkpoint
 def test_the_checkpoint_names_the_encoder_it_was_trained_against():
     """A head trained on 768-dimensional vectors is useless against a
     512-dimensional encoder, and the two lived in different files with nothing
@@ -129,6 +134,8 @@ def test_embeddings_carry_the_exact_names_they_were_made_with():
     """
     import json
     import pathlib
+    if not pathlib.Path("ml/embeddings").is_dir():
+        pytest.skip("optional saved embeddings are not present")
     for d in pathlib.Path("ml/embeddings").iterdir():
         if not ((d / "vectors.npy").exists() and (d / "encoder.json").exists()):
             continue
@@ -146,6 +153,8 @@ def test_a_joined_set_is_as_wide_as_its_halves_together():
     import pathlib
     import numpy as np
     root = pathlib.Path("ml/embeddings")
+    if not root.is_dir():
+        pytest.skip("optional saved embeddings are not present")
     for d in root.iterdir():
         marker = d / "encoder.json"
         if not (marker.exists() and (d / "vectors.npy").exists()):

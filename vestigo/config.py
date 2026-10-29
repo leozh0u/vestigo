@@ -29,18 +29,21 @@ REASONER = "claude-sonnet-5"
 
 
 def build(preset: str = "cheap", *, limit_usd: float | None = 5.0,
-          cache_dir: str = ".cache/llm", batched: bool = False) -> tuple[Router, Budget]:
+          cache_dir: str = ".cache/llm", batched: bool = False,
+          cache_only: bool = False) -> tuple[Router, Budget]:
     """A router and the budget watching it.
 
     The budget is returned rather than hidden, because the number worth looking
     at after a run is `budget.by_label()`, which says which step spent what.
 
-    `batched` halves the price and costs nothing in convenience on an eval,
-    since nothing is waiting on one.
+    `cache_only` refuses every cache miss before contacting a provider.
+    Synchronous providers reject `batched`; a discount cannot be requested
+    without implementing the vendor's actual Batch API.
     """
     budget = Budget(limit_usd)
     cache = CompletionCache(cache_dir)
-    common = {"cache": cache, "budget": budget, "batched": batched}
+    common = {"cache": cache, "budget": budget, "batched": batched,
+              "cache_only": cache_only}
 
     def anthropic(model: str) -> Provider:
         return AnthropicProvider(model, **common)
@@ -59,14 +62,16 @@ def build(preset: str = "cheap", *, limit_usd: float | None = 5.0,
         # Extraction on this machine, so the highest-volume call has no
         # marginal cost at all.
         return Router(anthropic(REASONER),
-                      {"extract": LocalProvider(cache=cache, budget=budget)}), budget
+                      {"extract": LocalProvider(cache=cache, budget=budget,
+                                                cache_only=cache_only)}), budget
 
     if preset == "kimi":
         # A second vendor, for the comparison the calibration thesis wants.
         # Add its current rate to PRICING first, or the budget will refuse it,
         # which is the intended behaviour rather than an obstacle.
         return Router(MoonshotProvider(**common),
-                      {"extract": LocalProvider(cache=cache, budget=budget)}), budget
+                      {"extract": LocalProvider(cache=cache, budget=budget,
+                                                cache_only=cache_only)}), budget
 
     if preset == "openrouter":
         # One key, two vendors, so the cross-model comparison the calibration

@@ -61,11 +61,12 @@ export class Player {
       this.show(0);
     }
 
+    if (!Number.isFinite(dt) || dt < 0) return;
     this.elapsed += dt * 1000;
-    const step = this.steps[this.index];
-    const hold = step ? (HOLD[step.kind] ?? HOLD.default) : 0;
-
-    while (!this.done && this.elapsed >= hold) {
+    while (!this.done) {
+      const step = this.steps[this.index];
+      const hold = step ? (HOLD[step.kind] ?? HOLD.default) : 0;
+      if (this.elapsed < hold) return;
       this.elapsed -= hold;
       this.index += 1;
       if (this.index >= this.steps.length) {
@@ -74,10 +75,16 @@ export class Player {
         return;
       }
       this.show(this.index);
-      // Recompute, since the next step may hold for a different length.
-      const next = this.steps[this.index];
-      if ((HOLD[next.kind] ?? HOLD.default) > this.elapsed) break;
     }
+  }
+
+  finish() {
+    if (this.cancelled || this.done) return;
+    for (let i = this.started ? this.index + 1 : 0; i < this.steps.length; i++) this.show(i);
+    this.started = true;
+    this.index = this.steps.length;
+    this.done = true;
+    this.onDone?.(this.final);
   }
 
   show(i) {

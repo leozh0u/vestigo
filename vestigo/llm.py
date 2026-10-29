@@ -28,10 +28,15 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
+import os
 import pathlib
+import tempfile
 import threading
 import time
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
@@ -44,6 +49,10 @@ class LLMError(RuntimeError):
 
 class BudgetExceeded(LLMError):
     """The call was refused because it would spend past the ceiling."""
+
+
+class CacheMiss(LLMError):
+    """An offline replay has no saved response for this exact request."""
 
 
 # --------------------------------------------------------------------------
@@ -150,6 +159,14 @@ class Usage:
     model: str = ""
     batched: bool = False
 
+    def __post_init__(self) -> None:
+        for name in ("input_tokens", "output_tokens", "cached_tokens"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{name} must be a non-negative integer")
+        if self.cached_tokens > self.input_tokens:
+            raise ValueError("cached_tokens cannot exceed input_tokens")
+
     @property
     def cost_usd(self) -> float | None:
         """None when the model has no price on file. Never zero by default."""
@@ -230,6 +247,8 @@ class Budget:
     """
 
     def __init__(self, limit_usd: float | None = None, *, allow_unpriced: bool = False):
+        if limit_usd is not None and (not math.isfinite(limit_usd) or limit_usd < 0):
+            raise ValueError("budget limit must be finite and non-negative")
         self.limit_usd = limit_usd
         self.allow_unpriced = allow_unpriced
         self.entries: list[tuple[str, Usage]] = []
@@ -238,6 +257,9 @@ class Budget:
         # only one of them has, and the ceiling leaks by roughly the number of
         # workers times the cost of one call.
         self._lock = threading.Lock()
+        self._reservations: dict[object, float] = {}
+        self._capture: ContextVar[list[tuple[str, Usage]] | None] = ContextVar(
+            f"budget_capture_{id(self)}", default=None)
 
     @property
     def spent_usd(self) -> float:
@@ -245,7 +267,8 @@ class Budget:
 
     @property
     def remaining_usd(self) -> float:
-        return float("inf") if self.limit_usd is None else self.limit_usd - self.spent_usd
+        return (float("inf") if self.limit_usd is None else
+                self.limit_usd - self.spent_usd - sum(self._reservations.values()))
 
     @property
     def unpriced_calls(self) -> int:
@@ -256,20 +279,53 @@ class Budget:
             self._check(model, estimated_usd)
 
     def _check(self, model: str, estimated_usd: float) -> None:
+        if not math.isfinite(estimated_usd) or estimated_usd < 0:
+            raise ValueError("estimated spend must be finite and non-negative")
         if model not in PRICING and not self.allow_unpriced:
             raise BudgetExceeded(
                 f"no price on file for {model!r}. Add it to PRICING, or build the "
                 "budget with allow_unpriced=True and accept that spend is untracked."
             )
-        if self.limit_usd is not None and self.spent_usd + estimated_usd > self.limit_usd:
+        committed = self.spent_usd + sum(self._reservations.values())
+        if self.limit_usd is not None and committed + estimated_usd > self.limit_usd:
             raise BudgetExceeded(
-                f"would spend ${self.spent_usd + estimated_usd:.4f} against a "
+                f"would spend ${committed + estimated_usd:.4f} against a "
                 f"${self.limit_usd:.2f} ceiling"
             )
+
+    def reserve(self, model: str, estimated_usd: float) -> object:
+        """Atomically claim capacity while a provider call is in flight."""
+        with self._lock:
+            self._check(model, estimated_usd)
+            token = object()
+            self._reservations[token] = estimated_usd
+            return token
+
+    def settle(self, token: object, label: str, usage: Usage | None = None) -> None:
+        with self._lock:
+            del self._reservations[token]
+            if usage is not None:
+                self.entries.append((label, usage))
+                captured = self._capture.get()
+                if captured is not None:
+                    captured.append((label, usage))
+
+    @contextmanager
+    def capture(self):
+        """Account for one run without including concurrent runs' requests."""
+        entries: list[tuple[str, Usage]] = []
+        token = self._capture.set(entries)
+        try:
+            yield entries
+        finally:
+            self._capture.reset(token)
 
     def record(self, label: str, usage: Usage) -> None:
         with self._lock:
             self.entries.append((label, usage))
+            captured = self._capture.get()
+            if captured is not None:
+                captured.append((label, usage))
 
     def by_label(self) -> dict[str, float]:
         """Where the money went, which is the number worth looking at."""
@@ -371,7 +427,14 @@ class CompletionCache:
     def put(self, provider: str, key: str, completion: Completion) -> None:
         p = self.path(provider, key)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(completion.to_dict(), indent=2) + "\n")
+        # Readers must never see a half-written response from another worker.
+        fd, temporary = tempfile.mkstemp(prefix=p.name, suffix=".tmp", dir=p.parent)
+        try:
+            with os.fdopen(fd, "w") as handle:
+                handle.write(json.dumps(completion.to_dict(), indent=2) + "\n")
+            os.replace(temporary, p)
+        finally:
+            pathlib.Path(temporary).unlink(missing_ok=True)
 
     @property
     def hit_rate(self) -> float:
@@ -394,11 +457,16 @@ class Provider(ABC):
     default_model: str = ""
 
     def __init__(self, model: str = "", *, cache: CompletionCache | None = None,
-                 budget: Budget | None = None, batched: bool = False):
+                 budget: Budget | None = None, batched: bool = False,
+                 cache_only: bool = False):
+        if batched:
+            raise ValueError("batch billing requires a Batch API implementation; "
+                             "synchronous requests cannot claim that discount")
         self.model = model or self.default_model
         self.cache = cache
         self.budget = budget
         self.batched = batched
+        self.cache_only = cache_only
         if not self.name or not self.model:
             raise ValueError(f"{type(self).__name__} needs a name and a model")
 
@@ -415,6 +483,11 @@ class Provider(ABC):
             if hit is not None:
                 return hit
 
+        if self.cache_only:
+            raise CacheMiss(f"offline replay has no saved response for "
+                            f"{self.name}/{model} request {key}; no request sent")
+
+        reservation = None
         if self.budget:
             price = PRICING.get(model)
             estimate = 0.0
@@ -423,14 +496,19 @@ class Provider(ABC):
                             + request.max_tokens * price.output) / 1_000_000
                 if self.batched:
                     estimate *= price.batch
-            self.budget.check(model, estimate)
+            reservation = self.budget.reserve(model, estimate)
 
         started = time.perf_counter()
-        completion = self._send(request, model)
+        try:
+            completion = self._send(request, model)
+        except BaseException:
+            if self.budget and reservation is not None:
+                self.budget.settle(reservation, request.label)
+            raise
         completion = replace(completion, elapsed_s=time.perf_counter() - started)
 
-        if self.budget:
-            self.budget.record(request.label, completion.usage)
+        if self.budget and reservation is not None:
+            self.budget.settle(reservation, request.label, completion.usage)
         if self.cache:
             self.cache.put(self.name, key, completion)
         return completion

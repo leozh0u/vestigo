@@ -44,7 +44,7 @@ from vestigo.scoring import (
     worst_overshoot,
 )
 from vestigo.board import EvidenceKind
-from vestigo.tools.base import Registry
+from vestigo.tools.base import DiskCache, Registry
 from vestigo.consensus import consense
 from vestigo.trace import write_trace
 from vestigo.tools.gazetteer import PlaceLookup
@@ -80,6 +80,17 @@ def context_for(entry: dict) -> str:
     return " ".join(bits)
 
 
+def image_for(entry: dict, *, dry: bool = False) -> pathlib.Path:
+    """Scripted smoke tests may use the committed gallery thumbnail.
+
+    Actual inference and evaluation never substitute a resized gallery image
+    for the original held-out input.
+    """
+    original = ROOT / "data/images" / entry["file"]
+    thumbnail = ROOT / "site/public/photos" / entry["file"]
+    return thumbnail if dry and not original.is_file() and thumbnail.is_file() else original
+
+
 def dry_router(budget: Budget) -> Router:
     """A scripted provider, so the whole pipeline runs with no key and no spend.
 
@@ -101,7 +112,7 @@ def dry_router(budget: Budget) -> Router:
         default_model = "scripted-1"
 
         def _send(self, request, model):
-            usage = Usage(200, 60, model="claude-sonnet-5")
+            usage = Usage(model="claude-sonnet-5")
             if request.schema is OBSERVATION_SCHEMA:
                 answer = {"observations": [
                     {"modality": "road", "what": "unmarked asphalt", "certainty": 0.9,
@@ -137,9 +148,16 @@ def main() -> int:
     ap.add_argument("--source", choices=SOURCES, help="one source only")
     ap.add_argument("--max-images", type=int)
     ap.add_argument("--batched", action="store_true",
-                    help="half price, and nothing is waiting on an eval")
-    ap.add_argument("--dry", action="store_true",
+                    help="unsupported: synchronous requests cannot use batch discounts")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--dry", action="store_true",
                     help="scripted replies, no key and no spend")
+    mode.add_argument("--cache-only", action="store_true",
+                      help="replay exact saved responses; refuse misses (the default)")
+    mode.add_argument("--live", action="store_true",
+                      help="explicitly allow new provider/tool requests, which may cost money")
+    ap.add_argument("--cache-dir", default=str(ROOT / ".cache/llm"))
+    ap.add_argument("--tool-cache-dir", default=str(ROOT / ".cache/tools"))
     ap.add_argument("--monthly", type=float, default=20.0,
                     help="ceiling for the calendar month, across every run. Set "
                          "your provider's own cap as well; that one is the only "
@@ -163,15 +181,28 @@ def main() -> int:
     ap.add_argument("--no-classifier", action="store_true",
                     help="leave the geocell classifier out of the registry, to "
                          "measure what it is worth by its absence")
-    ap.add_argument("--out", default="results/agent_runs.json")
+    ap.add_argument("--out", default="output/eval.json")
     args = ap.parse_args()
+    if args.batched:
+        ap.error("--batched is unsupported: this harness sends synchronous requests")
+    if args.samples < 1 or args.workers < 1 or (args.max_images is not None
+                                               and args.max_images < 1):
+        ap.error("samples, workers and max-images must be positive")
+    args.cache_only = not args.live and not args.dry
 
     if args.samples < 2:
         print("warning: below 2 samples the spread column is meaningless, and a "
               "median that moves 40 km on rerun will look like a result.\n")
 
-    ledger = Ledger(monthly_limit_usd=None if args.dry else args.monthly)
-    if not args.dry:
+    if args.live:
+        ledger = Ledger(monthly_limit_usd=args.monthly)
+        with ledger.session():
+            return _evaluate(args, ledger)
+    return _evaluate(args, None)
+
+
+def _evaluate(args, ledger):
+    if args.live:
         try:
             ledger.check(args.limit)
         except BudgetExceeded as exc:
@@ -184,24 +215,37 @@ def main() -> int:
         router = dry_router(budget)
     else:
         from vestigo.config import build
-        router, budget = build(args.preset, limit_usd=args.limit, batched=args.batched)
+        router, budget = build(args.preset, limit_usd=args.limit,
+                               cache_dir=args.cache_dir, cache_only=args.cache_only)
 
+    try:
+        return _run_evaluation(args, router, budget)
+    finally:
+        if args.live:
+            # Completed calls remain accounted for if a later image, output
+            # write or KeyboardInterrupt ends the run early.
+            ledger.absorb(budget)
+            print(f"  {ledger.summary()}")
+
+
+def _run_evaluation(args, router, budget):
     tools = [SolarTool()]
-    if not args.no_metas:
+    if not args.no_metas and not args.dry:
         try:
             tools.append(MetaTool())
         except Exception as exc:           # no boundary file on disk
             print(f"  country metas unavailable, running without them: {exc}\n")
-    if not args.no_gazetteer:
-        tools.append(PlaceLookup())
-    if not args.no_classifier:
+    cache = DiskCache(args.tool_cache_dir)
+    if not args.no_gazetteer and not args.dry:
+        tools.append(PlaceLookup(cache=cache, cache_only=args.cache_only))
+    if not args.no_classifier and not args.dry:
         try:
-            tools.append(GeocellTool())
+            tools.append(GeocellTool(cache=cache, cache_only=args.cache_only))
         except Exception as exc:               # no ML stack, or nothing trained
             print(f"  classifier unavailable, running without it: {exc}\n")
     agent = Agent(router, tools=Registry(tools), budget=budget)
     entries = load_manifest(args.source, args.max_images)
-    missing = [e for e in entries if not (ROOT / "data/images" / e["file"]).exists()]
+    missing = [e for e in entries if not image_for(e, dry=args.dry).is_file()]
     if missing:
         print(f"{len(missing)} images are not on disk. Run the ingest scripts first.")
         entries = [e for e in entries if e not in missing]
@@ -213,22 +257,29 @@ def main() -> int:
           f"{len(entries) * args.samples} runs, preset {args.preset}"
           f"{' (dry)' if args.dry else ''}\n")
     if args.dry:
-        print("DRY RUN. The replies are scripted, so every accuracy figure below "
-              "is meaningless.\nWhat is real is the plumbing and the cost "
-              "accounting.\n")
+        print("SCRIPTED SMOKE TEST. No photograph is interpreted and no model "
+              "accuracy is measured.\nOnly the agent plumbing and zero-spend "
+              "accounting are exercised.\n")
+        if any(image_for(e, dry=True).parent == ROOT / "site/public/photos" for e in entries):
+            print("Using committed gallery thumbnails for the scripted smoke test; "
+                  "no photograph is interpreted.\n")
+    elif args.cache_only:
+        print("OFFLINE REPLAY. Cache misses are refused; no provider or remote "
+              "tool requests are sent.\n")
 
     scored: list[Scored] = []
     summaries = []
     declined = 0
     consensus_rows: list[dict] = []
     records = []
+    failures = []
     stopped = None
 
     def one_image(entry: dict):
         """Everything for a single photograph. Independent of every other one,
         which is what makes the fan-out safe: the samples within an image share
         nothing, and the board is rebuilt per run."""
-        path = ROOT / "data/images" / entry["file"]
+        path = image_for(entry, dry=args.dry)
         return entry, agent.run_samples(path, n=args.samples, subject=entry["id"],
                                         context=context_for(entry))
 
@@ -245,6 +296,8 @@ def main() -> int:
                     continue
                 except Exception as exc:                # one bad image, not the run
                     print(f"{futures[future]['id']:<20}failed: {exc}")
+                    failures.append({"id": futures[future]["id"],
+                                     "error": f"{type(exc).__name__}: {exc}"})
                     continue
 
                 truth = LatLon(entry["truth"]["lat"], entry["truth"]["lon"])
@@ -321,11 +374,15 @@ def main() -> int:
                 if rows:
                     summary = summarise_repeats(entry["id"], rows, points)
                     summaries.append(summary)
-                    print(f"{entry['id']:<20}{entry['source']:<17}"
-                          f"{summary.median_error_km:>9.1f} km  "
-                          f"spread {summary.spread_km:>8.0f} km"
-                          f"  {summary.hit_rate:>4.0%} correct  "
-                          f"{'' if summary.stable else 'unstable'}", flush=True)
+                    if args.dry:
+                        print(f"{entry['id']:<20}scripted pipeline completed "
+                              f"({len(runs)} runs)", flush=True)
+                    else:
+                        print(f"{entry['id']:<20}{entry['source']:<17}"
+                              f"{summary.median_error_km:>9.1f} km  "
+                              f"spread {summary.spread_km:>8.0f} km"
+                              f"  {summary.hit_rate:>4.0%} correct  "
+                              f"{'' if summary.stable else 'unstable'}", flush=True)
         except KeyboardInterrupt:
             stopped = "interrupted"
             pool.shutdown(wait=False, cancel_futures=True)
@@ -334,128 +391,125 @@ def main() -> int:
         print(f"\nstopped: {stopped}")
 
     if not scored:
-        print("\nno scorable runs")
-        return 1
+        print("\nno scorable runs; saving failures and declines for inspection")
 
     summaries.sort(key=lambda s: s.subject)
     records.sort(key=lambda r: (r["id"], r["error_km"]))
 
-    print("\n" + "=" * 78)
-    print("CORRECT AT THE LEVEL CLAIMED, by source")
-    print("=" * 78)
-    print(f"{'source':<18}{'n':>4}{'correct':>10}{'overclaimed':>13}"
-          f"{'underclaimed':>14}{'median km':>11}")
-    print("-" * 78)
-    for src in SOURCES:
-        sub = [s for s in scored if s.source == src]
-        if sub:
-            rep = report(sub)
-            print(f"{src:<18}{rep.n:>4}{rep.hit_rate:>10.0%}{rep.overclaim_rate:>13.0%}"
-                  f"{rep.underclaim_rate:>14.0%}{rep.median_error_km:>11.1f}")
-    overall = report(scored)
-    print("-" * 78)
-    print(f"{'all':<18}{overall.n:>4}{overall.hit_rate:>10.0%}"
-          f"{overall.overclaim_rate:>13.0%}{overall.underclaim_rate:>14.0%}"
-          f"{overall.median_error_km:>11.1f}")
-    if declined:
-        print(f"\n  {declined} runs made no claim at all. Not counted above, and not a "
-              "failure:\n  declining to answer is the design working. Watch it for drift.")
-
-    # ------------------------------------------------------------------
-    # Consensus across samples
-    # ------------------------------------------------------------------
-    if consensus_rows:
+    if scored and not args.dry:
         print("\n" + "=" * 78)
-        print("CONSENSUS ACROSS SAMPLES")
+        print("CORRECT AT THE LEVEL CLAIMED, by source")
         print("=" * 78)
-        answered = [c for c in consensus_rows if c["error_km"] is not None]
-        refused = [c for c in consensus_rows if c["error_km"] is None]
-
-        print(f"{'source':<18}{'n':>4}{'median km':>11}{'worst km':>11}"
-              f"{'unanimous':>11}{'demoted':>9}")
+        print(f"{'source':<18}{'n':>4}{'correct':>10}{'overclaimed':>13}"
+              f"{'underclaimed':>14}{'median km':>11}")
         print("-" * 78)
         for src in SOURCES:
-            sub = [c for c in answered if c["source"] == src]
-            if not sub:
-                continue
-            errs = sorted(c["error_km"] for c in sub)
-            print(f"{src:<18}{len(sub):>4}{statistics.median(errs):>11.1f}"
-                  f"{errs[-1]:>11.0f}"
-                  f"{sum(1 for c in sub if c['agreement'] == 1.0) / len(sub):>11.0%}"
-                  f"{sum(1 for c in sub if c['demoted_from']):>9}")
-        if answered:
-            errs = sorted(c["error_km"] for c in answered)
+            sub = [s for s in scored if s.source == src]
+            if sub:
+                rep = report(sub)
+                print(f"{src:<18}{rep.n:>4}{rep.hit_rate:>10.0%}{rep.overclaim_rate:>13.0%}"
+                      f"{rep.underclaim_rate:>14.0%}{rep.median_error_km:>11.1f}")
+        overall = report(scored)
+        print("-" * 78)
+        print(f"{'all':<18}{overall.n:>4}{overall.hit_rate:>10.0%}"
+              f"{overall.overclaim_rate:>13.0%}{overall.underclaim_rate:>14.0%}"
+              f"{overall.median_error_km:>11.1f}")
+        if declined:
+            print(f"\n  {declined} runs made no claim at all. Not counted above, and not a "
+                  "failure:\n  declining to answer is the design working. Watch it for drift.")
+
+        # ------------------------------------------------------------------
+        # Consensus across samples
+        # ------------------------------------------------------------------
+        if consensus_rows:
+            print("\n" + "=" * 78)
+            print("CONSENSUS ACROSS SAMPLES")
+            print("=" * 78)
+            answered = [c for c in consensus_rows if c["error_km"] is not None]
+            refused = [c for c in consensus_rows if c["error_km"] is None]
+
+            print(f"{'source':<18}{'n':>4}{'median km':>11}{'worst km':>11}"
+                  f"{'unanimous':>11}{'demoted':>9}")
             print("-" * 78)
-            print(f"{'all':<18}{len(answered):>4}{statistics.median(errs):>11.1f}"
-                  f"{errs[-1]:>11.0f}"
-                  f"{sum(1 for c in answered if c['agreement'] == 1.0) / len(answered):>11.0%}"
-                  f"{sum(1 for c in answered if c['demoted_from']):>9}")
+            for src in SOURCES:
+                sub = [c for c in answered if c["source"] == src]
+                if not sub:
+                    continue
+                errs = sorted(c["error_km"] for c in sub)
+                print(f"{src:<18}{len(sub):>4}{statistics.median(errs):>11.1f}"
+                      f"{errs[-1]:>11.0f}"
+                      f"{sum(1 for c in sub if c['agreement'] == 1.0) / len(sub):>11.0%}"
+                      f"{sum(1 for c in sub if c['demoted_from']):>9}")
+            if answered:
+                errs = sorted(c["error_km"] for c in answered)
+                print("-" * 78)
+                print(f"{'all':<18}{len(answered):>4}{statistics.median(errs):>11.1f}"
+                      f"{errs[-1]:>11.0f}"
+                      f"{sum(1 for c in answered if c['agreement'] == 1.0) / len(answered):>11.0%}"
+                      f"{sum(1 for c in answered if c['demoted_from']):>9}")
 
-        # The comparison this exists for. A single sample is what one API call
-        # buys; consensus is what three of them buy, and the tail is where the
-        # difference should show up if it shows up anywhere.
-        singles = sorted(r["error_km"] for r in records)
-        if singles and answered:
-            def tail(v, q):
-                return v[min(len(v) - 1, int(len(v) * q))]
-            print(f"\n  {'':<14}{'median':>10}{'75th':>10}{'90th':>10}{'worst':>10}")
-            print(f"  {'one sample':<14}{statistics.median(singles):>10.0f}"
-                  f"{tail(singles, 0.75):>10.0f}{tail(singles, 0.90):>10.0f}"
-                  f"{singles[-1]:>10.0f}")
-            print(f"  {'consensus':<14}{statistics.median(errs):>10.0f}"
-                  f"{tail(errs, 0.75):>10.0f}{tail(errs, 0.90):>10.0f}"
-                  f"{errs[-1]:>10.0f}")
-            print("\n  The median is not the point. A frontier model already has a good\n"
-                  "  median and a dangerous tail, and the tail is the only column where\n"
-                  "  three samples can buy something one call cannot.")
+            # The comparison this exists for. A single sample is what one API call
+            # buys; consensus is what three of them buy, and the tail is where the
+            # difference should show up if it shows up anywhere.
+            singles = sorted(r["error_km"] for r in records)
+            if singles and answered:
+                def tail(v, q):
+                    return v[min(len(v) - 1, int(len(v) * q))]
+                print(f"\n  {'':<14}{'median':>10}{'75th':>10}{'90th':>10}{'worst':>10}")
+                print(f"  {'one sample':<14}{statistics.median(singles):>10.0f}"
+                      f"{tail(singles, 0.75):>10.0f}{tail(singles, 0.90):>10.0f}"
+                      f"{singles[-1]:>10.0f}")
+                print(f"  {'consensus':<14}{statistics.median(errs):>10.0f}"
+                      f"{tail(errs, 0.75):>10.0f}{tail(errs, 0.90):>10.0f}"
+                      f"{errs[-1]:>10.0f}")
+                print("\n  The median is not the point. A frontier model already has a good\n"
+                      "  median and a dangerous tail, and the tail is the only column where\n"
+                      "  three samples can buy something one call cannot.")
 
-        # Two different things, and the first version printed one headline over
-        # both. An image where three samples scattered across a hemisphere is a
-        # result; an image where no sample answered at all is the agent
-        # declining, which consensus had no part in. Reporting them together
-        # credited consensus with refusals it did not make.
-        silent = [c for c in refused if c["n_answered"] == 0]
-        disagreed = [c for c in refused if c["n_answered"] > 0]
-        if disagreed:
-            print(f"\n  {len(disagreed)} images where the samples answered and agreed on\n"
-                  f"  nothing, so no answer was stated. Each had samples that would\n"
-                  f"  have been stated alone, with a confidence.")
-            for c in disagreed[:5]:
-                print(f"    {c['id']:<24} spread {c['spread_km']:>8.0f} km")
-        if silent:
-            print(f"\n  {len(silent)} images where no sample answered at all. Nothing to\n"
-                  f"  agree or disagree about, and not consensus doing any work.")
+            # Two different things, and the first version printed one headline over
+            # both. An image where three samples scattered across a hemisphere is a
+            # result; an image where no sample answered at all is the agent
+            # declining, which consensus had no part in. Reporting them together
+            # credited consensus with refusals it did not make.
+            silent = [c for c in refused if c["n_answered"] == 0]
+            disagreed = [c for c in refused if c["n_answered"] > 0]
+            if disagreed:
+                print(f"\n  {len(disagreed)} images where the samples answered and agreed on\n"
+                      f"  nothing, so no answer was stated. Each had samples that would\n"
+                      f"  have been stated alone, with a confidence.")
+                for c in disagreed[:5]:
+                    print(f"    {c['id']:<24} spread {c['spread_km']:>8.0f} km")
+            if silent:
+                print(f"\n  {len(silent)} images where no sample answered at all. Nothing to\n"
+                      f"  agree or disagree about, and not consensus doing any work.")
 
-    print("\n" + "=" * 78)
-    print("CALIBRATION")
-    print("=" * 78)
-    print(f"  {'stated':<9}{'n':>4}{'promised':>10}{'observed':>10}{'gap':>8}"
-          f"{'median km':>11}{'worst':>9}{'worst claim broken':>21}")
-    for b in calibration_curve(scored):
-        group = [s for s in scored if s.confidence == b.label]
-        print(f"  {b.label:<9}{b.n:>4}{b.stated:>10.0%}{b.observed:>10.0%}"
-              f"{b.gap:>+8.0%}{b.median_error_km:>11.1f}{b.worst_error_km:>9.0f}"
-              f"{worst_overshoot(group):>20.1f}x")
-    print(f"\n  expected calibration error {overall.ece:.0%}")
-
-    if summaries:
-        spreads = [s.spread_km for s in summaries]
-        stable = sum(1 for s in summaries if s.stable)
         print("\n" + "=" * 78)
-        print("VARIANCE")
+        print("CALIBRATION")
         print("=" * 78)
-        print(f"  median spread {statistics.median(spreads):.0f} km, "
-              f"worst {max(spreads):.0f} km")
-        print(f"  images whose samples agree closely enough to read as one answer: "
-              f"{stable}/{len(summaries)}")
+        print(f"  {'stated':<9}{'n':>4}{'promised':>10}{'observed':>10}{'gap':>8}"
+              f"{'median km':>11}{'worst':>9}{'worst claim broken':>21}")
+        for b in calibration_curve(scored):
+            group = [s for s in scored if s.confidence == b.label]
+            print(f"  {b.label:<9}{b.n:>4}{b.stated:>10.0%}{b.observed:>10.0%}"
+                  f"{b.gap:>+8.0%}{b.median_error_km:>11.1f}{b.worst_error_km:>9.0f}"
+                  f"{worst_overshoot(group):>20.1f}x")
+        print(f"\n  expected calibration error {overall.ece:.0%}")
+
+        if summaries:
+            spreads = [s.spread_km for s in summaries]
+            stable = sum(1 for s in summaries if s.stable)
+            print("\n" + "=" * 78)
+            print("VARIANCE")
+            print("=" * 78)
+            print(f"  median spread {statistics.median(spreads):.0f} km, "
+                  f"worst {max(spreads):.0f} km")
+            print(f"  images whose samples agree closely enough to read as one answer: "
+                  f"{stable}/{len(summaries)}")
 
     print("\n" + "=" * 78)
     print("COST")
     print("=" * 78)
     print(f"  {budget.summary()}")
-    if not args.dry:
-        ledger.absorb(budget)
-        print(f"  {ledger.summary()}")
     for label, spend in budget.by_label().items():
         print(f"    {label:<12}${spend:>9.4f}")
     if scored:
@@ -472,10 +526,18 @@ def main() -> int:
     out.write_text(json.dumps({
         "ran_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         "preset": args.preset, "samples": args.samples, "dry": args.dry,
+        "mode": "live" if args.live else ("scripted" if args.dry else "cache-only"),
+        "metrics_valid": not args.dry,
         "spent_usd": budget.spent_usd, "runs": records, "consensus": consensus_rows,
+        "failures": failures, "declined": declined,
+        "requested_images": len(entries),
     }, indent=2) + "\n")
-    print(f"\nwrote {out.relative_to(ROOT)}")
-    return 0
+    try:
+        displayed_path = out.relative_to(ROOT)
+    except ValueError:
+        displayed_path = out
+    print(f"\nwrote {displayed_path}")
+    return 1 if stopped or failures or not scored else 0
 
 
 if __name__ == "__main__":

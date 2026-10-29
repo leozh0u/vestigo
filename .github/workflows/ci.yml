@@ -11,8 +11,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # The package itself has no dependencies, so the dev extra is only pytest.
-      # That keeps the run under a second and means a red build is a real failure
-      # rather than a resolver having a bad day.
       - run: pip install -e ".[dev]"
       - run: pytest -q
+      - run: python -m vestigo.demo
+      - run: python -m vestigo.demo --scripted
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      # Only static files from a checksum-locked historical deployment.
+      # No model, map, rendering or generation service is called.
+      - run: npm run assets:fetch
+      - run: npm run build

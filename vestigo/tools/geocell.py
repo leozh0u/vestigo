@@ -5,17 +5,14 @@ model citing it. That was the fault behind the first agent run overclaiming on
 28% of answers: it could put 0.9 on "dry scrub" and push a claim through, and
 the party grading the evidence had an interest in the answer.
 
-This tool is the first source whose strength is measured. The head is
-temperature scaled on held-out data, and its stated confidence tracks observed
-accuracy to within two points below 0.6, so the probability it reports for a
-cell is a number a claim may lean on exactly as far as it says. That is what
-`max_strength` was for, and until now nothing could fill it honestly.
+The head is temperature scaled on held-out locations. Its probability caps
+the support a claim can draw from that prediction; region-level evidence
+cannot establish a street address. Calibration was assessed on the held-out
+distribution, not guaranteed for each image or for unrelated imagery.
 
-What it is not is a good locator. 21% cell accuracy and a median of about
-1,000 km, against a frontier model call at 94 km on the same kind of imagery.
-So it proposes its top cells as candidates, which costs nothing if they are
-wrong because constraints and priors sort that out, and its real contribution
-is a second opinion carrying a trustworthy number.
+Recorded encoder comparisons and evaluation metrics live in results/. The
+tool proposes cells as candidates alongside the language model's hypothesis;
+constraints and priors rank them rather than accepting the top cell blindly.
 
 Loads lazily. The package imports fine without torch, and this tool refuses
 politely if the model has not been trained.
@@ -23,7 +20,9 @@ politely if the model has not been trained.
 from __future__ import annotations
 
 import json
+import math
 import pathlib
+import threading
 
 from ..board import Level
 from .base import CandidateProposal, Tool, ToolResult
@@ -51,7 +50,15 @@ class _Loaded:
     temperature = 1.0
 
 
+_load_lock = threading.Lock()
+
+
 def _load():
+    with _load_lock:
+        _load_once()
+
+
+def _load_once():
     if _Loaded.model is not None:
         return
     import torch
@@ -100,11 +107,18 @@ def _load():
             f"or embed with the encoders the head was trained on."
         )
 
+    temperature = float(blob.get("temperature", 1.0))
+    if not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError("classifier temperature must be positive and finite")
+    cells = json.loads(CELLS.read_text())
+    if not isinstance(cells, list) or len(cells) != blob["n_cells"]:
+        raise ValueError("classifier cell list does not match its output width")
+
     _Loaded.encoders = loaded
     _Loaded.encoder, _Loaded.preprocess = encoder, preprocess
     _Loaded.model = head
-    _Loaded.temperature = float(blob.get("temperature", 1.0))
-    _Loaded.cells = json.loads(CELLS.read_text())
+    _Loaded.temperature = temperature
+    _Loaded.cells = cells
 
 
 class GeocellTool(Tool):
@@ -133,6 +147,8 @@ class GeocellTool(Tool):
     }
 
     def _run(self, image_path: str, top_k: int = 3) -> ToolResult:
+        if not pathlib.Path(image_path).is_file():
+            raise FileNotFoundError(f"image does not exist: {image_path}")
         import torch
         from PIL import Image as PILImage
 

@@ -97,7 +97,7 @@ export class Flight {
     return from + delta;
   }
 
-  to(lat, lon, level, { onDone } = {}) {
+  to(lat, lon, level, { onDone, instant = false } = {}) {
     this.cancel();
     const globe = this.globe;
     const target = Flight.orientation(lat, lon);
@@ -115,6 +115,16 @@ export class Flight {
       // or the planet leaves the frame on a phone.
       z: (ALTITUDE[level] ?? globe.baseDistance) * globe.fit,
     };
+
+    if (instant) {
+      globe.metal.rotation.x = end.x;
+      globe.metal.rotation.y = end.y;
+      globe.camera.position.z = end.z;
+      globe.spinning = false;
+      globe.hold(0);
+      onDone?.();
+      return;
+    }
 
     globe.spinning = false;      // an idle rotation would fight this one
     const began = performance.now();

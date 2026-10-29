@@ -89,6 +89,13 @@ export class Opening {
   mount(parent = document.body) {
     const el = document.createElement("div");
     el.className = "opening";
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', 'Vestigo introduction');
+    this.page = document.getElementById('ui');
+    this.previousFocus = document.activeElement;
+    this.pageWasInert = this.page?.inert ?? false;
+    if (this.page) this.page.inert = true;
     /*
       No headline and no explanatory paragraph.
 
@@ -123,8 +130,20 @@ export class Opening {
         <button class="opening-go" type="button">ENTER</button>
         <button class="opening-skip" type="button">skip</button>
       </div>`;
+    el.addEventListener('keydown', event => {
+      if (event.key !== 'Tab') return;
+      const controls = [...el.querySelectorAll('button:not(:disabled)')]
+        .filter(button => !button.closest('[inert]'));
+      const first = controls[0], last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();first?.focus();
+      }
+    });
     parent.append(el);
     this.root = el;
+    el.querySelector(".opening-go").focus({ preventScroll: true });
     this.escape = (event) => { if (event.key === 'Escape') this.finish(); };
     document.addEventListener('keydown', this.escape);
 
@@ -136,6 +155,7 @@ export class Opening {
   async begin() {
     if (this.started || this.finished) return;
     this.started = true;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { this.finish(); return; }
     this.root.querySelector('.opening-go').disabled = true;
     this.onBegin?.();
     /*
@@ -282,7 +302,21 @@ export class Opening {
       So one retry, when the page is next actually visible, and only then a
       fall-through to the page itself.
     */
-    const start = async () => { await video.play(); };
+    const start = async () => {
+      await video.play();
+      let lastTime = video.currentTime;
+      let lastAdvance = performance.now();
+      clearInterval(this.playbackWatch);
+      this.playbackWatch = setInterval(() => {
+        if (this.finished) return;
+        if (document.visibilityState === 'hidden' || video.currentTime > lastTime + .01) {
+          lastTime = video.currentTime;
+          lastAdvance = performance.now();
+        } else if (performance.now() - lastAdvance > 15000) {
+          this.finish();
+        }
+      }, 1000);
+    };
     try {
       await start();
     } catch {
@@ -304,6 +338,15 @@ export class Opening {
   finish() {
     if (this.finished) return;       // ended and skipped can both arrive
     this.finished = true;
+    clearInterval(this.playbackWatch);
+    if (this.page) this.page.inert = this.pageWasInert;
+    if (this.root) {
+      this.root.inert = true;
+      this.root.setAttribute('aria-hidden', 'true');
+    }
+    const focus = this.previousFocus?.isConnected && this.previousFocus !== document.body
+      ? this.previousFocus : document.querySelector('.wordmark');
+    focus?.focus({ preventScroll: true });
     document.removeEventListener('keydown', this.escape);
     if (this.retryVisible) document.removeEventListener('visibilitychange', this.retryVisible);
     this.root?.querySelector('video')?.pause();
@@ -313,6 +356,8 @@ export class Opening {
     if (this.portal) {
       if (!this.portal.stage) this.onHandoff?.(this.ui);
       this.portal.finish();
+      // The projected stage was inert until finish restored the live page.
+      focus?.focus({ preventScroll: true });
       this.root?.querySelector('video')?.pause();
       this.root?.remove();
       this.onFinish?.({ portal: true });

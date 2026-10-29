@@ -12,6 +12,7 @@ import { Flight } from "./globe/camera.js";
 import { Drag } from "./globe/drag.js";
 import { Machine } from "./sequence/machine.js";
 import { Player } from "./sequence/player.js";
+import { TraceLoader } from "./sequence/loader.js";
 import { renderEvidence, renderReceipt, clearEvidence, setChosen } from "./ui/panels.js";
 import { Machinery } from "./ui/machinery.js";
 import { mountField } from "./ui/field.js";
@@ -19,17 +20,38 @@ import { mountTyping } from "./ui/typing.js";
 import "./style.css";
 
 const canvas = document.getElementById("stage");
-const globe = new Globe(canvas);
-const flight = new Flight(globe);
+const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let globe;
+let hasWebGL = true;
+try {
+  globe = new Globe(canvas);
+} catch {
+  hasWebGL = false;
+  canvas.hidden = true;
+  document.documentElement.classList.add('globe-unavailable');
+  // Recorded evidence remains usable when hardware acceleration is unavailable.
+  const noop = () => {};
+  globe = { clearMarkers: noop, setProgress: noop, release: noop, mark: noop,
+    render: noop, pose: noop, setSafeBottom: noop, spinning: false };
+}
+const flight = hasWebGL ? new Flight(globe) : {
+  cancel() {}, update() {}, to(lat, lon, level, { onDone } = {}) { onDone?.(); },
+};
 // The canvas ignores pointer events so the UI above it stays clickable, so the
 // drag listens on the page and reads movement rather than hit-testing.
-const drag = new Drag(globe, document.body);
+const drag = hasWebGL ? new Drag(globe, document.body) : { update() {} };
 const machine = new Machine("idle");
 const ui = document.getElementById("ui");
 const machinery = new Machinery(document.getElementById("machinery"));
 
 let player = null;
 let final = null;
+let opening = null;
+const loader = new TraceLoader();
+const status = document.getElementById('demo-status');
+const readyStatus = hasWebGL ? 'Recorded investigations' : '3D unavailable · recorded investigations';
+const setStatus = (text = readyStatus) => { status.textContent = text; };
+setStatus();
 
 /*
   One debugging handle, set once.
@@ -53,14 +75,19 @@ window.__globe = globe;
 machine.onChange(({ to }) => { ui.dataset.state = to; });
 
 async function loadIndex() {
-  const res = await fetch("/traces/index.json");
+  const res = await fetch("/traces/index.json", { signal: AbortSignal.timeout(12000) });
   if (!res.ok) throw new Error(`no trace index (${res.status})`);
-  return res.json();
+  const entries = await res.json();
+  if (!Array.isArray(entries) || !entries.length) throw new Error('No recorded examples');
+  return entries;
 }
 
 async function run(entry) {
   player?.cancel();
   flight.cancel();
+  final = null;
+  if (machine.state !== 'idle') machine.go('idle');
+  setStatus('Loading recorded investigation…');
   // The photograph this run is about, pinned to the answer for as long as the
   // answer is up. The strip it came from keeps moving; see panels.setChosen.
   setChosen(entry);
@@ -73,7 +100,20 @@ async function run(entry) {
   machinery.reset();
 
   machine.go("submitted", { entry });
-  const trace = await (await fetch(`/traces/${entry.file}`)).json();
+  let trace;
+  try {
+    trace = await loader.load(entry.file);
+  } catch {
+    machine.go('idle');
+    setStatus('Example unavailable · choose a photograph to retry');
+    const line = document.createElement('div');
+    line.className = 'line';
+    line.textContent = 'This recorded investigation could not load. Choose another photograph or try this one again.';
+    document.getElementById('evidence').append(line);
+    return;
+  }
+  if (!trace) return;
+  setStatus('Playing recorded investigation');
   // The grid comes from the trace, since a run is free to have used a
   // different resolution and the panel should draw what was actually computed.
   machinery.setGrid(trace.grid);
@@ -97,6 +137,7 @@ async function run(entry) {
     onProgress: (t) => globe.setProgress(t),
     onDone: (done) => {
       final = done;
+      setStatus();
       const answer = final?.answer;
       const point = final?.candidates?.[0];
       renderReceipt(final);
@@ -105,6 +146,7 @@ async function run(entry) {
       // what happened.
       if (answer && point) {
         flight.to(point.lat, point.lon, answer.level, {
+          instant: motion.matches,
           onDone: () => machine.go("arrived", { final }),
         });
       } else {
@@ -112,6 +154,7 @@ async function run(entry) {
       }
     },
   });
+  if (motion.matches) player.finish();
 }
 
 /*
@@ -130,15 +173,22 @@ async function run(entry) {
 function mountExamples(entries) {
   const track = document.getElementById("examples-track");
   const buttons = [];
+  let selected = null;
 
   const make = (entry, copy) => {
     const button = document.createElement("button");
     button.className = "photo";
     button.dataset.file = entry.file;
-    button.setAttribute("aria-pressed", "false");
+    button.dataset.copy = String(copy);
+    button.type = 'button';
+    button.setAttribute('aria-label', `Investigate photograph ${entries.indexOf(entry) + 1}`);
+    button.setAttribute('aria-pressed', String(entry.file === selected));
     // The second copy is the same control as the first, so a screen reader
     // should be told about it once.
-    if (copy) button.setAttribute("aria-hidden", "true");
+    if (copy) {
+      button.setAttribute('aria-hidden', 'true');
+      button.tabIndex = -1;
+    }
     if (entry.photo) {
       const img = document.createElement("img");
       img.src = entry.photo;
@@ -152,11 +202,11 @@ function mountExamples(entries) {
       button.textContent = entry.subject;
     }
     button.addEventListener("click", () => {
-      if (machine.state !== "idle") machine.go("idle");
+      selected = entry.file;
       for (const b of buttons) {
         b.setAttribute("aria-pressed", String(b.dataset.file === entry.file));
       }
-      run(entry).catch((err) => console.error(err));
+      run(entry).catch(() => setStatus('Example unavailable · choose a photograph to retry'));
     });
     buttons.push(button);
     return button;
@@ -178,6 +228,7 @@ function mountExamples(entries) {
     number of copies is however many sets cover the screen, plus one.
   */
   const fill = () => {
+    const focused = track.contains(document.activeElement) ? document.activeElement.dataset.file : null;
     track.replaceChildren();
     buttons.length = 0;
     track.append(...entries.map((e) => make(e, false)));
@@ -208,6 +259,7 @@ function mountExamples(entries) {
       photograph of the next is the period by definition, and it does not care
       how the gaps are arranged.
     */
+    if (focused) [...track.children].find(button => button.dataset.file === focused)?.focus({ preventScroll: true });
     const first = track.children[0];
     const second = track.children[entries.length];
     return second ? second.offsetLeft - first.offsetLeft : set;
@@ -260,7 +312,7 @@ function mountExamples(entries) {
   started at all and an external script steps the scene by exact amounts.
 */
 const RENDERING = new URLSearchParams(location.search).has("render");
-if (RENDERING) {
+if (RENDERING && hasWebGL) {
   // Everything that is not the globe. The opening panel is appended to the
   // body rather than into #ui, so hiding #ui alone left ENTER and the readings
   // sitting in the middle of the footage.
@@ -297,6 +349,10 @@ function frame(now) {
   player?.update(dt);
   flight.update(now);
   drag.update(Boolean(flight.active));
+  if (motion.matches) {
+    globe.spinning = false;
+    if (hasWebGL) globe.progress = globe.targetProgress;
+  }
   globe.render(dt);
   requestAnimationFrame(frame);
 }
@@ -335,7 +391,22 @@ document.body.style.cursor = "grab";
 // The background reads from the traces, so it says the same things the page
 // is arguing about rather than resembling them.
 mountField();
-mountTyping();
+let typedLines = [];
+const startTyping = () => mountTyping().then(lines => { typedLines = lines; });
+startTyping();
+motion.addEventListener('change', () => {
+  for (const line of typedLines) line.stop();
+  document.querySelector('.field-typed')?.replaceChildren();
+  if (motion.matches) {
+    opening?.finish();
+    player?.finish();
+    flight.update(Infinity);
+    globe.spinning = false;
+  } else {
+    globe.spinning = true;
+    startTyping();
+  }
+});
 
 /*
   The opening, if there is one to show.
@@ -389,8 +460,8 @@ const turnTo = (current, target) => {
 };
 
 Opening.available().then((src) => {
-  if (!src || RENDERING) return;
-  new Opening({
+  if (!src || RENDERING || !hasWebGL || motion.matches || machine.state !== 'idle') return;
+  opening = new Opening({
     onBegin: () => { globe.spinning = false; },
     /*
       Become the clip's first frame, rather than fading towards it.
@@ -517,16 +588,31 @@ Opening.available().then((src) => {
       */
       if (bar) globe.pose({ safeBottom: bar.offsetHeight });
       // After the growth, not during it. The CSS transition is 1100ms.
-      if (portal) globe.spinning = true;
-      else setTimeout(() => { globe.spinning = true; }, 1150);
+      if (portal) globe.spinning = !motion.matches;
+      else setTimeout(() => { globe.spinning = !motion.matches; }, 1150);
     },
   }).mount();
 });
 
-loadIndex()
-  .then(mountExamples)
-  .catch((err) => {
-    console.warn("no traces yet:", err.message);
-    document.getElementById("examples").textContent =
-      "No traces built yet. Run scripts/build_site_traces.py.";
-  });
+async function mountGallery() {
+  const examples = document.getElementById('examples');
+  try {
+    const entries = await loadIndex();
+    examples.replaceChildren();
+    const track = document.createElement('div');
+    track.id = 'examples-track';
+    track.className = 'examples-track';
+    examples.append(track);
+    mountExamples(entries);
+    setStatus();
+  } catch {
+    setStatus('Recorded examples unavailable');
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'retry-examples';
+    retry.textContent = 'Reload examples';
+    retry.addEventListener('click', mountGallery, { once: true });
+    examples.replaceChildren(retry);
+  }
+}
+mountGallery();

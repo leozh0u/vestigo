@@ -245,9 +245,9 @@ html, body {
   gap: 0.45rem;
   max-width: 46ch;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.875rem;
   line-height: 1.55;
-  color: var(--ink-dim);
+  color: var(--ink);
   /* The camera ends up over a lit continent, and grey monospace on pale green
      is unreadable. A soft dark ground behind the column costs nothing and
      works at every altitude, where tuning the text colour would not. */
@@ -280,8 +280,8 @@ html, body {
   gap: 0 1ch;
 }
 .evidence .line .who {
-  color: var(--ink-faint);
-  font-size: 0.62rem;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding-top: 0.18em;
@@ -452,7 +452,7 @@ html, body {
 .receipt[hidden] { display: none; }
 .receipt .level {
   font-family: var(--mono);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--live);
@@ -481,10 +481,10 @@ html, body {
 }
 .receipt dt {
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 .receipt dd {
   margin: 0;
@@ -1002,4 +1002,48 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Status is part of the instrument chrome, and remains readable on phones. */
+.demo-status {
+  margin: .7rem 0 0;
+  max-width: 100%;
+  color: var(--ink-dim);
+  font-size: .75rem;
+  line-height: 1.55;
+  letter-spacing: .04em;
+  text-shadow: 0 1px 4px var(--void), 0 0 10px var(--void);
+}
+.retry-examples {
+  margin: 1rem var(--pad);
+  padding: .75rem 1rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--steel);
+  color: var(--ink);
+  font: inherit;
+  font-size: .75rem;
+  cursor: pointer;
+}
+:is(.wordmark, .opening-go, .opening-skip, .retry-examples):focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 5px;
+}
+.opening-skip { color: var(--ink-dim); min-height: 44px; min-width: 44px; }
+.opening-meta { white-space: nowrap; }
+.opening-reading { gap: 1rem; flex-wrap: wrap; }
+
+/* Keyboard users get one stationary, scrollable copy of every photograph. */
+.examples:focus-within { overflow-x: auto; mask-image: none; -webkit-mask-image: none; }
+.examples:focus-within .examples-track { animation: none; transform: none; }
+.examples:focus-within .photo[data-copy="true"] { display: none; }
+.photo { touch-action: pan-x; }
+.globe-unavailable #stage { display: none; }
+.globe-unavailable .evidence { display: flex; }
+
+@media (prefers-reduced-motion: reduce) {
+  .field-layer, .examples-track { animation: none; transform: none; }
+  .examples { overflow-x: auto; mask-image: none; -webkit-mask-image: none; padding-top: 1rem; }
+  .photo[data-copy="true"] { display: none; }
+  .opening, .opening-inner, .opening-video, .photo, .bar-fill { transition: none; }
 }

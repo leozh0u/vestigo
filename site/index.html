@@ -103,7 +103,7 @@
       <div class="vignette"></div>
     </div>
 
-    <canvas id="stage"></canvas>
+    <canvas id="stage" aria-hidden="true"></canvas>
 
     <main id="ui" data-state="idle">
       <header class="masthead">
@@ -136,6 +136,7 @@
           </svg>
           <span>VESTIGO</span>
         </a>
+        <p id="demo-status" class="demo-status" role="status">Recorded investigations</p>
       </header>
 
       <!--
@@ -167,7 +168,7 @@
           four things somebody forgot to centre. It stops under the cursor,
           because a target that slides away while you reach for it is a game.
         -->
-        <div class="examples" id="examples">
+        <div class="examples" id="examples" role="group" aria-label="Choose a recorded investigation">
           <div class="examples-track" id="examples-track"></div>
         </div>
         <!--

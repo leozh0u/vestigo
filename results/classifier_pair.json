@@ -1,0 +1,30 @@
+{
+  "provenance": "Saved local checkpoint metrics; no fresh model evaluation performed for this report.",
+  "encoders": [
+    {
+      "model": "ViT-SO400M-14-SigLIP",
+      "pretrained": "webli"
+    },
+    {
+      "model": "ViT-SO400M-14-SigLIP2",
+      "pretrained": "webli"
+    }
+  ],
+  "checkpoint_sha256": "b0e9245bb54ab2ba234bfae367e3ff9ecbc29a7936ab8609d9a75783e4bbf88a",
+  "cells_sha256": "80d73ed4aa965cacb324f053aefce3288b53c53bef7ac38b9d9118afa28e90f9",
+  "metrics": {
+    "images": 65300,
+    "cells": 245,
+    "mode": "cluster",
+    "train": 52245,
+    "val": 13055,
+    "cell_accuracy": 0.5558789735733436,
+    "median_km": 127.75310714173006,
+    "within_750_km": 0.8127920337035619,
+    "within_200_km": 0.6185369590195328,
+    "temperature": 0.7202334403991699,
+    "tau_km": 150.0,
+    "ece_raw": 0.15161942379290186,
+    "ece_calibrated": 0.04010195032601061
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "source": "https://raw.githubusercontent.com/leozh0u/vestigo/4024944add847d2fafd0bafcc4c2e2a883e3c5aa/",
+  "files": [
+    {
+      "path": "opening/intro-50968209df.mp4",
+      "bytes": 11958982,
+      "sha256": "50968209dfd1cdab1c426eda4e238f071a9860abe7cf8aa1d942b8914a96aaa3"
+    },
+    {
+      "path": "textures/CREDIT.txt",
+      "bytes": 425,
+      "sha256": "a15e9629ed8a98be2bf50d2a157bad11a4f2a1bc63eb4676be47dd10045f5ba6"
+    },
+    {
+      "path": "textures/earth-day.jpg",
+      "bytes": 2308163,
+      "sha256": "f76d7b94445e8975a755c849ddaa93ed07b7e01118fb0b7e6bc5546a68c18d5c"
+    },
+    {
+      "path": "textures/earth-glow.jpg",
+      "bytes": 83238,
+      "sha256": "8e483599bbb557c385db88c73e38a28f241c835af6d41380f509454041b9ed6b"
+    },
+    {
+      "path": "textures/earth-night.jpg",
+      "bytes": 412172,
+      "sha256": "e464cd073c8846cd7ee47349a76c40f9b7c7dcbf054e7b74b505b8e5e24ff680"
+    },
+    {
+      "path": "textures/globe-growth.png",
+      "bytes": 485372,
+      "sha256": "8e71d786f813b81e9da2f17968b36a09229804c92d87aac3e736aae47c2123c3"
+    },
+    {
+      "path": "textures/globe-land.png",
+      "bytes": 25718,
+      "sha256": "e6317cff9948740ff99b8169223a016771a469d01ed914ae09c03cd444067d48"
+    },
+    {
+      "path": "textures/globe-metal.png",
+      "bytes": 836472,
+      "sha256": "feebc4db516d8989ea9e4f244f1b8bb0ef06bdaec3e50f6d1bfb25ef26f775a0"
+    },
+    {
+      "path": "textures/globe-normal.png",
+      "bytes": 1864442,
+      "sha256": "00c3585a376a212fa297d09d9cfd7fbebc581e4b3057df8380170bbd29f194bc"
+    },
+    {
+      "path": "textures/globe-relief.png",
+      "bytes": 225163,
+      "sha256": "b0cb91effeb4080985d845f38e28cd5e7d5c4e3de0e772318c8201e0b4ef6620"
+    },
+    {
+      "path": "textures/globe-rough.png",
+      "bytes": 296844,
+      "sha256": "2b2214178964f47095d846344cae9edb5c5384e4645d5f513408f69334695e05"
+    }
+  ]
+}

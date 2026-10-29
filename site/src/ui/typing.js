@@ -154,6 +154,7 @@ export async function mountTyping() {
   if (!host) return [];
 
   const lines = await readLines();
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return [];
   const rand = seeded(20260905);
   return SLOTS.map((slot) => new Line(host, slot, lines, rand));
 }

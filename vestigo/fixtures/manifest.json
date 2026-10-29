@@ -1,0 +1,23 @@
+{
+  "landmark": {
+    "file": "landmark.json",
+    "source": "results/traces_v9/im2gps_694f4bfbd7_s0.json",
+    "sha256": "3c89152665ec1d360f1550795d78e7a031417c0aa82fff518c7451661467fa5c",
+    "evaluation": "agent_v9",
+    "provenance": "Historical recorded model/tool output; displayed without new inference or recomputation."
+  },
+  "rural": {
+    "file": "rural.json",
+    "source": "results/traces_v9/rural_cb06bab2f5_s0.json",
+    "sha256": "2eb95a01e6bf14c2dd5597b80bb53bf1cc421549e978bbe56be15451bf328235",
+    "evaluation": "agent_v9",
+    "provenance": "Historical recorded model/tool output; displayed without new inference or recomputation."
+  },
+  "declined": {
+    "file": "declined.json",
+    "source": "results/traces_v9/im2gps_771cffef86_s0.json",
+    "sha256": "efa98ea5b3de41eb8050e930614ab29c1a6db6479e5a4e19be3811bce7077fc5",
+    "evaluation": "agent_v9",
+    "provenance": "Historical recorded model/tool output; displayed without new inference or recomputation."
+  }
+}

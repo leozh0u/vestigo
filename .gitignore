@@ -62,3 +62,7 @@ site/.bundle-*/
 site/.check-*
 site/.bundle-*
 site/.descent-*
+
+output/
+
+.playwright-cli/

@@ -4,7 +4,22 @@ The intro runs from Earth through Manhattan, into an apartment and onto a laptop
 
 ## Render pipeline
 
-The published film combines an Earth render, Google Photorealistic 3D Tiles and a Blender apartment. The accepted six-second apartment shot stays intact. A four-second exterior approach connects the city camera to its first frame. Camera position and rotation must agree at the window join.
+The published film combines an Earth render, saved Google Photorealistic 3D Tiles footage and a Blender apartment. The six-second room and four-second exterior approach share a lighting setup and meet at the same camera pose. The final laptop screen becomes the live page.
+
+## Present the published version
+
+```sh
+npm run assets:fetch
+npm run assets:check
+npm run check
+npm run build
+npm run preview
+```
+
+The asset fetch restores the checksum-locked published film and textures. It
+does not call a model or map API or generate new media. The portal check uses
+the screen track in the tracked public manifest, so it needs no ignored render
+inputs. The full native render pipeline below is separate from presentation.
 
 Local render outputs live under `media/continuous/` and are ignored by Git. The assembly script checks frame counts, duration, black intervals and the window camera join. It produces a review candidate before touching the public manifest.
 
@@ -37,4 +52,4 @@ Map provider metadata is retained with the local render outputs. The published f
 
 `screen-portal.js` projects the existing page into the laptop's four screen corners using the exported camera track. It moves the actual DOM nodes, including the WebGL canvas, into a temporary stage. A matching hole in the video reveals them. The final transform becomes the viewport's identity transform, then the nodes return to their original positions.
 
-The manifest carries the film path, camera state, screen track and credit interval. Missing assets, load errors and timeouts return control to the page. `?introProof` selects the local candidate only in development.
+The manifest carries the film path, camera state and screen track. Missing assets, load errors, stalled playback and timeouts return control to the page. `?introProof` selects the local candidate only in development. Reduced-motion preferences bypass the film.

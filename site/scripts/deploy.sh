@@ -5,6 +5,8 @@ cd "$(dirname "$0")/.."
 
 [ "$(gh api user --jq .login)" = "leozh0u" ] || { echo "Expected GitHub account leozh0u" >&2; exit 1; }
 git fetch origin gh-pages
+npm run check
+npm run assets:check
 rm -rf dist
 npm run build
 WORKTREE=$(mktemp -d "${TMPDIR:-/tmp}/vestigo-deploy.XXXXXX")

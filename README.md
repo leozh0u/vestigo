@@ -13,12 +13,53 @@ so the metric that matters is calibration rather than distance error.
 Every claim carries the tool result or the rule that produced it. A claim with
 nothing behind it does not count toward the answer.
 
-There is a site for it at **https://vestigo.earth**. It shows what the agent does; you cannot run it there yet.
+The site at **https://vestigo.earth** plays recorded investigations. It makes
+no model requests and costs nothing per visitor. The Python agent and trained
+geocell classifier are separate from that presentation.
+
+## Try it without spending
+
+With Python 3.12 or newer, from this checkout:
+
+```sh
+python3 -m vestigo.demo
+python3 -m vestigo.demo --scripted
+```
+
+The first command displays a recorded investigation. The second exercises the
+current Agent and Board with deliberately synthetic replies. Neither needs
+credentials, network, images or model downloads. Recorded output and the
+scripted exercise are labelled separately.
+
+To run the website locally with Node 22 or newer:
+
+```sh
+cd site
+npm ci --ignore-scripts
+npm run assets:fetch
+npm run check
+npm run build
+npm run preview -- --host 127.0.0.1
+```
+
+The asset fetch restores checksum-locked copies of the published movie and
+globe textures. It does not generate new media or call a model or map API.
+After restoration, the checks and build run locally. The harness defaults to
+cache-only execution and refuses missing responses; new provider calls require
+an explicit `--live` choice. A scripted harness exercise is available with
+`python3 eval/harness.py --dry --max-images 1 --samples 1`.
+
+[Presentation walkthrough](docs/PRESENTING.md),
+[code and learning guide](docs/LEARNING.md),
+[verification and maintenance](docs/MAINTENANCE.md),
+[29 October readiness evidence](docs/READINESS.md).
 
 ## Status
 
 The agent runs end to end, with a trained geocell classifier alongside it and
-eight measured evaluation runs behind it.
+saved evaluation runs behind it. The public gallery is curated playback,
+including coarse answers and refusals. Current hardening checks exercise
+offline behaviour; they do not constitute a fresh paid model evaluation.
 
 It started as a measurement rather than a system. The point was to find out
 whether a plain model call is already good enough before building anything on
@@ -256,7 +297,9 @@ than I expected going in, and it is where the work belongs.
 ## Reproducing
 
 ```
-python3 -m venv .venv && ./.venv/bin/pip install pillow pytest
+python3 -m venv .venv
+./.venv/bin/python -m pip install -e '.[dev]'
+./.venv/bin/python -m vestigo.demo       # no images, network or credentials
 ./.venv/bin/python scripts/ingest_im2gps.py
 ./.venv/bin/python scripts/ingest_mapillary.py    # needs a Mapillary token in .env
 ./.venv/bin/python eval/score.py eval/arm_a.json
@@ -277,8 +320,10 @@ The ML half needs torch and about 8 GB of imagery for the full set:
 Without the flags, `ml/embed.py` uses ViT-B/32, which runs on a laptop in
 minutes and is the first row of the encoder table below.
 
-The package itself has no dependencies. Pillow is for the ingest scripts and
-pytest is for the tests.
+The core package has no runtime dependencies. The development extra installs
+pytest, NumPy and Pillow for the checks and data scripts. The trained image
+classifier additionally needs PyTorch, OpenCLIP and matching local artifacts;
+the recorded demo does not.
 
 Images are not committed. The manifest holds the coordinates, so the fetch is
 reproducible without redistributing anyone's pixels.
@@ -331,7 +376,13 @@ The split holds out whole seed locations rather than random images, because
 several photographs were drawn from each 10 km box and a random split would
 report recall dressed as accuracy.
 
-Full writeup in [results/classifier.md](results/classifier.md).
+Full writeup in [results/classifier.md](results/classifier.md). A later saved
+checkpoint joins SigLIP and SigLIP2 features: 55.6% cell accuracy, 128 km median
+and 4.0% expected calibration error on 13,055 validation images. Its retained
+metrics and artifact hashes are in [results/classifier_pair.json](results/classifier_pair.json).
+These are historical checkpoint results, not new measurements from the
+presentation hardening pass. The agent's combined evidence scores are separate
+from the classifier's temperature-scaled probabilities.
 
 ## Cost
 
@@ -354,10 +405,10 @@ real figure after. A model with no price on file reports its cost as unknown and
 is refused unless explicitly allowed, because a budget that reads unpriced as
 free looks fine until the invoice arrives.
 
-No part of the codebase names a vendor above `llm.py`, so running the same eval
-against a second provider is a config line. That matters beyond cost: calibration
-is a property of the model rather than of this code, so comparing two of them is
-a result rather than an expense.
+Provider-specific HTTP integrations live in `providers.py`, with routing in
+`config.py` and the request/budget contract in `llm.py`. This keeps provider
+changes separate from the board. Model changes still require new evaluation:
+calibration measured for one configuration does not transfer automatically.
 
 ## Decisions
 

@@ -25,6 +25,7 @@ recorded as rejected, not quietly dropped and not quietly accepted.
 from __future__ import annotations
 
 import pathlib
+from contextlib import nullcontext
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
@@ -226,12 +227,12 @@ class Agent:
             schema=OBSERVATION_SCHEMA,
             sample=sample,
         ))
-        if not reply.structured:
+        if not isinstance(reply.structured, dict):
             trace.add("observe", "extractor returned nothing usable")
             return
         try:
             observations = parse_observations(reply.structured)
-        except ValueError as exc:
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
             trace.add("observe", f"unusable reply: {exc}")
             return
         attach_observations(board, observations)
@@ -256,8 +257,13 @@ class Agent:
             sample=sample,
         ))
         guess = reply.structured
-        if not guess:
+        if not isinstance(guess, dict):
             trace.add("guess", "no first pass returned")
+            return
+        try:
+            point = LatLon(float(guess["lat"]), float(guess["lon"]))
+        except (KeyError, TypeError, ValueError, OverflowError) as exc:
+            trace.add("guess", f"unusable coordinates: {exc}")
             return
         evidence = board.add_evidence(
             source="first_pass",
@@ -266,7 +272,7 @@ class Agent:
             result=guess,
         )
         board.add_candidate(
-            LatLon(float(guess["lat"]), float(guess["lon"])),
+            point,
             label=guess.get("place", ""),
             prior=1.0,
             origin="first_pass",
@@ -284,7 +290,11 @@ class Agent:
         # board, solar geometry settles it, because the sun was 47 degrees up
         # over one and 79 below the horizon over the other.
         alternatives = guess.get("alternatives") or []
+        if not isinstance(alternatives, list):
+            alternatives = []
         for alt in alternatives[:3]:
+            if not isinstance(alt, dict):
+                continue
             try:
                 point = LatLon(float(alt["lat"]), float(alt["lon"]))
             except (KeyError, TypeError, ValueError):
@@ -299,7 +309,7 @@ class Agent:
                 evidence_ids=(evidence.id,),
             )
         trace.add("guess", f"{guess.get('place', '?')} at "
-                           f"{guess['lat']:.3f},{guess['lon']:.3f} "
+                           f"{float(guess['lat']):.3f},{float(guess['lon']):.3f} "
                            f"({guess.get('granularity')}, {guess.get('confidence')})"
                            + (f", {len(alternatives)} alternatives" if alternatives else
                               ", no alternatives offered"))
@@ -351,13 +361,24 @@ class Agent:
 
             called, results = [], []
             for call in reply.tool_calls:
+                if not isinstance(call, dict):
+                    trace.add("tools", "ignored malformed tool call")
+                    continue
                 name = call.get("name", "")
+                if not isinstance(name, str):
+                    trace.add("tools", "ignored non-string tool name")
+                    continue
                 called.append(name)
                 if name not in self.tools:
                     trace.add("tools", f"asked for unknown tool {name!r}")
                     results.append(f"{name}: no such tool")
                     continue
-                result = self.tools.call(board, name, **call.get("input", {}))
+                inputs = call.get("input", {})
+                if not isinstance(inputs, dict):
+                    trace.add("tools", f"{name}: ignored non-object inputs")
+                    results.append(f"{name}: inputs must be an object")
+                    continue
+                result = self.tools.call(board, name, **inputs)
                 results.append(f"{name}: {result.summary}")
                 trace.add("tools", f"{name} -> {result.summary}")
 
@@ -421,13 +442,34 @@ class Agent:
         ))
         rejected: list[str] = []
         parent: str | None = None
-        for row in (reply.structured or {}).get("claims", []):
+        payload = reply.structured
+        rows = payload.get("claims") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            trace.add("claims", "reply has no usable claims list")
+            return ["model returned no usable claims list"]
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("value"), str) \
+                    or not row["value"].strip():
+                rejected.append("malformed claim: expected an object with a place name")
+                continue
             supports, bad = [], []
-            for s in row.get("supports", []):
+            citations = row.get("supports", [])
+            if not isinstance(citations, list):
+                rejected.append(f"{row['value']} has malformed citations")
+                continue
+            for s in citations:
+                if not isinstance(s, dict):
+                    rejected.append(f"{row['value']} has a malformed citation")
+                    continue
                 eid = s.get("evidence_id", "")
-                if eid in board.evidence:
-                    supports.append(Support(eid, float(s.get("strength", 0.0)),
-                                            bool(s.get("supports", True))))
+                if isinstance(eid, str) and eid in board.evidence:
+                    try:
+                        if not isinstance(s.get("supports", True), bool):
+                            raise ValueError("supports must be boolean")
+                        supports.append(Support(eid, float(s.get("strength", 0.0)),
+                                                s.get("supports", True)))
+                    except (TypeError, ValueError, OverflowError) as exc:
+                        rejected.append(f"{row['value']} has an invalid citation: {exc}")
                 else:
                     bad.append(eid)
             if bad:
@@ -441,11 +483,15 @@ class Agent:
                 rejected.append(f"{row.get('value', '?')} used an unknown level")
                 continue
             point = None
-            if row.get("lat") is not None and row.get("lon") is not None:
-                point = LatLon(float(row["lat"]), float(row["lon"]))
-            claim = board.add_claim(level, row["value"], supports=supports,
-                                    point=point, parent=parent,
-                                    stated_confidence=row.get("confidence"))
+            try:
+                if row.get("lat") is not None and row.get("lon") is not None:
+                    point = LatLon(float(row["lat"]), float(row["lon"]))
+                claim = board.add_claim(level, row["value"], supports=supports,
+                                        point=point, parent=parent,
+                                        stated_confidence=row.get("confidence"))
+            except (TypeError, ValueError, OverflowError) as exc:
+                rejected.append(f"{row['value']} could not be grounded: {exc}")
+                continue
             parent = claim.id
         trace.add("claims", f"{len(board.claims)} accepted, {len(rejected)} rejected")
         return rejected
@@ -464,12 +510,11 @@ class Agent:
         image = Image.from_path(path)
         board = Board(subject)
         trace = Trace()
-        before = self._spent()
-
-        self._observe(board, image, trace, sample)
-        self._first_pass(board, image, context, trace, sample)
-        turns = self._use_tools(board, context, trace, sample, str(path))
-        rejected = self._make_claims(board, trace, sample)
+        with self.budget.capture() if self.budget else nullcontext([]) as charges:
+            self._observe(board, image, trace, sample)
+            self._first_pass(board, image, context, trace, sample)
+            turns = self._use_tools(board, context, trace, sample, str(path))
+            rejected = self._make_claims(board, trace, sample)
 
         # Everything above builds. This is the only step that tries to knock
         # something down, and it runs before resolution so a refuted claim
@@ -483,8 +528,8 @@ class Agent:
             subject=subject,
             board=board,
             resolution=resolution,
-            usage=self._usage(),
-            cost_usd=self._spent() - before,
+            usage=sum((usage for _, usage in charges), start=Usage()),
+            cost_usd=sum(usage.cost_usd or 0.0 for _, usage in charges),
             turns=turns,
             trace=trace,
             rejected=rejected,

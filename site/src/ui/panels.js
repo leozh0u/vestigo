@@ -99,6 +99,10 @@ export function setChosen(entry) {
   chosen = entry?.photo ? entry : null;
 }
 
+function fraction(value) {
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
+}
+
 function chosenMarkup() {
   if (!chosen) return "";
   // The alt text says what it is and not where: naming the place would hand a
@@ -133,13 +137,13 @@ export function renderReceipt(final) {
     box.classList.add("refused");
     const closest = best
       ? `<dt>closest</dt>
-         <dd>${escape(best.label)} · ${(best.score ?? 0).toFixed(2)}
+         <dd title="Evidence score, not a calibrated probability">${escape(best.label)} · ${fraction(best.score).toFixed(2)}
            <span class="bar"><span class="bar-fill"
-                 style="width:${Math.round((best.score ?? 0) * 100)}%"></span></span>
+                 style="width:${Math.round(fraction(best.score) * 100)}%"></span></span>
          </dd>
          <dt>why</dt>
-         <dd>${(best.prior ?? 0).toFixed(2)} prior ×
-             ${(best.admissibility ?? 0).toFixed(3)} admissible</dd>`
+         <dd>${fraction(best.prior).toFixed(2)} prior ×
+             ${fraction(best.admissibility).toFixed(3)} admissible</dd>`
       : `<dt>why</dt><dd>Nothing reached the board.</dd>`;
 
     box.innerHTML = `
@@ -155,9 +159,9 @@ export function renderReceipt(final) {
   // well as printed as a number. The bar is the honest part: a claim at 0.31
   // should not look like a claim at 0.94 just because both are two digits.
   const rows = (answer.chain ?? []).map((c) => {
-    const pct = Math.round((c.confidence ?? 0) * 100);
-    return `<dt>${c.level}</dt>
-            <dd>${escape(c.value)} · ${pct}%
+    const pct = Math.round(fraction(c.confidence) * 100);
+    return `<dt>${escape(c.level)}</dt>
+            <dd title="Evidence score, not a calibrated probability">${escape(c.value)} · <span aria-label="Evidence score ${pct} percent">${pct}%</span>
               <span class="bar"><span class="bar-fill"
                     style="width:${pct}%"></span></span>
             </dd>`;
@@ -166,7 +170,7 @@ export function renderReceipt(final) {
   box.classList.remove("refused");
   box.innerHTML = `
     ${chosenMarkup()}
-    <div class="level">${answer.level} · stated ${answer.stated ?? "—"}</div>
+    <div class="level">${escape(answer.level)} · stated ${escape(answer.stated ?? "—")}</div>
     <div class="value">${escape(answer.value)}</div>
     <dl>${rows}</dl>`;
   box.hidden = false;
@@ -177,5 +181,5 @@ export function renderReceipt(final) {
 function escape(value) {
   const node = document.createElement("span");
   node.textContent = String(value ?? "");
-  return node.innerHTML;
+  return node.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }

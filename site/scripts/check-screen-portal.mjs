@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { screenQuad, projectiveMatrix } from '../src/opening/screen-portal.js';
-const track={start:3,fps:24,frames:JSON.parse(fs.readFileSync('media/continuous/round-3-motion/camera.json')).map(f=>f.screen)};
+const published=JSON.parse(fs.readFileSync(new URL('../public/opening/intro.json', import.meta.url)));
+const track={...published.portal,start:3};
+assert.equal(track.frames.length,144);
 const transform=(m,x,y)=>[(m[0]*x+m[4]*y+m[12])/(m[3]*x+m[7]*y+1),(m[1]*x+m[5]*y+m[13])/(m[3]*x+m[7]*y+1)];
 for(const [w,h] of [[1280,720],[1512,771],[390,844],[844,390]]) {
  for(let frame=0;frame<144;frame++){

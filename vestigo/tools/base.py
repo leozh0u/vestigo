@@ -295,10 +295,11 @@ class Tool(ABC):
     # service that can change under you sets this False.
     deterministic: ClassVar[bool] = True
 
-    def __init__(self, cache: DiskCache | None = None):
+    def __init__(self, cache: DiskCache | None = None, *, cache_only: bool = False):
         if not self.name:
             raise ValueError(f"{type(self).__name__} has no name")
         self.cache = cache
+        self.cache_only = cache_only
 
     def spec(self) -> dict:
         """The tool definition in the shape the model API takes."""
@@ -346,6 +347,11 @@ class Tool(ABC):
             hit = self.cache.get(self.name, self.version, inputs)
             if hit is not None:
                 return hit
+
+        if self.cache_only:
+            return ToolResult(tool=self.name, version=self.version, inputs=inputs,
+                              ok=False, summary=f"{self.name}: no recorded tool result",
+                              error="offline cache miss; tool was not executed")
 
         started = time.perf_counter()
         try:
@@ -410,7 +416,13 @@ class Registry:
         as a keyword collides with this signature and the call dies with an
         error about the wrong thing.
         """
-        result = self.get(name)(**inputs)
+        tool = self.get(name)
+        try:
+            result = tool(**inputs)
+        except ToolInputError as exc:
+            result = ToolResult(tool=name, version=tool.version, inputs=inputs,
+                                ok=False, summary=f"{name}: invalid inputs: {exc}",
+                                error=f"ToolInputError: {exc}")
         if result.ok:
             attach(board, result)
         else:
@@ -420,6 +432,7 @@ class Registry:
                 kind=EvidenceKind.TOOL,
                 inputs=result.inputs,
                 result={"error": result.error},
+                max_strength=0.0,
             )
         return result
 
